@@ -11,6 +11,24 @@ function isRoleEligible(userRole, ruleRole) {
   return false;
 }
 
+// Returns true if the given slot starts within the next hour (and hasn't
+// already passed). Used for fallback_type = 'auto_release' rules, e.g.
+// Wed 6-8pm football: Female Faculty has first claim, and it auto-opens
+// to Commercial 1hr before kickoff if nobody's booked it yet — no admin
+// action required, which keeps the whole system genuinely real-time.
+//
+// NOTE: assumes the server's system clock is in the same timezone as
+// booking_date/start_time (Bhutan Time). Fine for a single-server pilot;
+// revisit if you ever deploy across timezones.
+function isWithinAutoReleaseWindow(bookingDate, startTime) {
+  const slotStart = new Date(`${bookingDate}T${startTime}`);
+  const now = new Date();
+  const msUntilSlot = slotStart.getTime() - now.getTime();
+  const oneHourMs = 60 * 60 * 1000;
+  return msUntilSlot <= oneHourMs && msUntilSlot >= 0;
+}
+
+// POST /bookings — always auto-confirms immediately, no admin approval step
 router.post('/', async (req, res) => {
   const { user_id, facility_id, booking_date, start_time, end_time, purpose } = req.body;
   if (!user_id || !facility_id || !booking_date || !start_time || !end_time) {
@@ -41,9 +59,18 @@ router.post('/', async (req, res) => {
 
     const rule = ruleResult.rows[0];
     let eligible = isRoleEligible(userRole, rule.primary_role);
-    if (!eligible && rule.fallback_role && rule.fallback_type === 'manual_release') {
-      eligible = isRoleEligible(userRole, rule.fallback_role);
+
+    if (!eligible && rule.fallback_role && rule.fallback_type === 'auto_release') {
+      const windowOpen = isWithinAutoReleaseWindow(booking_date, start_time);
+      eligible = windowOpen && isRoleEligible(userRole, rule.fallback_role);
+      if (!eligible && windowOpen === false && isRoleEligible(userRole, rule.fallback_role)) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({
+          error: `This slot is reserved for ${rule.primary_role} until 1 hour before start time. Try again closer to the slot.`,
+        });
+      }
     }
+
     if (userRole === 'admin') eligible = true;
     if (!eligible) {
       await client.query('ROLLBACK');
@@ -75,16 +102,21 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PATCH /bookings/:id — admin cancel/override for exceptions (no-shows,
+// disputes, policy violations reported after the fact). This is NOT part
+// of the normal booking flow anymore — every booking above auto-confirms.
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { status, admin_user_id, rejection_reason } = req.body;
-  if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: "status must be 'approved' or 'rejected'" });
+  const { status, admin_user_id, reason } = req.body;
+  if (!['approved', 'cancelled'].includes(status)) {
+    return res.status(400).json({ error: "status must be 'approved' or 'cancelled'" });
+  }
   if (!admin_user_id) return res.status(400).json({ error: 'admin_user_id is required' });
 
   try {
     const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [admin_user_id]);
     if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Only an admin can approve or reject bookings' });
+      return res.status(403).json({ error: 'Only an admin can override a booking' });
     }
     const result = await pool.query(
       `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING id, status, user_id, facility_id, booking_date, start_time, end_time`,
@@ -93,36 +125,15 @@ router.patch('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
 
     const booking = result.rows[0];
-    const message = status === 'approved'
-      ? `Your booking for ${booking.booking_date} (${booking.start_time}-${booking.end_time}) was approved.`
-      : `Your booking for ${booking.booking_date} (${booking.start_time}-${booking.end_time}) was rejected.${rejection_reason ? ' Reason: ' + rejection_reason : ''}`;
-    await pool.query(`INSERT INTO notifications (user_id, type, message) VALUES ($1, $2, $3)`,
-      [booking.user_id, status === 'approved' ? 'booking_approved' : 'booking_rejected', message]);
+    if (status === 'cancelled') {
+      const message = `Your booking for ${booking.booking_date} (${booking.start_time}-${booking.end_time}) was cancelled by an admin.${reason ? ' Reason: ' + reason : ''}`;
+      await pool.query(`INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_cancelled', $2)`, [booking.user_id, message]);
+    }
 
     res.json({ booking });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to update booking status' });
-  }
-});
-
-router.patch('/:id/release', async (req, res) => {
-  const { id } = req.params;
-  const { admin_user_id } = req.body;
-  if (!admin_user_id) return res.status(400).json({ error: 'admin_user_id is required' });
-  try {
-    const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [admin_user_id]);
-    if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Only an admin can release a slot' });
-    }
-    const result = await pool.query(
-      `UPDATE bookings SET released_for_commercial = true WHERE id = $1 RETURNING id, released_for_commercial`, [id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
-    res.json({ booking: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to release slot' });
+    res.status(500).json({ error: 'Failed to update booking' });
   }
 });
 

@@ -5,10 +5,10 @@
 -- 1. Facilities
 INSERT INTO facilities (name, type, capacity, location, max_duration_minutes, is_active) VALUES
   ('Football Ground',  'football',    30, 'Main Campus', NULL, true),
-  ('Basketball Court',  'basketball',  20, 'Academic Block B', 60, true),
+  ('Basketball Court',  'basketball',  20, 'Main Campus', 60, true),
   ('Volleyball Court',  'volleyball',  20, 'Main Campus', 60, true),
-  ('Badminton Court',   'badminton',   16, 'Academic Block B', 60, true),
-  ('Table Tennis Hall', 'table_tennis',16, 'Lower Campus', 60, true),
+  ('Badminton Court',   'badminton',   16, 'Main Campus', 60, true),
+  ('Table Tennis Hall', 'table_tennis',16, 'Main Campus', 60, true),
   ('Archery Range',     'archery',     10, 'Main Campus', NULL, true)
 ON CONFLICT (name) DO NOTHING;
 
@@ -30,7 +30,7 @@ SELECT id, 2, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Tuesday: stude
 UNION ALL
 SELECT id, 3, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Wednesday' FROM facilities WHERE name = 'Football Ground'
 UNION ALL
-SELECT id, 3, '18:00'::time, '20:00'::time, 'faculty_female', 'commercial', 'manual_release', 'Wednesday: Female Faculty first claim, admin releases to Commercial if unused' FROM facilities WHERE name = 'Football Ground'
+SELECT id, 3, '18:00'::time, '20:00'::time, 'faculty_female', 'commercial', 'auto_release', 'Wednesday: Female Faculty first claim, admin releases to Commercial if unused' FROM facilities WHERE name = 'Football Ground'
 UNION ALL
 SELECT id, 3, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Wednesday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
 UNION ALL
