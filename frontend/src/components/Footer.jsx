@@ -15,6 +15,9 @@ function Footer() {
         <p>Football Arena</p>
         <p>Basketball Courts</p>
         <p>Archery Range</p>
+        <p>Volleyball Court</p>
+        <p>Badminton Court</p>
+        <p>Table Tennis Hall</p>
       </div>
       <div className="footer-col">
         <h4>CONTACT &amp; INFO</h4>
