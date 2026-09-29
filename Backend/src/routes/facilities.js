@@ -5,7 +5,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name, type, capacity, location, max_duration_minutes FROM facilities WHERE is_active = true ORDER BY id'
+      'SELECT id, name, type, group_name, court_label, capacity, location, max_duration_minutes FROM facilities WHERE is_active = true ORDER BY id'
     );
     res.json(result.rows);
   } catch (err) {
