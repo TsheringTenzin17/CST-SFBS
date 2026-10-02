@@ -3,13 +3,16 @@
 -- day_of_week: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 
 -- 1. Facilities
-INSERT INTO facilities (name, type, capacity, location, max_duration_minutes, is_active) VALUES
-  ('Football Ground',  'football',    30, 'Main Campus', NULL, true),
-  ('Basketball Court',  'basketball',  20, 'Main Campus', 60, true),
-  ('Volleyball Court',  'volleyball',  20, 'Main Campus', 60, true),
-  ('Badminton Court',   'badminton',   16, 'Main Campus', 60, true),
-  ('Table Tennis Hall', 'table_tennis',16, 'Main Campus', 60, true),
-  ('Archery Range',     'archery',     10, 'Main Campus', NULL, true)
+INSERT INTO facilities (name, type, group_name, court_label, capacity, location, max_duration_minutes, is_active) VALUES
+  ('Football Ground', 'football', 'Football Ground', NULL, 30, 'Main Campus', NULL, true),
+  ('Basketball Court', 'basketball', 'Basketball Court', NULL, 20, 'Main Campus', 60, true),
+  ('Volleyball Court (Male)', 'volleyball', 'Volleyball Court', 'Male', 20, 'Main Campus', 60, true),
+  ('Volleyball Court (Female)', 'volleyball', 'Volleyball Court', 'Female', 20, 'Main Campus', 60, true),
+  ('Badminton Court 1', 'badminton', 'Badminton Court', '1', 16, 'Main Campus', 60, true),
+  ('Badminton Court 2', 'badminton', 'Badminton Court', '2', 16, 'Main Campus', 60, true),
+  ('Table Tennis Table 1', 'table_tennis', 'Table Tennis Hall', '1', 8, 'Main Campus', 60, true),
+  ('Table Tennis Table 2', 'table_tennis', 'Table Tennis Hall', '2', 8, 'Main Campus', 60, true),
+  ('Archery Range', 'archery', 'Archery Range', NULL, 10, 'Main Campus', NULL, true)
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. Football Ground — daily 6-8am free student slot (all 7 days)
@@ -62,7 +65,7 @@ WHERE name = 'Football Ground';
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
 SELECT f.id, d, '16:00'::time, '22:00'::time, 'any', NULL, 'none', 'Free for students, commercial rate for outsiders. 1hr max per booking.'
 FROM facilities f, generate_series(0,6) AS d
-WHERE f.name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall');
+WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall');
 
 -- 6. Archery Range — intentionally left with no schedule_rules.
 -- DSA left this open; the team defines the structure (see spec Section 4)
