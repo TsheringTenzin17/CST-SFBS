@@ -48,7 +48,7 @@ function Home() {
           </div>
         </div>
         <div className="hero-image">
-            <img src="/images/cst.jpg" alt="CST campus aerial view" className="hero-img" />
+            <img src="/images/collegeCST.jpg" alt="CST campus aerial view" className="hero-img" />
         </div>
       </section>
 

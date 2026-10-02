@@ -10,13 +10,15 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS facilities (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(50) UNIQUE NOT NULL,
-  type VARCHAR(50),
-  capacity INT,
-  location VARCHAR(100),
-  max_duration_minutes INT,
-  is_active BOOLEAN DEFAULT true
+  id                    SERIAL PRIMARY KEY,
+  name                  VARCHAR(50) UNIQUE NOT NULL,
+  type                  VARCHAR(50),
+  group_name            VARCHAR(50),
+  court_label           VARCHAR(50),
+  capacity              INT,
+  location              VARCHAR(100),
+  max_duration_minutes  INT,
+  is_active             BOOLEAN DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS schedule_rules (
