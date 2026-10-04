@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:conflict": "node tests/conflict-test.js"
   },
   "dependencies": {
     "express": "^4.19.2",
