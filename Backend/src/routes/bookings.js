@@ -2,6 +2,28 @@ const express = require('express');
 const pool = require('../db');
 const router = express.Router();
 
+// Create the route: when someone visits GET /bookings, run this function
+// async lets us wait for the database. req = incoming request, res = our reply
+router.get('/', async (req, res) => {
+  try {
+    // Ask the database for data (pool is the database connection)
+    const result = await pool.query(
+      // Pick these columns from the bookings table (nicknamed b)
+      `SELECT b.id, b.status, b.booking_date, b.start_time, b.end_time, b.purpose,
+              u.full_name AS user_name, u.role AS user_role,   -- the person's name and role from users (u)
+              f.name AS facility_name                           -- the facility's name from facilities (f)
+       FROM bookings b
+       JOIN users u ON u.id = b.user_id                         -- link each booking to the user who made it
+       JOIN facilities f ON f.id = b.facility_id                -- link each booking to its facility
+       ORDER BY b.booking_date DESC, b.start_time DESC`         // newest bookings first
+    );
+    res.json(result.rows);                                      // send the rows back as JSON
+  } catch (err) {
+    console.error(err);                                         // print the error in the backend terminal
+    res.status(500).json({ error: 'Failed to fetch bookings' }); // tell the frontend something went wrong
+  }
+});
+
 function isRoleEligible(userRole, ruleRole) {
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
