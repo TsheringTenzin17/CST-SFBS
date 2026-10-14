@@ -1,95 +1,194 @@
-// Import two React tools: useState stores data, useEffect runs code when the page opens
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import './admin.css';
 
-// The backend address. Uses the VITE_API_URL setting if it exists, otherwise your local backend
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// TODO: replace this temporary ID when admin authentication is available.
+const ADMIN_USER_ID = 1;
 
-// TEMPORARY: there's no login yet, so we pretend user 1 is the logged-in admin
-const ADMIN_USER_ID = 1; // this user must have role = 'admin' in the database
+const navigation = [
+  { label: 'Dashboard', active: true },
+  { label: 'Manage Bookings' },
+  { label: 'Facilities Status' },
+  { label: 'Registered Users', disabled: true },
+  { label: 'Maintenance Blocks', disabled: true },
+  { label: 'System Settings', disabled: true },
+];
 
-// Start of the page component (a function that returns what to show on screen)
+function formatDate(value) {
+  const date = String(value || '').slice(0, 10);
+  const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : '—';
+}
+
+function formatTime(value) {
+  return String(value || '').slice(0, 5) || '—';
+}
+
 function AdminDashboard() {
-  // bookings holds the list from the backend; setBookings updates it. Starts as an empty list
   const [bookings, setBookings] = useState([]);
-  // loading is true until the data arrives, so we can show "Loading…"
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Function that fetches all bookings from the backend
-  function loadBookings() {
-    fetch(`${API_URL}/bookings`)
-      .then((res) => res.json())
-      .then((data) => {
-        setBookings(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }
+  const loadBookings = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-  // Run loadBookings once when the page first opens (the [] means "only once")
-  useEffect(loadBookings, []);
+    try {
+      const response = await fetch(`${API_URL}/bookings`);
+      const data = await response.json();
 
-  // Runs when you click Cancel on a booking. id is that booking's id
-  async function handleCancel(id) {
-    // Pop up a box asking for a reason
-    const reason = window.prompt('Reason for cancelling this booking?');
-    // If the admin pressed Cancel in the popup, stop and do nothing
-    if (reason === null) return;
-    // Send a PATCH request to update this booking
-    await fetch(`${API_URL}/bookings/${id}`, {
-      method: 'PATCH',                                       // PATCH means "change part of this item"
-      headers: { 'Content-Type': 'application/json' },       // tell the backend we're sending JSON
-      body: JSON.stringify({                                 // the data we send:
-        status: 'cancelled',                                 //   new status
-        admin_user_id: ADMIN_USER_ID,                        //   who is cancelling it
-        reason,                                              //   why (what was typed in the popup)
-      }),
-    });
-    loadBookings(); // reload the list so the table shows the updated status
-  }
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not load bookings.');
+      }
+      if (!Array.isArray(data)) {
+        throw new Error('The bookings response was not a list.');
+      }
 
-  // What the page displays
+      setBookings(data);
+    } catch (requestError) {
+      setError(requestError.message || 'Could not load bookings.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  const bookingList = Array.isArray(bookings) ? bookings : [];
+  const activeCount = bookingList.filter((booking) => booking.status === 'approved').length;
+  const cancelledCount = bookingList.filter((booking) => booking.status === 'cancelled').length;
+  const facilityCount = new Set(
+    bookingList.map((booking) => booking.facility_name).filter(Boolean)
+  ).size;
+
   return (
-    <main className="main">
-      <h1 className="title">Manage Facility Bookings</h1>
-
-      {/* Show "Loading…" only while loading is true */}
-      {loading && <p>Loading…</p>}
-
-      <table className="availability-table">
-        <thead>
-          <tr>
-            {/* The column headings. The last empty one is for the Cancel button */}
-            <th>ID</th><th>Requester</th><th>Facility</th><th>Date</th><th>Time</th><th>Status</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Loop over every booking (b) and make one table row for each */}
-          {bookings.map((b) => (
-            <tr key={b.id}>                                  {/* key helps React tell rows apart */}
-              <td>{b.id}</td>                                {/* booking number */}
-              <td>{b.user_name} ({b.user_role})</td>         {/* who booked, and their role */}
-              <td>{b.facility_name}</td>                     {/* which facility */}
-              <td>{new Date(b.booking_date).toLocaleDateString()}</td>                     {/* the date */}
-              <td>{b.start_time}-{b.end_time}</td>           {/* start and end time */}
-              <td>
-                {/* Green badge if approved, red otherwise */}
-                <span className={`badge badge-${b.status === 'approved' ? 'green' : 'red'}`}>
-                  {b.status}
-                </span>
-              </td>
-              <td>
-                {/* Show the Cancel button only for approved bookings */}
-                {b.status === 'approved' && (
-                  <button className="btn-primary" onClick={() => handleCancel(b.id)}>Cancel</button>
-                )}
-              </td>
-            </tr>
+    <div className="admin-dashboard">
+      <aside className="admin-sidebar">
+        <div className="admin-brand">
+          <span className="admin-brand-mark">A</span>
+          <span>Admin Control</span>
+        </div>
+        <nav className="admin-nav" aria-label="Admin navigation">
+          {Array.isArray(navigation) && navigation.map((item) => (
+            <button
+              className={`admin-nav-item${item.active ? ' is-active' : ''}${item.disabled ? ' is-disabled' : ''}`}
+              disabled={item.disabled}
+              key={item.label}
+              type="button"
+            >
+              <span>{item.label}</span>
+              {item.disabled && <span className="admin-coming-soon">Coming soon</span>}
+            </button>
           ))}
-        </tbody>
-      </table>
-    </main>
+        </nav>
+      </aside>
+
+      <main className="admin-content">
+        <header className="admin-page-header">
+          <div>
+            <h1>System Overview</h1>
+            <p>Welcome back. Here’s the latest on your sports facilities.</p>
+          </div>
+        </header>
+
+        <section className="admin-stats" aria-label="Booking statistics">
+          <article className="admin-stat-card">
+            <span>Total Bookings</span>
+            <strong>{bookingList.length}</strong>
+          </article>
+          <article className="admin-stat-card">
+            <span>Active</span>
+            <strong className="admin-stat-blue">{activeCount}</strong>
+          </article>
+          <article className="admin-stat-card">
+            <span>Cancelled</span>
+            <strong className="admin-stat-red">{cancelledCount}</strong>
+          </article>
+          <article className="admin-stat-card">
+            <span>Facilities Booked</span>
+            <strong className="admin-stat-green">{facilityCount}</strong>
+          </article>
+        </section>
+
+        <section className="admin-panel admin-bookings-panel">
+          <div className="admin-panel-heading">
+            <h2>Recent Bookings</h2>
+            <span>Newest first</span>
+          </div>
+
+          {error && (
+            <div className="admin-error" role="alert">
+              <span>{error}</span>
+              <button type="button" onClick={loadBookings}>Try again</button>
+            </div>
+          )}
+
+          {loading ? (
+            <p className="admin-state-message" role="status">Loading bookings…</p>
+          ) : (
+            <div className="admin-table-scroll">
+              <table className="admin-bookings-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Requester</th>
+                    <th>Facility</th>
+                    <th>Role</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookingList.length === 0 ? (
+                    <tr>
+                      <td className="admin-empty-state" colSpan="8">No bookings yet</td>
+                    </tr>
+                  ) : (
+                    bookingList.map((booking) => (
+                      <tr key={booking.id}>
+                        <td className="admin-booking-id">{booking.id}</td>
+                        <td>{booking.user_name || '—'}</td>
+                        <td>{booking.facility_name || '—'}</td>
+                        <td>
+                          <span className={`admin-role-badge role-${String(booking.user_role || 'other').toLowerCase()}`}>
+                            {booking.user_role || '—'}
+                          </span>
+                        </td>
+                        <td>{formatDate(booking.booking_date)}</td>
+                        <td>{formatTime(booking.start_time)}-{formatTime(booking.end_time)}</td>
+                        <td>
+                          <span className={`admin-status-badge status-${String(booking.status || 'unknown').toLowerCase()}`}>
+                            {booking.status || 'unknown'}
+                          </span>
+                        </td>
+                        <td>
+                          {booking.status === 'approved' ? (
+                            <button
+                              aria-label={`Cancel booking ${booking.id}`}
+                              className="admin-cancel-button"
+                              disabled
+                              title="Cancellation will be available in Step 2"
+                              type="button"
+                            >
+                              Cancel
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
 
-// Make this component available so App.jsx can import it
 export default AdminDashboard;
