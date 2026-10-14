@@ -6,6 +6,9 @@ import Facilities from './pages/Facilities';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
+import BookingForm from './pages/BookingForm';
+import BookingConfirmation from './pages/BookingConfirmation';
+
 
 function App() {
   const { pathname } = useLocation();
@@ -21,6 +24,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/book" element={<BookingForm />} />
+        <Route path="/booking-confirmed" element={<BookingConfirmation />} />
       </Routes>
       {!hideChrome && <Footer />}
     </div>
