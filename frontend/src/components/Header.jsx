@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import UserMenu from './UserMenu';
 
 function Header() {
   const location = useLocation();
@@ -8,13 +9,9 @@ function Header() {
 
   return (
     <header className="header">
-      <div className="brand">
-        <div className="brand-logo">C</div>
-        <div>
-          <div className="brand-name">CST-SFBS</div>
-          <div className="brand-sub">Royal University of Bhutan</div>
-        </div>
-      </div>
+      <Link to="/" className="nav-brand">
+      <img src="/images/logo.png" alt="CST-SFBS logo" className="nav-logo-img" />
+    </Link>
       <nav className="nav">
         <Link to="/" className={isActive('/')}>Home</Link>
         <Link to="/facilities" className={isActive('/facilities')}>Facilities</Link>
@@ -22,10 +19,7 @@ function Header() {
         {user?.role === 'admin' && <Link to="/admin" className={isActive('/admin')}>Admin</Link>}
       </nav>
       {user ? (
-        <div className="user-pill">
-          {user.full_name}{' '}
-          <a href="#" onClick={(e) => { e.preventDefault(); logout(); }} style={{ marginLeft: 8 }}>Logout</a>
-        </div>
+        <UserMenu />
       ) : (
         <Link to="/login" className="user-pill" style={{ textDecoration: 'none' }}>Sign in</Link>
       )}

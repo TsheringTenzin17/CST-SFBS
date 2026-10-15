@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import BookingForm from './pages/BookingForm';
 import BookingConfirmation from './pages/BookingConfirmation';
+import FacilityDetail from './pages/FacilityDetail';
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/book" element={<BookingForm />} />
         <Route path="/booking-confirmed" element={<BookingConfirmation />} />
+        <Route path="/facilities/:type" element={<FacilityDetail />} />
       </Routes>
       {!hideChrome && <Footer />}
     </div>
