@@ -3,7 +3,7 @@
    Change a color here and it updates everywhere.
 */
 :root {
-  --blue: #0b57c4;        /* main brand blue */
+  --blue: #255463;        /* main brand  dark cyan/blue */
   --blue-dark: #0947a3;   /* darker blue for button hover */
   --orange: #f59e0b;      /* accent orange */
   --green: #16a34a;       /* green button color */
@@ -439,7 +439,7 @@ a {
 .auth-side {
   width: 34%;
   min-width: 260px;
-  background: #0a3d91;
+  background: #255463;
   color: #fff;
   padding: 40px 36px;
   display: flex;
