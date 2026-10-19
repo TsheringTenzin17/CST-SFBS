@@ -15,6 +15,9 @@
 /* The white rounded boxes */
 .fd-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px; }
 
+/* Right-hand grid card: lets the grid shrink instead of overflowing the page */
+.fd-availability-card { min-width: 0; padding: 24px; }
+
 /* Left column text and image */
 .fd-title { color: #1d4ed8; margin: 0 0 16px; font-size: 28px; }
 .fd-subtitle { margin: 0 0 12px; font-size: 21px; }
@@ -33,13 +36,14 @@
 .fd-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; }
 .fd-green { background: #22c55e; }
 .fd-red { background: #ef4444; }
+.fd-gray { background: #9ca3af; }
 .fd-orange { background: #f59e0b; }
 
 /* The grid: rows stacked vertically */
 .fd-grid { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
 
-/* Every row uses the same 7 columns: time label + 6 days */
-.fd-row { display: grid; grid-template-columns: 140px repeat(6, 1fr); gap: 10px; align-items: center; }
+/* Every row uses the same 8 columns: time label + 7 days (Mon to Sun) */
+.fd-row { display: grid; grid-template-columns: 140px repeat(7, minmax(0, 1fr)); gap: 10px; align-items: center; }
 .fd-day { font-size: 14.5px; font-weight: 600; text-align: center; }
 .fd-time { font-size: 14.5px; color: #374151; }
 
@@ -48,6 +52,7 @@
 .fd-available { background: #ecfdf5; border-color: #22c55e; color: #15803d; }
 .fd-available:hover { background: #d1fae5; }
 .fd-booked { background: #fef2f2; border-color: #ef4444; color: #b91c1c; cursor: not-allowed; }
+.fd-unavailable { background: #f3f4f6; border-color: #9ca3af; color: #6b7280; cursor: not-allowed; }
 .fd-cell.fd-selected { background: #fffbeb; border-color: #f59e0b; color: #b45309; }
 
 /* Bottom bar with selected slot + book button */
@@ -60,5 +65,5 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
 @media (max-width: 1000px) {
   .fd-page { grid-template-columns: 1fr; }
   .fd-card { overflow-x: auto; }
-  .fd-grid { min-width: 700px; }
+  .fd-grid { min-width: 820px; }
 }
