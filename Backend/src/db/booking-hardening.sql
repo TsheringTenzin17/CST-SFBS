@@ -44,3 +44,30 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_schedule_rule
     facility_id, day_of_week, start_time, end_time, primary_role,
     (COALESCE(fallback_role, '')), (COALESCE(fallback_type, ''))
   );
+
+-- 5. Archery is open to every role 4-10pm on weekdays and 8am-10pm on weekends.
+DELETE FROM schedule_rules
+WHERE facility_id = (SELECT id FROM facilities WHERE name = 'Archery Range');
+
+INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_type, notes)
+SELECT f.id, d.day_of_week,
+       CASE WHEN d.day_of_week IN (0, 6) THEN '08:00'::time ELSE '16:00'::time END,
+       '22:00'::time, 'everyone', 'none', 'Open to students, faculty/staff, and outsiders'
+FROM facilities f
+CROSS JOIN generate_series(0, 6) AS d(day_of_week)
+WHERE f.name = 'Archery Range'
+ON CONFLICT DO NOTHING;
+
+-- 6. Other sports: open weekends 8am-10pm to every role; preserve weekday rules.
+DELETE FROM schedule_rules
+WHERE facility_id IN (
+  SELECT id FROM facilities
+  WHERE group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+)
+AND day_of_week IN (0, 6);
+
+INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
+SELECT f.id, d, '08:00'::time, '22:00'::time, 'everyone', NULL, 'none', 'Weekend open to students, faculty/staff, and outsiders; 1hr max per booking.'
+FROM facilities f, generate_series(0, 6, 6) AS d
+WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+ON CONFLICT DO NOTHING;

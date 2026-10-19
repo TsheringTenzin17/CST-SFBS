@@ -22,8 +22,9 @@ const router = express.Router();
 // ---------------------------------------------------------------
 
 // Which user roles may book a slot whose rule says `ruleRole`?
-// 'any' = students AND commercial/outsiders (first to book wins).
+// 'any' = students and outsiders; 'everyone' also includes faculty/staff.
 function isRoleEligible(userRole, ruleRole) {
+  if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
   if (ruleRole === 'commercial') return userRole === 'outsider';

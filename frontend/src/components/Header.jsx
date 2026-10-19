@@ -16,6 +16,7 @@ function Header() {
         <Link to="/" className={isActive('/')}>Home</Link>
         <Link to="/facilities" className={isActive('/facilities')}>Facilities</Link>
         <Link to="/my-bookings" className={isActive('/my-bookings')}>My Bookings</Link>
+        <Link to="/help" className={isActive('/help')}>Help &amp; Contact</Link>
         {user?.role === 'admin' && <Link to="/admin" className={isActive('/admin')}>Admin</Link>}
       </nav>
       {user ? (
