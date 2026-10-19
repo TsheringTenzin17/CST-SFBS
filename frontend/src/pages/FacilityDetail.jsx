@@ -1,193 +1,269 @@
-// useEffect = run code when the page opens; useState = remember changing values
+// =============================================================
+// frontend/src/pages/FacilityDetail.jsx  —  slots for one facility  (owner: Lhamo)
+// =============================================================
+// Route:  /facilities/:id   (optionally  ?date=2026-10-20)
+// Sections:  1. data loading   2. loading / error screens   3. page layout
+//
+// If this page is BLANK, check in this order:
+//   a) App.jsx has  <Route path="/facilities/:id" element={<FacilityDetail />} />
+//   b) the import is  import FacilityDetail from './pages/FacilityDetail';
+//   c) the browser console (F12) for a red error.
 import { useEffect, useState } from 'react';
-
-// useParams = read the value from the URL (/facilities/football -> "football")
-// Link = clickable link that doesn't reload the page
-import { useParams, Link } from 'react-router-dom';
-
-// Descriptions text per sport (already exists in your project)
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
+import { apiCall } from '../utils/api';
+import { ROLE_LABELS, STATE_LABELS, buildSlots, slotState, todayString, toHHMM, toMin } from '../utils/slots';
 import { DESCRIPTIONS } from '../facilityMeta';
-
-// The fake grid data from the file above
-import { DAYS, TIME_SLOTS, SAMPLE_GRID } from '../facilityDetailMock';
-
-// The styles for this page
 import './FacilityDetail.css';
 
-// Backend address, same as in Facilities.jsx
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// ---------------------------------------------------------------
+// Weekday closed hours
+// ---------------------------------------------------------------
+// DSA: on weekdays the facilities open at 4:00 PM. Between 8:00 AM and
+// 4:00 PM (Monday to Friday) nothing can be booked, by anyone. The server
+// already refuses those times (no booking rule covers them); here we only
+// SHOW them as greyed "Unavailable" slots instead of leaving a gap.
+// (The football 6:00 to 8:00 AM student slot is a normal rule and stays bookable.)
+const WEEKDAY_CLOSED = { from: '08:00', to: '16:00' };
+
+// 'YYYY-MM-DD' -> true for Monday to Friday (uses the browser's own date)
+function isWeekday(dateStr) {
+  const day = new Date(`${dateStr}T00:00:00`).getDay(); // 0 = Sunday ... 6 = Saturday
+  return day >= 1 && day <= 5;
+}
+
+// The full list of slots to draw for one day: the bookable slots from the
+// rules, plus (on weekdays) the greyed closed slots, in time order.
+// Closed slots are marked  closed: true  and have no rule.
+function buildDaySlots(rules, slotMinutes, date) {
+  const bookable = buildSlots(rules, slotMinutes);
+  if (!isWeekday(date)) return bookable;
+
+  const closed = [];
+  for (let s = toMin(WEEKDAY_CLOSED.from); s + slotMinutes <= toMin(WEEKDAY_CLOSED.to); s += slotMinutes) {
+    const slot = { start: toHHMM(s), end: toHHMM(s + slotMinutes), rule: null, closed: true };
+    // never hide a real bookable slot behind a closed one
+    const overlapsBookable = bookable.some((b) => toMin(b.start) < toMin(slot.end) && toMin(b.end) > toMin(slot.start));
+    if (!overlapsBookable) closed.push(slot);
+  }
+  return [...bookable, ...closed].sort((a, b) => toMin(a.start) - toMin(b.start));
+}
+
+function getWeekDates(date) {
+  const monday = new Date(`${date}T00:00:00Z`);
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(monday);
+    day.setUTCDate(monday.getUTCDate() + index);
+    return day.toISOString().slice(0, 10);
+  });
+}
+
+function formatDay(date) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric',
+  });
+}
+
+function formatTime(time) {
+  const [hour, minute] = time.split(':').map(Number);
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${suffix}`;
+}
 
 function FacilityDetail() {
-  // Get ":type" from the route path "/facilities/:type" in App.jsx
-  const { type } = useParams();
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [facility, setFacility] = useState(null);   // sport info: { name, courtCount }
-  const [loading, setLoading] = useState(true);     // true while waiting for backend
-  const [error, setError] = useState(null);         // error message if fetch fails
-  const [selected, setSelected] = useState(null);   // clicked slot: { row, col } or null
+  // ---------- 1. data loading ----------
+  const [allFacilities, setAllFacilities] = useState(null);
+  const [date, setDate] = useState(searchParams.get('date') || todayString());
+  const [weeklyAvailability, setWeeklyAvailability] = useState({});
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const weekDates = getWeekDates(date);
+  const weekStart = weekDates[0];
 
-  // Runs when the page opens, and again if "type" changes in the URL
+  // 1a. every facility (needed for the name and for the court tabs)
   useEffect(() => {
-    fetch(`${API_URL}/facilities`)                  // get all facilities from backend
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server responded ${res.status}`); // bad reply = error
-        return res.json();                          // convert reply to JS data
-      })
-      .then((data) => {
-        // Keep only the rows for this sport (e.g. all "football" rows)
-        const rows = data.filter((f) => f.type === type);
-        if (rows.length > 0) {
-          // Save the sport's name and how many courts it has
-          setFacility({ name: rows[0].group_name, courtCount: rows.length });
-        }
-        setLoading(false);                          // stop "Loading…"
-      })
-      .catch((err) => {
-        setError(err.message);                      // save error text to show
-        setLoading(false);
-      });
-  }, [type]);
+    apiCall('/facilities').then(setAllFacilities).catch((e) => setError(e.message));
+  }, []);
 
-  // While loading, show a simple message and stop here
-  if (loading) return <main className="fd-page"><p>Loading…</p></main>;
+  // 1b. rules + bookings for THIS facility across the chosen week
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setSelected(null);
+    const dates = getWeekDates(weekStart);
+    Promise.all(dates.map((day) =>
+      apiCall(`/facilities/${id}/availability?date=${day}`).then((data) => [day, data]),
+    ))
+      .then((entries) => { if (!cancelled) setWeeklyAvailability(Object.fromEntries(entries)); })
+      .catch((e) => { if (!cancelled) setError(e.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [id, weekStart]);
 
-  // If the fetch failed OR this sport doesn't exist, show a message + back link
-  if (error || !facility) {
+  // ---------- 2. loading / error screens ----------
+  if (!allFacilities) {
+    return <main className="main">{error ? <p className="error">{error}</p> : <p>Loading facility…</p>}</main>;
+  }
+  const facility = allFacilities.find((f) => f.id === Number(id));
+  if (!facility) {
     return (
-      <main className="fd-page">
-        <p>{error ? `Couldn't load facility (${error}).` : 'Facility not found.'}</p>
+      <main className="main">
+        <p className="error">Facility not found.</p>
         <Link to="/facilities">Back to facilities</Link>
       </main>
     );
   }
 
-  const isWithinSchedule = (row, col) => {
-    const isWeekend = col >= 5;
-    return isWeekend || row >= 5 || (type === 'football' && row === 0);
-  };
+  // ---------- 3. page layout ----------
+  const courts = allFacilities.filter((f) => f.group_name === facility.group_name); // e.g. Badminton 1 + 2
+  const slotMinutes = facility.max_duration_minutes || 120; // courts 1h, football 2h
+  const slotsByDate = Object.fromEntries(weekDates.map((day) => [
+    day,
+    weeklyAvailability[day] ? buildDaySlots(weeklyAvailability[day].rules, slotMinutes, day) : [],
+  ]));
+  const slotRows = [...new Map(
+    Object.values(slotsByDate).flat().map((slot) => [`${slot.start}-${slot.end}`, { start: slot.start, end: slot.end }]),
+  ).values()].sort((a, b) => toMin(a.start) - toMin(b.start));
 
-  // Runs when someone clicks a grid cell. row = time slot index, col = day index
-  const handleCellClick = (row, col) => {
-    if (!isWithinSchedule(row, col) || SAMPLE_GRID[row][col] !== 'A') return;
-    setSelected({ row, col });                      // remember the clicked cell
-  };
+  function handleBook() {
+    if (!selected) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/book?facility_id=${id}&date=${selected.date}&start=${selected.start}&end=${selected.end}`);
+  }
 
-  // Runs when someone clicks "Select Slot & Book"
-  const handleBook = () => {
-    // TODO: later, send a POST request to the backend here
-    alert(`Booking: ${facility.name}, ${DAYS[selected.col].label}, ${TIME_SLOTS[selected.row]}`);
-  };
-
-  // What the page looks like (JSX). Comments inside here must use {/* */}
   return (
     <main className="fd-page">
-      {/* LEFT COLUMN: facility info + rules */}
-      <div className="fd-left">
-        {/* White box with name, picture and description */}
-        <div className="fd-card">
-          <h2 className="fd-title">{facility.name}</h2>
-          <img
-            className="fd-img"
-            src={`/images/${type}.jpg`}             // picture from public/images/
-            alt={facility.name}
-            onError={(e) => { e.target.style.visibility = 'hidden'; }} // hide if missing
-          />
-          <p className="fd-desc">{DESCRIPTIONS[type] || ''}</p>
-        </div>
+      <aside className="fd-left">
+        <section className="fd-card fd-info-card">
+          <Link to="/facilities" className="fd-back-link">All facilities</Link>
+          <h1 className="fd-title">{facility.name}</h1>
+          <p className="fd-desc">{DESCRIPTIONS[facility.type] || ''}</p>
+          <div className="fd-facts">
+            <span>{facility.location}</span>
+            <span>Capacity {facility.capacity}</span>
+            {facility.max_duration_minutes && <span>{facility.max_duration_minutes / 60}-hour booking limit</span>}
+          </div>
+          {courts.length > 1 && (
+            <nav className="court-tabs" aria-label="Courts in this facility">
+              {courts.map((court) => (
+                <Link key={court.id} to={`/facilities/${court.id}?date=${date}`} className={court.id === facility.id ? 'court-tab active' : 'court-tab'}>
+                  {court.name}
+                </Link>
+              ))}
+            </nav>
+          )}
+        </section>
 
-        {/* White box with "who can book on which day" */}
-        <div className="fd-card">
-          <h3 className="fd-subtitle">Day-Specific Allocation Rules</h3>
-          {DAYS.map((d) => (                        // one line per day
-            <div className="fd-rule" key={d.key}>
-              <span>{d.label.split(' ')[0]}</span>  {/* "Mon (St.)" becomes "Mon" */}
-              <span className="fd-rule-who">{d.who}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+        <section className="fd-card fd-rules-card">
+          <h2 className="fd-subtitle">Day-Specific Allocation Rules</h2>
+          {weekDates.map((day) => {
+            const dayAvailability = weeklyAvailability[day];
+            return (
+              <div className="fd-rule" key={day}>
+                <strong className="fd-rule-day">{formatDay(day)}</strong>
+                <div className="fd-rule-details">
+                  {dayAvailability?.rules.length ? dayAvailability.rules.map((rule) => (
+                    <div className="fd-rule-line" key={`${rule.start_time}-${rule.end_time}`}>
+                      <span>{rule.start_time}–{rule.end_time}</span>
+                      <span>{ROLE_LABELS[rule.primary_role] || rule.primary_role}</span>
+                    </div>
+                  )) : <span className="fd-muted">{dayAvailability ? 'No booking rules' : 'Loading rules…'}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      </aside>
 
-      {/* RIGHT COLUMN: the weekly grid */}
-      <div className="fd-card fd-availability-card">
-        {/* Title on the left, colour legend on the right */}
+      <section className="fd-card fd-availability-card">
         <div className="fd-grid-head">
           <div>
-            <h3 className="fd-grid-title">Weekly Availability Grid</h3>
-            <p className="fd-muted">Select an open slot to begin your booking</p>
+            <h2 className="fd-grid-title">Weekly Availability Grid</h2>
+            <p className="fd-muted">Select an open slot to begin your booking.</p>
           </div>
-          <div className="fd-legend">
-            <span><i className="fd-dot fd-green" /> Available</span>
-            <span><i className="fd-dot fd-red" /> Booked</span>
-            <span><i className="fd-dot fd-gray" /> Unavailable</span>
-            <span><i className="fd-dot fd-orange" /> Selected</span>
+          <div className="fd-legend" aria-label="Availability legend">
+            <span><i className="fd-dot fd-green" />Available</span>
+            <span><i className="fd-dot fd-red" />Booked</span>
+            <span><i className="fd-dot fd-gray" />Unavailable</span>
+            <span><i className="fd-dot fd-orange" />Selected</span>
           </div>
         </div>
 
-        <div className="fd-grid">
-          {/* Header row: the word "Time" + the 7 day names */}
-          <div className="fd-row">
-            <div className="fd-muted">Time</div>
-            {DAYS.map((d) => (
-              <div className="fd-day" key={d.key}>{d.label}</div>
-            ))}
-          </div>
+        <div className="fd-week-control">
+          <label htmlFor="week-date">Week containing</label>
+          <input id="week-date" type="date" value={date} min={todayString()} onChange={(event) => setDate(event.target.value)} />
+          <span>{formatDay(weekDates[0])} – {formatDay(weekDates[6])}</span>
+        </div>
 
-          {/* One row for each time slot. "row" = position in TIME_SLOTS */}
-          {TIME_SLOTS.map((time, row) => (
-            <div className="fd-row" key={time}>
-              <div className="fd-time">{time}</div>  {/* time label on the left */}
+        {error && <p className="fd-error">{error}</p>}
+        {loading && <p className="fd-muted" role="status">Loading this week’s availability…</p>}
 
-              {/* One button per day. "col" = position in DAYS */}
-              {DAYS.map((d, col) => {
-                const cellStatus = SAMPLE_GRID[row][col];
-                const isWithinFacilitySchedule = isWithinSchedule(row, col);
-                const isBooked = cellStatus === 'B' && isWithinFacilitySchedule;
-                const isUnavailable = cellStatus === 'U' || !isWithinFacilitySchedule;
-                // Is this the cell the user clicked?
-                const isSelected = selected && selected.row === row && selected.col === col;
-                // Decide the look: selected > booked > unavailable > available
-                const status = isSelected
-                  ? 'selected'
-                  : isBooked
-                    ? 'booked'
-                    : isUnavailable
-                      ? 'unavailable'
-                      : 'available';
-                const label = isBooked ? 'Booked' : isUnavailable ? 'Unavailable' : 'Available';
-                return (
-                  <button
-                    key={d.key}
-                    className={`fd-cell fd-${status}`}
-                    disabled={isBooked || isUnavailable}
-                    onClick={() => handleCellClick(row, col)}
-                  >
-                    {isSelected ? 'Selected' : label}
-                  </button>
-                );
-              })}
+        <div className="fd-grid-scroll">
+          <div className="fd-grid" role="table" aria-label="Weekly facility availability">
+            <div className="fd-row fd-header-row" role="row">
+              <span className="fd-day fd-time" role="columnheader">Time</span>
+              {weekDates.map((day) => <span className="fd-day" role="columnheader" key={day}>{formatDay(day)}</span>)}
             </div>
-          ))}
+            {slotRows.map((row) => (
+              <div className="fd-row" role="row" key={`${row.start}-${row.end}`}>
+                <span className="fd-time" role="rowheader">{formatTime(row.start)} – {formatTime(row.end)}</span>
+                {weekDates.map((day) => {
+                  const slot = slotsByDate[day].find((item) => item.start === row.start && item.end === row.end);
+                  const dayAvailability = weeklyAvailability[day];
+                  const state = !slot || !dayAvailability
+                    ? 'unavailable'
+                    : slot.closed ? 'closed' : slotState(slot, { date: day, availability: dayAvailability, user });
+                  const isSelected = selected?.date === day && selected.start === row.start && selected.end === row.end;
+                  const stateClass = state === 'open' ? 'fd-available' : state === 'booked' ? 'fd-booked' : 'fd-unavailable';
+                  const label = state === 'open' ? 'Available'
+                    : state === 'booked' ? STATE_LABELS.booked
+                      : state === 'restricted' ? STATE_LABELS.restricted : STATE_LABELS[state] || 'Unavailable';
+                  return (
+                    <button
+                      type="button"
+                      role="cell"
+                      key={day}
+                      className={`fd-cell ${stateClass}${isSelected ? ' fd-selected' : ''}`}
+                      disabled={state !== 'open' || loading}
+                      aria-label={`${formatDay(day)}, ${formatTime(row.start)} to ${formatTime(row.end)}: ${label}`}
+                      aria-pressed={isSelected}
+                      onClick={() => setSelected({ date: day, start: row.start, end: row.end })}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            {!loading && slotRows.length === 0 && <p className="fd-muted">No time slots are configured for this week.</p>}
+          </div>
         </div>
 
-        {/* Bottom bar: chosen slot text + the book button */}
         <div className="fd-footer">
           <div>
-            <span className="fd-muted">Selected Slot:</span>
+            <span className="fd-muted">Selected slot</span>
             <p className="fd-selected">
-              {selected
-                ? `${DAYS[selected.col].label}, ${TIME_SLOTS[selected.row]}` // e.g. "Wed (St.), 03:00 - 05:00 PM"
-                : 'None'}                                                   {/* nothing clicked yet */}
+              {selected ? `${formatDay(selected.date)} · ${formatTime(selected.start)} – ${formatTime(selected.end)}` : 'None'}
             </p>
           </div>
-          {/* Greyed out until a slot is selected */}
-          <button className="fd-book" disabled={!selected} onClick={handleBook}>
-            Select Slot &amp; Book
+          <button type="button" className="fd-book" disabled={!selected || loading} onClick={handleBook}>
+            {selected && !user ? 'Sign In to Book' : 'Select Slot & Book'}
           </button>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
 
-// Lets App.jsx import this page
 export default FacilityDetail;

@@ -67,3 +67,123 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
   .fd-card { overflow-x: auto; }
   .fd-grid { min-width: 820px; }
 }
+
+
+/* frontend/src/pages/FacilityDetail.css  —  styles for the availability page */
+.back-link { font-size: 13px; color: #0b57c4; text-decoration: none; }
+.inline-link { color: #0b57c4; font-weight: 600; }
+.btn-link { text-decoration: none; display: inline-block; }
+
+.court-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.court-tab { padding: 6px 12px; border: 1px solid #0b57c4; border-radius: 6px; font-size: 12px; text-decoration: none; color: #0b57c4; background: #fff; }
+.court-tab.active { background: #0b57c4; color: #fff; }
+
+.date-row { display: flex; align-items: center; gap: 10px; margin: 16px 0; font-size: 13px; }
+.date-row input { padding: 7px 9px; border: 1px solid #d1d5db; border-radius: 6px; }
+
+.rules-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; }
+.rules-card h3 { margin: 0 0 6px; font-size: 13px; color: #0b57c4; }
+.rules-card ul { margin: 0; padding-left: 18px; line-height: 1.7; }
+
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.slot { border-radius: 8px; padding: 12px; border: 1px solid; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+.slot-time { font-weight: 700; font-size: 14px; }
+.slot-who { color: #555; }
+.slot-status { font-weight: 700; font-size: 11px; }
+.slot-open { background: #ecfdf3; border-color: #86efac; }
+.slot-open .slot-status { color: #15803d; }
+.slot-booked { background: #fee2e2; border-color: #fca5a5; }
+.slot-booked .slot-status { color: #b91c1c; }
+.slot-muted { background: #f3f4f6; border-color: #d1d5db; color: #6b7280; }
+.slot-book { text-align: center; text-decoration: none; padding: 7px; border-radius: 6px; background: #0b57c4; color: #fff; font-weight: 600; font-size: 12px; }
+
+.notice { padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+.notice-warn { background: #fef3c7; color: #92400e; }
+
+/* Weekly facility detail and booking grid */
+.fd-page {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+  display: grid;
+  grid-template-columns: minmax(250px, 0.78fr) minmax(0, 1.72fr);
+  gap: 20px;
+  align-items: start;
+  flex: 1;
+}
+
+.fd-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fd-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
+.fd-availability-card { min-width: 0; padding: 20px; }
+.fd-back-link { display: inline-block; margin-bottom: 14px; color: #255463; font-size: 13px; text-decoration: none; }
+.fd-back-link:hover { text-decoration: underline; }
+.fd-title { color: #255463; margin: 0 0 14px; font-size: 24px; line-height: 1.2; }
+.fd-subtitle { margin: 0 0 14px; font-size: 17px; }
+.fd-desc { font-size: 14px; color: #374151; line-height: 1.55; margin: 0 0 16px; }
+.fd-facts { display: flex; flex-direction: column; gap: 7px; color: #5b6470; font-size: 12px; }
+.fd-facts span + span { padding-top: 7px; border-top: 1px solid #edf0f2; }
+
+.court-tabs { display: flex; gap: 7px; flex-wrap: wrap; margin: 16px 0 0; }
+.court-tab { padding: 7px 10px; border: 1px solid #cbd5d9; border-radius: 5px; font-size: 12px; text-decoration: none; color: #255463; background: #fff; }
+.court-tab.active { background: #255463; color: #fff; border-color: #255463; }
+
+.fd-rules-card { padding-bottom: 12px; }
+.fd-rule { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; padding: 11px 0; border-bottom: 1px solid #edf0f2; font-size: 12px; }
+.fd-rule:last-child { border-bottom: 0; }
+.fd-rule-day { color: #374151; font-weight: 600; }
+.fd-rule-details { display: grid; gap: 5px; min-width: 0; }
+.fd-rule-line { display: flex; justify-content: space-between; gap: 8px; color: #255463; text-align: right; }
+.fd-rule-line span:first-child { flex: 0 0 auto; color: #66717b; }
+
+.fd-grid-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+.fd-grid-title { color: #255463; margin: 0; font-size: 21px; }
+.fd-muted { font-size: 12px; color: #6b7280; margin: 5px 0 0; }
+.fd-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; align-items: center; color: #374151; }
+.fd-legend span { white-space: nowrap; }
+.fd-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.fd-green { background: #22c55e; }
+.fd-red { background: #ef4444; }
+.fd-gray { background: #9ca3af; }
+.fd-orange { background: #f59e0b; }
+
+.fd-week-control { display: flex; align-items: center; gap: 10px; margin: 18px 0 12px; color: #5b6470; font-size: 12px; }
+.fd-week-control input { min-height: 34px; padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 5px; color: #263238; background: #fff; font: inherit; }
+.fd-week-control span { margin-left: auto; color: #255463; font-weight: 600; }
+.fd-error { padding: 10px 12px; border-radius: 5px; color: #991b1b; background: #fee2e2; font-size: 13px; }
+
+.fd-grid-scroll { width: 100%; overflow-x: auto; }
+.fd-grid { min-width: 760px; display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+.fd-row { display: grid; grid-template-columns: 104px repeat(7, minmax(0, 1fr)); gap: 7px; align-items: center; }
+.fd-header-row { min-height: 30px; }
+.fd-day { font-size: 11px; font-weight: 600; text-align: center; color: #263238; }
+.fd-time { font-size: 11px; font-weight: 400; color: #4b5563; white-space: nowrap; }
+.fd-cell { height: 40px; min-width: 0; padding: 3px; border-radius: 6px; border: 1px solid; font: inherit; font-size: 11px; line-height: 1.1; }
+.fd-available { background: #ecfdf5; border-color: #22c55e; color: #166534; cursor: pointer; }
+.fd-available:hover { background: #d1fae5; }
+.fd-booked { background: #fef2f2; border-color: #ef4444; color: #991b1b; cursor: not-allowed; }
+.fd-unavailable { background: #f3f4f6; border-color: #9ca3af; color: #5b6470; cursor: not-allowed; }
+.fd-cell.fd-selected { background: #fffbeb; border-color: #f59e0b; color: #92400e; box-shadow: inset 0 0 0 1px #f59e0b; }
+.fd-cell:focus-visible, .fd-book:focus-visible, .fd-week-control input:focus-visible { outline: 2px solid #255463; outline-offset: 2px; }
+
+.fd-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+.fd-selected { font-weight: 600; margin: 5px 0 0; font-size: 13px; color: #1f2937; }
+.fd-book { min-height: 42px; background: #255463; color: #fff; border: 0; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.fd-book:hover:not(:disabled) { background: #173f4a; }
+.fd-book:disabled { background: #d1d5db; color: #fff; cursor: not-allowed; }
+
+@media (max-width: 980px) {
+  .fd-page { grid-template-columns: 1fr; }
+  .fd-left { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+@media (max-width: 620px) {
+  .fd-page { padding: 20px 14px 36px; gap: 14px; }
+  .fd-left { display: flex; }
+  .fd-card, .fd-availability-card { padding: 16px; }
+  .fd-grid-head { display: block; }
+  .fd-legend { margin-top: 12px; gap: 10px; }
+  .fd-week-control { flex-wrap: wrap; }
+  .fd-week-control span { width: 100%; margin-left: 0; }
+  .fd-footer { align-items: stretch; flex-direction: column; }
+  .fd-book { width: 100%; }
+}

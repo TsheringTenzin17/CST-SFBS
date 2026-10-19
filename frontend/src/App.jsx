@@ -9,7 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import BookingForm from './pages/BookingForm';
 import BookingConfirmation from './pages/BookingConfirmation';
 import FacilityDetail from './pages/FacilityDetail';
-
+import Rules from './pages/Rules';
 
 function App() {
   const { pathname } = useLocation();
@@ -27,7 +27,8 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/book" element={<BookingForm />} />
         <Route path="/booking-confirmed" element={<BookingConfirmation />} />
-        <Route path="/facilities/:type" element={<FacilityDetail />} />
+        <Route path="/facilities/:id" element={<FacilityDetail />} />
+        <Route path="/rules" element={<Rules />} />
       </Routes>
       {!hideChrome && <Footer />}
     </div>
