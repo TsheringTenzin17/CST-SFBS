@@ -1,38 +1,29 @@
-import { Link } from 'react-router-dom';
+// =============================================================
+// frontend/src/pages/Home.jsx  —  landing page  (owner: Lhamo)
+// =============================================================
+// Sections:  1. data   2. hero banner   3. "Our Sports Arenas" cards
 import { useEffect, useState } from 'react';
-import { DESCRIPTIONS, STATUS } from '../facilityMeta';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-
-// Groups individual court rows (e.g. "Badminton Court 1" and "Badminton
-// Court 2") into one card per sport, matching the Figma design, while
-// the database keeps each physical court as its own bookable resource.
-function groupByCourt(facilities) {
-  const groups = {};
-  for (const f of facilities) {
-    const key = f.group_name;
-    if (!groups[key]) {
-      groups[key] = { ...f, displayName: key, courtCount: 0 };
-    }
-    groups[key].courtCount += 1;
-  }
-  return Object.values(groups);
-}
+import { Link } from 'react-router-dom';
+import { DESCRIPTIONS } from '../facilityMeta';
+import { apiCall } from '../utils/api';
+import { badgeFor, groupFacilities } from '../utils/availability';
+import { todayString } from '../utils/slots';
+import useSummary from '../hooks/useSummary';
 
 function Home() {
+  // ---------- 1. data ----------
   const [facilities, setFacilities] = useState([]);
+  const { summary } = useSummary(todayString()); // real counts for today
 
   useEffect(() => {
-    fetch(`${API_URL}/facilities`)
-      .then((res) => res.json())
-      .then(setFacilities)
-      .catch(() => {});
+    apiCall('/facilities').then(setFacilities).catch(() => {});
   }, []);
 
-  const grouped = groupByCourt(facilities);
+  const cards = groupFacilities(facilities);
 
   return (
     <>
+      {/* ---------- 2. hero banner ---------- */}
       <section className="hero">
         <div className="hero-text">
           <span className="hero-badge">NEW STREAMLINED BOOKING PROCESS</span>
@@ -48,10 +39,11 @@ function Home() {
           </div>
         </div>
         <div className="hero-image">
-            <img src="/images/collegeCST.jpg" alt="CST campus aerial view" className="hero-img" />
+          <img src="/images/collegeCST.jpg" alt="CST campus aerial view" className="hero-img" />
         </div>
       </section>
 
+      {/* ---------- 3. facility cards ---------- */}
       <section className="main">
         <h2 className="title">Our Sports Arenas</h2>
         <p className="subtitle">
@@ -59,10 +51,10 @@ function Home() {
         </p>
 
         <div className="grid">
-          {grouped.map((f) => {
-            const status = STATUS[f.type] || { label: '', variant: 'green' };
+          {cards.map((f) => {
+            const badge = badgeFor(summary[f.group_name]);
             return (
-              <Link to="/facilities" className="card card-link" key={f.group_name}>
+              <Link to={`/facilities/${f.courtIds[0]}`} className="card card-link" key={f.group_name}>
                 <img
                   className="card-img"
                   src={`/images/${f.type}.jpg`}
@@ -75,7 +67,7 @@ function Home() {
                       {f.displayName}
                       {f.courtCount > 1 && <span className="court-count"> ({f.courtCount} courts)</span>}
                     </h3>
-                    <span className={`badge badge-${status.variant}`}>{status.label}</span>
+                    {badge.label && <span className={`badge badge-${badge.variant}`}>{badge.label}</span>}
                   </div>
                   <p className="card-desc">{DESCRIPTIONS[f.type] || ''}</p>
                 </div>

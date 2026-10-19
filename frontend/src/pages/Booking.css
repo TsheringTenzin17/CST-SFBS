@@ -19,14 +19,14 @@
 
 /* Booking summary */
 .summary-card {
-	background: #0b57c4;
+	background: #255463;
 	color: #fff;
 	border-radius: 10px;
 	padding: 20px;
 }
 
 .summary-card h3 {
-	color: #f59e0b;
+	color: #fff;
 	margin: 0 0 6px;
 }
 
