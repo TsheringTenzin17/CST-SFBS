@@ -61,9 +61,14 @@ function FacilityDetail() {
     );
   }
 
+  const isWithinSchedule = (row, col) => {
+    const isWeekend = col >= 5;
+    return isWeekend || row >= 5 || (type === 'football' && row === 0);
+  };
+
   // Runs when someone clicks a grid cell. row = time slot index, col = day index
   const handleCellClick = (row, col) => {
-    if (SAMPLE_GRID[row][col] === 'B') return;      // booked? do nothing
+    if (!isWithinSchedule(row, col) || SAMPLE_GRID[row][col] !== 'A') return;
     setSelected({ row, col });                      // remember the clicked cell
   };
 
@@ -103,7 +108,7 @@ function FacilityDetail() {
       </div>
 
       {/* RIGHT COLUMN: the weekly grid */}
-      <div className="fd-card">
+      <div className="fd-card fd-availability-card">
         {/* Title on the left, colour legend on the right */}
         <div className="fd-grid-head">
           <div>
@@ -113,12 +118,13 @@ function FacilityDetail() {
           <div className="fd-legend">
             <span><i className="fd-dot fd-green" /> Available</span>
             <span><i className="fd-dot fd-red" /> Booked</span>
+            <span><i className="fd-dot fd-gray" /> Unavailable</span>
             <span><i className="fd-dot fd-orange" /> Selected</span>
           </div>
         </div>
 
         <div className="fd-grid">
-          {/* Header row: the word "Time" + the 6 day names */}
+          {/* Header row: the word "Time" + the 7 day names */}
           <div className="fd-row">
             <div className="fd-muted">Time</div>
             {DAYS.map((d) => (
@@ -131,22 +137,31 @@ function FacilityDetail() {
             <div className="fd-row" key={time}>
               <div className="fd-time">{time}</div>  {/* time label on the left */}
 
-              {/* 6 buttons, one per day. "col" = position in DAYS */}
+              {/* One button per day. "col" = position in DAYS */}
               {DAYS.map((d, col) => {
-                // Is this cell booked in the data?
-                const isBooked = SAMPLE_GRID[row][col] === 'B';
+                const cellStatus = SAMPLE_GRID[row][col];
+                const isWithinFacilitySchedule = isWithinSchedule(row, col);
+                const isBooked = cellStatus === 'B' && isWithinFacilitySchedule;
+                const isUnavailable = cellStatus === 'U' || !isWithinFacilitySchedule;
                 // Is this the cell the user clicked?
                 const isSelected = selected && selected.row === row && selected.col === col;
-                // Decide the look: selected > booked > available
-                const status = isSelected ? 'selected' : isBooked ? 'booked' : 'available';
+                // Decide the look: selected > booked > unavailable > available
+                const status = isSelected
+                  ? 'selected'
+                  : isBooked
+                    ? 'booked'
+                    : isUnavailable
+                      ? 'unavailable'
+                      : 'available';
+                const label = isBooked ? 'Booked' : isUnavailable ? 'Unavailable' : 'Available';
                 return (
                   <button
                     key={d.key}
-                    className={`fd-cell fd-${status}`}  // gives the green/red/orange colour
-                    disabled={isBooked}                 // booked cells can't be clicked
+                    className={`fd-cell fd-${status}`}
+                    disabled={isBooked || isUnavailable}
                     onClick={() => handleCellClick(row, col)}
                   >
-                    {isSelected ? 'Selected' : isBooked ? 'Booked' : 'Available'}
+                    {isSelected ? 'Selected' : label}
                   </button>
                 );
               })}
