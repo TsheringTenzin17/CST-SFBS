@@ -1,3 +1,9 @@
+// =============================================================
+// Backend/src/routes/auth.js  —  register + login
+// =============================================================
+// POST /auth/register   POST /auth/login
+// Passwords are hashed with bcrypt. Old plain-text passwords are upgraded
+// to hashes the first time that user signs in.
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
@@ -5,15 +11,12 @@ const router = express.Router();
 
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
 
-// 02210145.cst@rub.edu.bt -> student, kwangdi.cst@rub.edu.bt -> faculty (staff)
+// 02210145.cst@rub.edu.bt -> student ; kwangdi.cst@rub.edu.bt -> faculty (staff)
 function roleFromCollegeEmail(email) {
   const local = email.split('.cst@')[0];
   return /^\d+$/.test(local) ? 'student' : 'faculty';
 }
 
-// POST /auth/register
-// The server decides the role from the email. The role sent by the browser
-// is only used to catch mistakes, so nobody can register themselves as admin.
 router.post('/register', async (req, res) => {
   const { full_name, student_staff_id, password, contact_number, role: requestedRole } = req.body;
   const email = (req.body.email || '').trim().toLowerCase();
@@ -21,10 +24,9 @@ router.post('/register', async (req, res) => {
   if (!full_name || !email || !password) {
     return res.status(400).json({ error: 'full_name, email and password are required' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters' });
-  }
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
+  // The SERVER decides the role. Nobody can register as admin.
   let role;
   if (COLLEGE_EMAIL.test(email)) {
     role = roleFromCollegeEmail(email);
@@ -38,11 +40,8 @@ router.post('/register', async (req, res) => {
   try {
     if (student_staff_id) {
       const taken = await pool.query('SELECT 1 FROM users WHERE student_staff_id = $1', [student_staff_id]);
-      if (taken.rows.length > 0) {
-        return res.status(409).json({ error: 'An account with this Student / Staff ID already exists' });
-      }
+      if (taken.rows.length > 0) return res.status(409).json({ error: 'An account with this Student / Staff ID already exists' });
     }
-
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number)
@@ -51,22 +50,17 @@ router.post('/register', async (req, res) => {
     );
     res.status(201).json({ user: result.rows[0] });
   } catch (err) {
-    if (err.code === '23505') {
-      return res.status(409).json({ error: 'An account with this email already exists' });
-    }
+    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email already exists' });
     console.error(err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-// POST /auth/login
-// Accepts an email OR a Student / Staff ID in the "email" field.
+// The "email" field may contain an email OR a Student / Staff ID.
 router.post('/login', async (req, res) => {
   const identifier = (req.body.email || req.body.identifier || '').trim();
   const { password } = req.body;
-  if (!identifier || !password) {
-    return res.status(400).json({ error: 'email (or ID) and password are required' });
-  }
+  if (!identifier || !password) return res.status(400).json({ error: 'email (or ID) and password are required' });
 
   try {
     const result = await pool.query(
@@ -74,26 +68,19 @@ router.post('/login', async (req, res) => {
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
       [identifier]
     );
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email/ID or password' });
-    }
+    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid email/ID or password' });
 
     const row = result.rows[0];
     let ok;
     if (row.password_hash.startsWith('$2')) {
       ok = await bcrypt.compare(password, row.password_hash);
     } else {
-      // Old account created before hashing was added: compare plain text,
-      // then upgrade it to a hash so it is never stored as plain text again.
-      ok = row.password_hash === password;
+      ok = row.password_hash === password; // old plain-text account
       if (ok) {
-        const upgraded = await bcrypt.hash(password, 10);
-        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [upgraded, row.id]);
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [await bcrypt.hash(password, 10), row.id]);
       }
     }
-    if (!ok) {
-      return res.status(401).json({ error: 'Invalid email/ID or password' });
-    }
+    if (!ok) return res.status(401).json({ error: 'Invalid email/ID or password' });
 
     const { password_hash, ...user } = row;
     res.json({ user });

@@ -1,20 +1,16 @@
+// =============================================================
+// Backend/src/db.js  —  PostgreSQL connection pool
+// =============================================================
+// Reads DATABASE_URL from Backend/.env (never commit that file).
+// Render's database needs SSL. If you ever run a LOCAL Postgres that
+// has no SSL, add  DB_SSL=false  to your .env.
 const { Pool } = require('pg');
 
-const useUrl = !!process.env.DATABASE_URL;
+const useSsl = process.env.DB_SSL !== 'false';
 
-const pool = new Pool(
-  useUrl
-    ? {
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-      }
-    : {
-        host: process.env.PGHOST,
-        port: process.env.PGPORT,
-        database: process.env.PGDATABASE,
-        user: process.env.PGUSER,
-        password: process.env.PGPASSWORD,
-      }
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
+});
 
 module.exports = pool;
