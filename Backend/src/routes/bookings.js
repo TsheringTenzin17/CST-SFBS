@@ -1,65 +1,150 @@
+// =============================================================
+// Backend/src/routes/bookings.js  —  EVERYTHING about bookings
+// =============================================================
+// POST   /bookings                  make a booking (instant confirmation)
+// GET    /bookings/user/:userId     one user's own bookings        (My Bookings page)
+// PATCH  /bookings/:id/cancel       a user cancels their own booking
+// GET    /bookings?admin_user_id=   all bookings                   (admin only)
+// PATCH  /bookings/:id              admin cancels any booking, with a reason
+// PATCH  /bookings/:id/reschedule   admin moves a booking          (admin only)
+//
+// Layout of this file:
+//   A. helpers      B. validateSlot (rules shared by book + reschedule)
+//   C. routes
 const express = require('express');
 const pool = require('../db');
+const { isAdmin } = require('../adminCheck');
+const { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const router = express.Router();
 
-// Create the route: when someone visits GET /bookings, run this function
-// async lets us wait for the database. req = incoming request, res = our reply
-router.get('/', async (req, res) => {
-  try {
-    // Ask the database for data (pool is the database connection)
-    const result = await pool.query(
-      // Pick these columns from the bookings table (nicknamed b)
-      `SELECT b.id, b.status, b.booking_date, b.start_time, b.end_time, b.purpose,
-              u.full_name AS user_name, u.role AS user_role,   -- the person's name and role from users (u)
-              f.name AS facility_name                           -- the facility's name from facilities (f)
-       FROM bookings b
-       JOIN users u ON u.id = b.user_id                         -- link each booking to the user who made it
-       JOIN facilities f ON f.id = b.facility_id                -- link each booking to its facility
-       ORDER BY b.booking_date DESC, b.start_time DESC`         // newest bookings first
-    );
-    res.json(result.rows);                                      // send the rows back as JSON
-  } catch (err) {
-    console.error(err);                                         // print the error in the backend terminal
-    res.status(500).json({ error: 'Failed to fetch bookings' }); // tell the frontend something went wrong
-  }
-});
+// ---------------------------------------------------------------
+// A. HELPERS
+// ---------------------------------------------------------------
 
+// Which user roles may book a slot whose rule says `ruleRole`?
+// 'any' = students AND commercial/outsiders (first to book wins).
 function isRoleEligible(userRole, ruleRole) {
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
   if (ruleRole === 'commercial') return userRole === 'outsider';
-  if (['faculty_male', 'faculty_female', 'faculty'].includes(ruleRole)) return userRole === 'faculty';
-  if (ruleRole === 'maintenance') return false;
-  return false;
+  if (['faculty', 'faculty_male', 'faculty_female'].includes(ruleRole)) return userRole === 'faculty';
+  return false; // 'maintenance' and anything unknown
 }
 
-// Returns true if the given slot starts within the next hour (and hasn't
-// already passed). Used for fallback_type = 'auto_release' rules, e.g.
-// Wed 6-8pm football: Female Faculty has first claim, and it auto-opens
-// to Commercial 1hr before kickoff if nobody's booked it yet — no admin
-// action required, which keeps the whole system genuinely real-time.
-//
-// NOTE: assumes the server's system clock is in the same timezone as
-// booking_date/start_time (Bhutan Time). Fine for a single-server pilot;
-// revisit if you ever deploy across timezones.
+// Auto-release rule (Wed 6-8pm football): faculty have first claim, and the
+// slot opens to commercial users 1 hour before it starts. Uses BHUTAN time.
 function isWithinAutoReleaseWindow(bookingDate, startTime) {
-  const slotStart = new Date(`${bookingDate}T${startTime}`);
-  const now = new Date();
-  const msUntilSlot = slotStart.getTime() - now.getTime();
-  const oneHourMs = 60 * 60 * 1000;
-  return msUntilSlot <= oneHourMs && msUntilSlot >= 0;
+  const now = bhutanNow();
+  if (bookingDate !== now.date) return false;
+  const minutesUntil = toMin(startTime) - now.minutes;
+  return minutesUntil >= 0 && minutesUntil <= 60;
 }
 
-// POST /bookings — always auto-confirms immediately, no admin approval step
-router.post('/', async (req, res) => {
-  const { user_id, facility_id, booking_date, start_time, end_time, purpose } = req.body;
-  if (!user_id || !facility_id || !booking_date || !start_time || !end_time) {
-    return res.status(400).json({ error: 'user_id, facility_id, booking_date, start_time, end_time are required' });
+// Decide whether `userRole` may book the slot covered by `rule`.
+// Returns { ok: true } or { ok: false, status, message }.
+function checkEligibility(userRole, rule, bookingDate, startTime) {
+  if (userRole === 'admin') return { ok: true };
+
+  if (rule.primary_role === 'maintenance') {
+    return { ok: false, status: 403, message: 'This slot is reserved for maintenance / college team practice.' };
   }
+  if (isRoleEligible(userRole, rule.primary_role)) return { ok: true };
+
+  if (rule.fallback_role && rule.fallback_type === 'auto_release' && isRoleEligible(userRole, rule.fallback_role)) {
+    if (isWithinAutoReleaseWindow(bookingDate, startTime)) return { ok: true };
+    return {
+      ok: false,
+      status: 403,
+      message: 'This slot is reserved for faculty until 1 hour before it starts. Please try again closer to the time.',
+    };
+  }
+  return { ok: false, status: 403, message: `Role '${userRole}' is not eligible for this slot (${rule.primary_role}).` };
+}
+
+const CONFLICT_MESSAGE = 'This slot was just booked by someone else. Please choose another.';
+
+// ---------------------------------------------------------------
+// B. validateSlot — the rules that apply to ANY booking or move
+// ---------------------------------------------------------------
+// Checks, in order: facility exists + is open, length limit, a schedule rule
+// covers the time, no maintenance block, no overlapping booking.
+// Must be called INSIDE a transaction that already holds the facility lock.
+// `excludeBookingId` lets a reschedule ignore the booking being moved.
+async function validateSlot(client, { facilityId, date, start, end, excludeBookingId = 0 }) {
+  const fac = await client.query('SELECT max_duration_minutes, is_active FROM facilities WHERE id = $1', [facilityId]);
+  if (fac.rows.length === 0) return { ok: false, status: 404, message: 'Facility not found' };
+  if (!fac.rows[0].is_active) return { ok: false, status: 400, message: 'This facility is not open for booking' };
+
+  const length = toMin(end) - toMin(start);
+  const maxMin = fac.rows[0].max_duration_minutes;
+  if (maxMin && length > maxMin) {
+    return { ok: false, status: 400, message: `Bookings for this facility are limited to ${maxMin} minutes` };
+  }
+
+  const ruleResult = await client.query(
+    `SELECT primary_role, fallback_role, fallback_type FROM schedule_rules
+     WHERE facility_id = $1 AND day_of_week = $2
+       AND start_time <= $3::time AND end_time >= $4::time
+     ORDER BY start_time LIMIT 1`,
+    [facilityId, dayOfWeek(date), start, end]
+  );
+  if (ruleResult.rows.length === 0) {
+    return { ok: false, status: 400, message: 'No booking rule covers this facility/day/time. Pick a slot shown on the availability page.' };
+  }
+
+  const block = await client.query(
+    `SELECT reason FROM maintenance_blocks
+     WHERE facility_id = $1 AND $2::date BETWEEN start_date AND end_date LIMIT 1`,
+    [facilityId, date]
+  );
+  if (block.rows.length > 0) {
+    const why = block.rows[0].reason ? `: ${block.rows[0].reason}` : '';
+    return { ok: false, status: 400, message: `This facility is closed for maintenance on that date${why}` };
+  }
+
+  const overlap = await client.query(
+    `SELECT 1 FROM bookings
+     WHERE facility_id = $1 AND booking_date = $2 AND status <> 'cancelled'
+       AND id <> $5 AND start_time < $4::time AND end_time > $3::time LIMIT 1`,
+    [facilityId, date, start, end, excludeBookingId]
+  );
+  if (overlap.rows.length > 0) return { ok: false, status: 409, message: CONFLICT_MESSAGE };
+
+  return { ok: true, rule: ruleResult.rows[0] };
+}
+
+// Shared input checks. Returns an error message, or null when the input is fine.
+function checkSlotInput(date, start, end) {
+  if (!isValidDate(date) || !isValidTime(start) || !isValidTime(end)) return 'Invalid date or time format';
+  if (toMin(end) <= toMin(start)) return 'End time must be after start time';
+  const now = bhutanNow();
+  if (date < now.date || (date === now.date && toMin(start) <= now.minutes)) return 'That time has already passed';
+  return null;
+}
+
+// ---------------------------------------------------------------
+// C. ROUTES
+// ---------------------------------------------------------------
+
+// ---- POST /bookings : make a booking -------------------------------------
+router.post('/', async (req, res) => {
+  const { user_id, facility_id, booking_date, purpose } = req.body;
+  if (!user_id || !facility_id || !booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'user_id, facility_id, booking_date, start_time and end_time are required' });
+  }
+  const start = hhmm(req.body.start_time);
+  const end = hhmm(req.body.end_time);
+  const inputError = checkSlotInput(booking_date, start, end);
+  if (inputError) return res.status(400).json({ error: inputError });
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // One booking at a time PER FACILITY. The second of two simultaneous
+    // requests waits here, then sees the first booking and gets a 409.
+    // This is what guarantees zero double bookings (Objective O3).
+    await client.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [facility_id]);
 
     const userResult = await client.query('SELECT role FROM users WHERE id = $1', [user_id]);
     if (userResult.rows.length === 0) {
@@ -68,55 +153,34 @@ router.post('/', async (req, res) => {
     }
     const userRole = userResult.rows[0].role;
 
-    const dayOfWeek = new Date(booking_date).getDay();
-    const ruleResult = await client.query(
-      `SELECT primary_role, fallback_role, fallback_type FROM schedule_rules
-       WHERE facility_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $4`,
-      [facility_id, dayOfWeek, start_time, end_time]
-    );
-    if (ruleResult.rows.length === 0) {
+    const slot = await validateSlot(client, { facilityId: facility_id, date: booking_date, start, end });
+    if (!slot.ok) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'No booking rule covers this facility/day/time' });
+      return res.status(slot.status).json({ error: slot.message });
     }
 
-    const rule = ruleResult.rows[0];
-    let eligible = isRoleEligible(userRole, rule.primary_role);
-
-    if (!eligible && rule.fallback_role && rule.fallback_type === 'auto_release') {
-      const windowOpen = isWithinAutoReleaseWindow(booking_date, start_time);
-      eligible = windowOpen && isRoleEligible(userRole, rule.fallback_role);
-      if (!eligible && windowOpen === false && isRoleEligible(userRole, rule.fallback_role)) {
-        await client.query('ROLLBACK');
-        return res.status(403).json({
-          error: `This slot is reserved for ${rule.primary_role} until 1 hour before start time. Try again closer to the slot.`,
-        });
-      }
-    }
-
-    if (userRole === 'admin') eligible = true;
-    if (!eligible) {
+    const eligibility = checkEligibility(userRole, slot.rule, booking_date, start);
+    if (!eligibility.ok) {
       await client.query('ROLLBACK');
-      return res.status(403).json({ error: `Role '${userRole}' is not eligible for this slot (${rule.primary_role})` });
+      return res.status(eligibility.status).json({ error: eligibility.message });
     }
 
-    const insertResult = await client.query(
+    // Confirmed instantly — there is no admin approval step.
+    const inserted = await client.query(
       `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'approved') RETURNING id, status`,
-      [user_id, facility_id, booking_date, start_time, end_time, purpose || null]
+      [user_id, facility_id, booking_date, start, end, purpose || null]
     );
-
     await client.query(
       `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_confirmed', $2)`,
-      [user_id, `Your booking for ${booking_date} (${start_time}-${end_time}) is confirmed.`]
+      [user_id, `Your booking for ${booking_date} (${start}-${end}) is confirmed.`]
     );
 
     await client.query('COMMIT');
-    res.status(201).json({ booking: insertResult.rows[0] });
+    res.status(201).json({ booking: inserted.rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') {
-      return res.status(409).json({ error: 'This slot was just booked by someone else. Please choose another.' });
-    }
+    if (err.code === '23505') return res.status(409).json({ error: CONFLICT_MESSAGE }); // database backstop
     console.error(err);
     res.status(500).json({ error: 'Failed to create booking' });
   } finally {
@@ -124,38 +188,164 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /bookings/:id — admin cancel/override for exceptions (no-shows,
-// disputes, policy violations reported after the fact). This is NOT part
-// of the normal booking flow anymore — every booking above auto-confirms.
-router.patch('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { status, admin_user_id, reason } = req.body;
-  if (!['approved', 'cancelled'].includes(status)) {
-    return res.status(400).json({ error: "status must be 'approved' or 'cancelled'" });
-  }
-  if (!admin_user_id) return res.status(400).json({ error: 'admin_user_id is required' });
-
+// ---- GET /bookings/user/:userId : "My Bookings" --------------------------
+router.get('/user/:userId', async (req, res) => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId)) return res.status(400).json({ error: 'Invalid user id' });
   try {
-    const adminCheck = await pool.query('SELECT role FROM users WHERE id = $1', [admin_user_id]);
-    if (adminCheck.rows.length === 0 || adminCheck.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Only an admin can override a booking' });
-    }
     const result = await pool.query(
-      `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING id, status, user_id, facility_id, booking_date, start_time, end_time`,
-      [status, id]
+      `SELECT b.id, b.status, b.purpose,
+              to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
+              to_char(b.start_time, 'HH24:MI') AS start_time,
+              to_char(b.end_time, 'HH24:MI') AS end_time,
+              f.name AS facility_name
+       FROM bookings b JOIN facilities f ON f.id = b.facility_id
+       WHERE b.user_id = $1
+       ORDER BY b.booking_date DESC, b.start_time DESC`,
+      [userId]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
-
-    const booking = result.rows[0];
-    if (status === 'cancelled') {
-      const message = `Your booking for ${booking.booking_date} (${booking.start_time}-${booking.end_time}) was cancelled by an admin.${reason ? ' Reason: ' + reason : ''}`;
-      await pool.query(`INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_cancelled', $2)`, [booking.user_id, message]);
-    }
-
-    res.json({ booking });
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to update booking' });
+    res.status(500).json({ error: 'Failed to fetch your bookings' });
+  }
+});
+
+// ---- PATCH /bookings/:id/cancel : a user cancels their OWN booking -------
+router.patch('/:id/cancel', async (req, res) => {
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'user_id is required' });
+  try {
+    const result = await pool.query(
+      `UPDATE bookings SET status = 'cancelled'
+       WHERE id = $1 AND user_id = $2 AND status = 'approved'
+       RETURNING id, status`,
+      [req.params.id, user_id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found, not yours, or already cancelled' });
+    }
+    res.json({ booking: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
+
+// ---- GET /bookings?admin_user_id= : every booking (admin) ----------------
+router.get('/', async (req, res) => {
+  try {
+    if (!(await isAdmin(req.query.admin_user_id))) {
+      return res.status(403).json({ error: 'Only an admin can see all bookings' });
+    }
+    const result = await pool.query(
+      `SELECT b.id, b.status, b.purpose,
+              to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
+              to_char(b.start_time, 'HH24:MI') AS start_time,
+              to_char(b.end_time, 'HH24:MI') AS end_time,
+              u.full_name AS user_name, u.role AS user_role, f.name AS facility_name
+       FROM bookings b
+       JOIN users u ON u.id = b.user_id
+       JOIN facilities f ON f.id = b.facility_id
+       ORDER BY b.booking_date DESC, b.start_time DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+// ---- PATCH /bookings/:id : admin cancels any booking ---------------------
+// Exception handling only (no-shows, rule violations, closures).
+router.patch('/:id', async (req, res) => {
+  const { status, admin_user_id, reason } = req.body;
+  if (status !== 'cancelled') return res.status(400).json({ error: "Only status 'cancelled' is supported" });
+  try {
+    if (!(await isAdmin(admin_user_id))) return res.status(403).json({ error: 'Only an admin can cancel any booking' });
+
+    const result = await pool.query(
+      `UPDATE bookings SET status = 'cancelled' WHERE id = $1 AND status <> 'cancelled'
+       RETURNING id, user_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
+                 to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found or already cancelled' });
+
+    const b = result.rows[0];
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_cancelled', $2)`,
+      [b.user_id, `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin.${reason ? ' Reason: ' + reason : ''}`]
+    );
+    res.json({ booking: { id: b.id, status: 'cancelled' } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to cancel booking' });
+  }
+});
+
+// ---- PATCH /bookings/:id/reschedule : admin moves a booking --------------
+// Same safety rules as a new booking (rule exists, not maintenance, no
+// overlap, length limit) — an admin can move a booking but cannot create a
+// double booking.
+router.patch('/:id/reschedule', async (req, res) => {
+  const { admin_user_id, booking_date } = req.body;
+  if (!admin_user_id || !booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'admin_user_id, booking_date, start_time and end_time are required' });
+  }
+  const start = hhmm(req.body.start_time);
+  const end = hhmm(req.body.end_time);
+  const inputError = checkSlotInput(booking_date, start, end);
+  if (inputError) return res.status(400).json({ error: inputError });
+
+  const client = await pool.connect();
+  try {
+    if (!(await isAdmin(admin_user_id))) {
+      return res.status(403).json({ error: 'Only an admin can reschedule a booking' });
+    }
+    await client.query('BEGIN');
+
+    const existing = await client.query(
+      `SELECT id, user_id, facility_id FROM bookings WHERE id = $1 AND status <> 'cancelled' FOR UPDATE`,
+      [req.params.id]
+    );
+    if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Booking not found or already cancelled' });
+    }
+    const booking = existing.rows[0];
+
+    await client.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [booking.facility_id]);
+
+    const slot = await validateSlot(client, {
+      facilityId: booking.facility_id, date: booking_date, start, end, excludeBookingId: booking.id,
+    });
+    if (!slot.ok) {
+      await client.query('ROLLBACK');
+      return res.status(slot.status).json({ error: slot.message });
+    }
+    if (slot.rule.primary_role === 'maintenance') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'That time is reserved for maintenance / college team practice' });
+    }
+
+    await client.query(
+      'UPDATE bookings SET booking_date = $1, start_time = $2, end_time = $3 WHERE id = $4',
+      [booking_date, start, end, booking.id]
+    );
+    await client.query(
+      `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_rescheduled', $2)`,
+      [booking.user_id, `Your booking was moved by an admin to ${booking_date} (${start}-${end}).`]
+    );
+    await client.query('COMMIT');
+    res.json({ booking: { id: booking.id, booking_date, start_time: start, end_time: end } });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') return res.status(409).json({ error: CONFLICT_MESSAGE });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reschedule booking' });
+  } finally {
+    client.release();
   }
 });
 
