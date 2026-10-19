@@ -17,6 +17,7 @@ export const ROLE_LABELS = {
   commercial: 'Commercial / outsiders',
   maintenance: 'Maintenance / college team',
   any: 'Students or commercial (first to book)',
+  everyone: 'Students, faculty/staff, and outsiders',
 };
 
 export const STATE_LABELS = {
@@ -46,6 +47,7 @@ const nowMinutes = () => {
 
 // ---------- 3. who can book ----------
 function roleMatches(userRole, ruleRole) {
+  if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
   if (ruleRole === 'commercial') return userRole === 'outsider';

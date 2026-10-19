@@ -1,3 +1,8 @@
+// =============================================================
+// frontend/src/pages/BookingConfirmation.jsx  —  success screen  (owner: Samdrup)
+// =============================================================
+// Route:  /booking-confirmed   (BookingForm passes the details with navigate(..., { state }))
+// Opening this address directly, without booking first, shows a friendly message.
 import { Link, useLocation } from 'react-router-dom';
 import { prettyDate } from '../utils/format';
 import './Booking.css';
@@ -6,11 +11,7 @@ function BookingConfirmation() {
   const { state } = useLocation();
 
   if (!state) {
-    return (
-      <main className="main">
-        <p>No booking to show. <Link to="/my-bookings">View My Bookings</Link></p>
-      </main>
-    );
+    return <main className="main"><p>No booking to show. <Link to="/my-bookings">View My Bookings</Link></p></main>;
   }
 
   return (

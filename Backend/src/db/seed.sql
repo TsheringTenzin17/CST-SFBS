@@ -62,28 +62,30 @@ FROM facilities, generate_series(0,6,6) AS d
 WHERE name = 'Football Ground'
 ON CONFLICT DO NOTHING;
 
--- 5. Basketball, Volleyball, Badminton, Table Tennis — same rule every day:
---    4-10pm only, both students (free) and outsiders (commercial rate) eligible,
---    1 hour max enforced via facilities.max_duration_minutes.
+-- 5. Basketball, Volleyball, Badminton, Table Tennis — weekdays 4-10pm;
+--    weekends 8am-10pm for students, faculty/staff, and outsiders.
+DELETE FROM schedule_rules
+WHERE facility_id IN (
+  SELECT id FROM facilities
+  WHERE group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+)
+AND day_of_week IN (0, 6);
+
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
-SELECT f.id, d, '16:00'::time, '22:00'::time, 'any', NULL, 'none', 'Free for students, commercial rate for outsiders. 1hr max per booking.'
-FROM facilities f, generate_series(0,6) AS d
+SELECT f.id, d, '08:00'::time, '22:00'::time, 'everyone', NULL, 'none', 'Weekend open to students, faculty/staff, and outsiders; 1hr max per booking.'
+FROM facilities f, generate_series(0,6,6) AS d
 WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
 ON CONFLICT DO NOTHING;
 
--- 6. Archery Range — weekdays 4-6pm, weekends 9am-4pm.
--- Students are eligible for these proposed test schedule slots.
+-- 6. Archery Range — every role can book 4-10pm on weekdays and 8am-10pm on weekends.
+DELETE FROM schedule_rules
+WHERE facility_id = (SELECT id FROM facilities WHERE name = 'Archery Range');
+
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_type, notes)
-SELECT f.id, d.day_of_week, d.start_time::time, d.end_time::time, 'student', 'none', 'Archery proposal: student sessions'
+SELECT f.id, d.day_of_week,
+       CASE WHEN d.day_of_week IN (0, 6) THEN '08:00'::time ELSE '16:00'::time END,
+       '22:00'::time, 'everyone', 'none', 'Open to students, faculty/staff, and outsiders'
 FROM facilities f
-CROSS JOIN (VALUES
-  (1, '16:00', '18:00'),
-  (2, '16:00', '18:00'),
-  (3, '16:00', '18:00'),
-  (4, '16:00', '18:00'),
-  (5, '16:00', '18:00'),
-  (0, '09:00', '16:00'),
-  (6, '09:00', '16:00')
-) AS d(day_of_week, start_time, end_time)
+CROSS JOIN generate_series(0, 6) AS d(day_of_week)
 WHERE f.name = 'Archery Range'
 ON CONFLICT DO NOTHING;
