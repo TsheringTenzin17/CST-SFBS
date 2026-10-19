@@ -19,7 +19,8 @@ ON CONFLICT (name) DO NOTHING;
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
 SELECT f.id, d, '06:00'::time, '08:00'::time, 'student', NULL, 'none', 'Daily free student slot (football only)'
 FROM facilities f, generate_series(0,6) AS d
-WHERE f.name = 'Football Ground';
+WHERE f.name = 'Football Ground'
+ON CONFLICT DO NOTHING;
 
 -- 3. Football Ground — weekday schedule
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
@@ -47,7 +48,8 @@ SELECT id, 5, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Friday' FR
 UNION ALL
 SELECT id, 5, '18:00'::time, '20:00'::time, 'commercial', NULL, 'none', 'Friday' FROM facilities WHERE name = 'Football Ground'
 UNION ALL
-SELECT id, 5, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Friday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground';
+SELECT id, 5, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Friday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
+ON CONFLICT DO NOTHING;
 
 -- 4. Football Ground — weekend schedule (0=Sun, 6=Sat)
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
@@ -57,7 +59,8 @@ WHERE name = 'Football Ground'
 UNION ALL
 SELECT id, d, '16:00'::time, '22:00'::time, 'commercial', NULL, 'none', 'Weekend: commercial use 4-10pm'
 FROM facilities, generate_series(0,6,6) AS d
-WHERE name = 'Football Ground';
+WHERE name = 'Football Ground'
+ON CONFLICT DO NOTHING;
 
 -- 5. Basketball, Volleyball, Badminton, Table Tennis — same rule every day:
 --    4-10pm only, both students (free) and outsiders (commercial rate) eligible,
@@ -65,8 +68,22 @@ WHERE name = 'Football Ground';
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
 SELECT f.id, d, '16:00'::time, '22:00'::time, 'any', NULL, 'none', 'Free for students, commercial rate for outsiders. 1hr max per booking.'
 FROM facilities f, generate_series(0,6) AS d
-WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall');
+WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+ON CONFLICT DO NOTHING;
 
--- 6. Archery Range — intentionally left with no schedule_rules.
--- DSA left this open; the team defines the structure (see spec Section 4)
--- and should insert rules here once decided.
+-- 6. Archery Range — weekdays 4-6pm, weekends 9am-4pm.
+-- Students are eligible for these proposed test schedule slots.
+INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_type, notes)
+SELECT f.id, d.day_of_week, d.start_time::time, d.end_time::time, 'student', 'none', 'Archery proposal: student sessions'
+FROM facilities f
+CROSS JOIN (VALUES
+  (1, '16:00', '18:00'),
+  (2, '16:00', '18:00'),
+  (3, '16:00', '18:00'),
+  (4, '16:00', '18:00'),
+  (5, '16:00', '18:00'),
+  (0, '09:00', '16:00'),
+  (6, '09:00', '16:00')
+) AS d(day_of_week, start_time, end_time)
+WHERE f.name = 'Archery Range'
+ON CONFLICT DO NOTHING;

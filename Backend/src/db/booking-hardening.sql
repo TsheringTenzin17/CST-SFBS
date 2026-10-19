@@ -1,5 +1,6 @@
 -- =============================================================
--- Backend/src/db/booking-hardening.sql   (run ONCE on the shared database)
+-- Backend/src/db/booking-hardening.sql   (safe to re-run on the shared database)
+-- Run this before seed.sql so schedule-rule inserts are idempotent.
 -- =============================================================
 -- 1. A cancelled booking must free its slot, so the "one booking per slot"
 --    rule now ignores cancelled rows.
@@ -23,3 +24,23 @@ CREATE TABLE IF NOT EXISTS maintenance_blocks (
 -- 3. The Wednesday faculty slot now opens by itself (no admin click).
 UPDATE schedule_rules SET fallback_type = 'auto_release'
 WHERE fallback_type = 'manual_release';
+
+-- 4. Remove repeated schedule entries and prevent the seed script from
+--    adding them again. Keep the oldest row for each equivalent rule.
+WITH ranked_rules AS (
+  SELECT id,
+         ROW_NUMBER() OVER (
+           PARTITION BY facility_id, day_of_week, start_time, end_time, primary_role,
+                        COALESCE(fallback_role, ''), COALESCE(fallback_type, '')
+           ORDER BY id
+         ) AS duplicate_number
+  FROM schedule_rules
+)
+DELETE FROM schedule_rules
+WHERE id IN (SELECT id FROM ranked_rules WHERE duplicate_number > 1);
+
+CREATE UNIQUE INDEX IF NOT EXISTS unique_schedule_rule
+  ON schedule_rules (
+    facility_id, day_of_week, start_time, end_time, primary_role,
+    (COALESCE(fallback_role, '')), (COALESCE(fallback_type, ''))
+  );

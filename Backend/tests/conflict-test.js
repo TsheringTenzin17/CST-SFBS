@@ -1,61 +1,56 @@
-// Fires 5 simultaneous booking requests for the exact same slot and
-// checks that exactly 1 succeeds and the other 4 are correctly
-// rejected as conflicts. This is Objective O3's actual success measure.
-require('dotenv').config();
-const pool = require('../src/db');
-const { bhutanNow } = require('../src/time');
-
-const API_URL = process.env.API_URL || 'http://localhost:4000';
+// =============================================================
+// Backend/tests/conflict-test.js  —  Objective O3: zero double bookings
+// =============================================================
+const { api, post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
 
 async function main() {
-  const email = `conflict-test-${Date.now()}@cst.edu.bt`;
-  const userResult = await pool.query(
-    `INSERT INTO users (full_name, email, role, password_hash) VALUES ($1, $2, 'student', 'placeholder') RETURNING id`,
-    ['Conflict Test User', email]
-  );
-  const userId = userResult.rows[0].id;
-  const bookingDate = new Date(`${bhutanNow().date}T00:00:00Z`);
-  bookingDate.setUTCDate(bookingDate.getUTCDate() + 1);
+  const alice = await createUser('student');
+  const bob = await createUser('student');
+  const date = dateOnWeekday(2); // a Tuesday
+  const basketball = await facilityId('Basketball Court');
+  const slot = { user_id: alice, facility_id: basketball, booking_date: date, start_time: '16:00', end_time: '17:00' };
 
-  const booking = {
-    user_id: userId,
-    facility_id: 2, // Basketball Court — 'any' role, 4-10pm every day
-    booking_date: bookingDate.toISOString().slice(0, 10),
-    start_time: '16:00',
-    end_time: '17:00',
-  };
+  // ---- Test 1: 5 requests for the SAME slot at the SAME moment -------------
+  console.log('Test 1: 5 simultaneous requests for one slot');
+  const results = await Promise.all(Array.from({ length: 5 }, () => post(slot)));
+  const statuses = results.map((r) => r.status);
+  const successes = statuses.filter((s) => s === 201).length;
+  const conflicts = statuses.filter((s) => s === 409).length;
+  console.log(`  successes: ${successes}, conflicts: ${conflicts}`);
+  check('exactly 1 of 5 succeeds', successes === 1, `statuses: ${statuses}`);
+  check('the other 4 get 409 Conflict', conflicts === 4, `statuses: ${statuses}`);
 
-  try {
-    console.log('Firing 5 simultaneous requests for the same slot...');
-    const attempts = Array.from({ length: 5 }, () =>
-      fetch(`${API_URL}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(booking),
-      }).then((res) => res.json().then((body) => ({ status: res.status, body })))
-    );
+  // ---- Test 2: a PARTLY overlapping slot is also refused --------------------
+  console.log('Test 2: overlapping times');
+  const r2 = await post({ ...slot, user_id: bob, start_time: '16:30', end_time: '17:30' });
+  check('16:30-17:30 overlaps the 16:00-17:00 booking -> 409', r2.status === 409, `got ${r2.status}`);
+  const r2b = await post({ ...slot, user_id: bob, start_time: '17:00', end_time: '18:00' });
+  check('17:00-18:00 is right after it -> allowed', r2b.status === 201, `got ${r2b.status}`);
 
-    const results = await Promise.all(attempts);
-    const successes = results.filter((r) => r.status === 201);
-    const conflicts = results.filter((r) => r.status === 409);
+  // ---- Test 3: two DIFFERENT courts at the same time both succeed ----------
+  console.log('Test 3: two courts, same time');
+  const court1 = await facilityId('Badminton Court 1');
+  const court2 = await facilityId('Badminton Court 2');
+  const [c1, c2] = await Promise.all([
+    post({ ...slot, facility_id: court1 }),
+    post({ ...slot, user_id: bob, facility_id: court2 }),
+  ]);
+  check('Badminton Court 1 books', c1.status === 201, `got ${c1.status}`);
+  check('Badminton Court 2 books at the same time', c2.status === 201, `got ${c2.status}`);
 
-    console.log(`Successes: ${successes.length}, Conflicts: ${conflicts.length}`);
-    if (successes.length === 1 && conflicts.length === 4) {
-      console.log('PASS: exactly one booking succeeded, the rest were correctly rejected.');
-    } else {
-      console.log('FAIL — expected 1 success and 4 conflicts. Full results:');
-      console.log(JSON.stringify(results, null, 2));
-      process.exitCode = 1;
-    }
-  } finally {
-    await pool.query('DELETE FROM bookings WHERE user_id = $1', [userId]);
-    await pool.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
-    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
-    await pool.end();
-  }
+  // ---- Test 4: cancelling frees the slot -------------------------------------
+  console.log('Test 4: cancel then re-book');
+  const first = await post({ ...slot, facility_id: await facilityId('Volleyball Court (Male)') });
+  check('first booking succeeds', first.status === 201, `got ${first.status}`);
+  const id = first.body.booking && first.body.booking.id;
+  const wrong = await api('PATCH', `/bookings/${id}/cancel`, { user_id: bob });
+  check("another user cannot cancel it -> 404", wrong.status === 404, `got ${wrong.status}`);
+  const cancel = await api('PATCH', `/bookings/${id}/cancel`, { user_id: alice });
+  check('the owner can cancel it', cancel.status === 200, `got ${cancel.status}`);
+  const again = await post({ ...slot, user_id: bob, facility_id: await facilityId('Volleyball Court (Male)') });
+  check('the freed slot can be booked again', again.status === 201, `got ${again.status}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch((err) => check('test run completed without errors', false, err.message))
+  .then(finish);

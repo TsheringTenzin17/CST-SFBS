@@ -38,7 +38,7 @@ router.get('/summary', async (req, res) => {
     const [facilities, rules, bookings, blocks] = await Promise.all([
       pool.query('SELECT id, name, group_name, max_duration_minutes FROM facilities WHERE is_active = true ORDER BY id'),
       pool.query(
-        `SELECT facility_id, to_char(start_time,'HH24:MI') AS start_time,
+        `SELECT DISTINCT facility_id, to_char(start_time,'HH24:MI') AS start_time,
                 to_char(end_time,'HH24:MI') AS end_time, primary_role
          FROM schedule_rules WHERE day_of_week = $1`, [dow]),
       pool.query(
