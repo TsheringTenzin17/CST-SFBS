@@ -6,7 +6,10 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "test": "jest",
-    "test:conflict": "node tests/conflict-test.js"
+    "test:conflict": "node tests/conflict-test.js",
+    "test:rules": "node tests/rules-test.js",
+    "test:admin": "node tests/admin-test.js",
+    "test:all": "node tests/run-all.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
