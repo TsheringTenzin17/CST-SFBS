@@ -1,103 +1,680 @@
-* { box-sizing: border-box; }
-body { margin: 0; font-family: 'Roboto', system-ui, sans-serif; background: #f7f7f7; color: #1a1a1a; }
-a { color: inherit; }
+/*
+   1. VARIABLES: colors used all over the site.
+   Change a color here and it updates everywhere.
+*/
+:root {
+  --blue: #255463;        /* main brand  dark cyan/blue */
+  --blue-dark: #0947a3;   /* darker blue for button hover */
+  --orange: #f59e0b;      /* accent orange */
+  --green: #16a34a;       /* green button color */
+  --border: #e5e5e5;      /* light grey lines and borders */
+  --muted: #666;          /* soft grey text */
+}
 
-.header { display: flex; justify-content: space-between; align-items: center; padding: 12px 40px; background: #fff; border-bottom: 1px solid #e5e5e5; }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo { width: 32px; height: 32px; background: #0b57c4; color: #fff; font-weight: 700; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-.brand-logo.orange { background: #f59e0b; }
-.brand-name { font-weight: 700; color: #0b57c4; font-size: 14px; line-height: 1.1; }
-.brand-sub { font-size: 10px; color: #444; }
-.nav a { margin: 0 16px; text-decoration: none; color: #555; font-size: 13px; padding-bottom: 6px; }
-.nav a.active { color: #0b57c4; font-weight: 600; border-bottom: 2px solid #f59e0b; }
-.user-pill { background: #dbeafe; color: #0b57c4; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+/*
+   2. BASE: rules that apply to the whole page
+*/
+* {
+  box-sizing: border-box;   /* padding and border stay INSIDE the width you set */
+}
 
-.hero { display: flex; gap: 40px; align-items: center; background: #0b57c4; color: #fff; padding: 48px 40px; }
-.hero-text { flex: 1; }
-.hero-badge { background: #f59e0b; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; }
-.hero-text h1 { font-size: 32px; margin: 14px 0; }
-.hero-text p { font-size: 14px; opacity: 0.9; max-width: 460px; margin-bottom: 20px; }
-.hero-buttons { display: flex; gap: 12px; }
-.btn-green { background: #16a34a; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; }
-.btn-outline-white { border: 1px solid #fff; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; }
-.hero-image { flex: 1; height: 220px; background: rgba(255,255,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(255,255,255,0.7); }
-.hero-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
+body {
+  margin: 0;                                        /* remove the browser's default gap */
+  font-family: 'Roboto', system-ui, sans-serif;     /* use Roboto, else the system font */
+  background: #f7f7f7;                              /* light grey page background */
+  color: #1a1a1a;                                   /* near-black text */
+}
 
-.main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 56px; min-height: 50vh; }
-.title { color: #0b57c4; margin: 0 0 6px; font-size: 26px; }
-.subtitle { color: #666; font-size: 13px; margin: 0 0 24px; }
-.error { color: #b91c1c; background: #fee2e2; padding: 12px; border-radius: 6px; }
+a {
+  color: inherit;   /* links copy the color of the text around them */
+}
 
-.filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-.filter-tabs { display: flex; gap: 8px; }
-.tab { border: 1px solid #ddd; background: #fff; padding: 8px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-.tab.active { background: #0b57c4; color: #fff; border-color: #0b57c4; }
-.sort-label { font-size: 12px; color: #555; }
+/*
+   3. PAGE LAYOUT: this pins the footer to the bottom
+*/
+.page {
+  min-height: 100vh;        /* at least as tall as the browser window */
+  display: flex;            /* children sit in a flexible box */
+  flex-direction: column;   /* stack them top to bottom: Header, content, Footer */
+}
 
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } .hero { flex-direction: column; } }
-@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+.page-content {
+  flex: 1;   /* grow to fill all empty space, which pushes the Footer down */
+}
 
-.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; overflow: hidden; }
-.card-link { text-decoration: none; color: inherit; display: block; }
-.card-img { width: 100%; height: 150px; object-fit: cover; display: block; background: #e5e7eb; }
-.card-body { padding: 14px; }
-.card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
-.card-title { margin: 0; font-size: 15px; }
-.court-count { font-weight: 400; font-size: 12px; color: #888; }
-.card-desc { color: #666; font-size: 12px; margin: 0 0 12px; min-height: 48px; }
-.card-footer-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.slots-text { font-size: 11px; color: #0b57c4; font-weight: 600; }
+/*
+   4. HEADER (BIGGER)
+*/
+.header {
+  display: flex;
+  justify-content: space-between;   /* logo left, nav middle, button right */
+  align-items: center;              /* line everything up vertically */
+  padding: 18px 48px;               /* BIGGER: was 12px 40px, so the bar is taller */
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
 
-.badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
-.badge-green { background: #dcfce7; color: #15803d; }
-.badge-red { background: #fee2e2; color: #b91c1c; }
-.badge-blue { background: #dbeafe; color: #1d4ed8; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;   /* space between the logo box and the name */
+}
+
+.brand-logo {
+  width: 44px;               /* BIGGER: was 32px */
+  height: 44px;              /* BIGGER: was 32px */
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;           /* BIGGER: size of the "C" letter */
+  border-radius: 8px;
+  display: flex;             /* these 3 lines center the letter in the box */
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-logo.orange {
+  background: var(--orange);   /* orange version, used in the footer */
+}
+
+.brand-name {
+  font-weight: 700;
+  color: var(--blue);
+  font-size: 18px;     /* BIGGER: was 14px */
+  line-height: 1.1;    /* tight space between lines */
+}
+
+.brand-sub {
+  font-size: 12px;   /* BIGGER: was 10px */
+  color: #444;
+}
+
+.nav a {
+  margin: 0 18px;            /* space between menu links */
+  text-decoration: none;     /* remove the underline */
+  color: #555;
+  font-size: 16px;           /* BIGGER: was 13px, easier to read */
+  padding-bottom: 6px;       /* room for the active underline */
+}
+
+.nav a.active {
+  color: var(--blue);
+  font-weight: 600;
+  border-bottom: 2px solid var(--orange);   /* orange line under the current page */
+}
+
+.user-pill {
+  background: #dbeafe;       /* light blue button */
+  color: var(--blue);
+  padding: 8px 20px;         /* BIGGER: was 6px 14px */
+  border-radius: 999px;      /* fully rounded pill shape */
+  font-size: 14px;           /* BIGGER: was 12px */
+  font-weight: 600;
+}
+
+/*
+   5. HERO: the big blue banner on the home page
+*/
+.hero {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  background: var(--blue);
+  color: #fff;
+  padding: 48px 40px;
+}
+
+.hero-text {
+  flex: 1;   /* text and image share the width equally */
+}
+
+.hero-badge {
+  background: var(--orange);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.hero-text h1 {
+  font-size: 32px;
+  margin: 14px 0;
+}
+
+.hero-text p {
+  font-size: 14px;
+  opacity: 0.9;           /* slightly see-through for softer text */
+  max-width: 460px;       /* keep lines from getting too long */
+  margin-bottom: 20px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-green {
+  background: var(--green);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-outline-white {
+  border: 1px solid #fff;   /* white outline, no fill */
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.hero-image {
+  flex: 1;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.15);   /* faint white box shown if there's no image */
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* fill the box and crop extra, no stretching */
+  border-radius: 10px;
+  display: block;       /* removes a tiny gap under images */
+}
+
+/*
+   6. MAIN CONTENT AREA AND TEXT STYLES
+*/
+.main {
+  max-width: 1100px;        /* content never gets wider than this */
+  margin: 0 auto;           /* center it on the screen */
+  padding: 32px 24px 56px;  /* top, left/right, bottom space */
+  min-height: 50vh;         /* at least half the screen tall */
+}
+
+.title {
+  color: var(--blue);
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 24px;
+}
+
+.error {
+  color: #b91c1c;        /* dark red text */
+  background: #fee2e2;   /* light red box */
+  padding: 12px;
+  border-radius: 6px;
+}
+
+/*
+   7. FILTER BAR: the tabs above the facility cards
+*/
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;   /* move items to a new line on small screens */
+  gap: 10px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;   /* hand cursor on hover */
+}
+
+.tab.active {
+  background: var(--blue);   /* the selected tab turns blue */
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.sort-label {
+  font-size: 12px;
+  color: #555;
+}
+
+/*
+   8. CARD GRID: facility cards in columns
+*/
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);   /* 3 equal columns */
+  gap: 20px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;   /* image corners follow the card's rounded corners */
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;   /* the whole card is clickable */
+}
+
+.card-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  background: #e5e7eb;   /* grey shown while the image loads */
+}
+
+.card-body {
+  padding: 14px;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+}
+
+.court-count {
+  font-weight: 400;
+  font-size: 12px;
+  color: #888;
+}
+
+.card-desc {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 12px;
+  min-height: 48px;   /* keeps all cards the same height */
+}
+
+.card-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.slots-text {
+  font-size: 11px;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/*
+   9. BADGES AND BUTTONS
+*/
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;   /* never break the text onto two lines */
+}
+
+.badge-green  { background: #dcfce7; color: #15803d; }   /* e.g. Available */
+.badge-red    { background: #fee2e2; color: #b91c1c; }   /* e.g. Booked */
+.badge-blue   { background: #dbeafe; color: #1d4ed8; }
 .badge-orange { background: #fef3c7; color: #b45309; }
 
-.btn-primary { padding: 8px 12px; background: #0b57c4; color: #fff; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
-.btn-primary:not(:disabled):hover { background: #0947a3; }
+.btn-primary {
+  padding: 8px 12px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
-.footer { background: #262626; color: #cfcfcf; display: flex; justify-content: space-between; gap: 40px; padding: 32px 40px; font-size: 12px; flex-wrap: wrap; }
-.footer-left { max-width: 380px; }
-.footer-brand { display: flex; align-items: center; gap: 10px; color: #fff; margin-bottom: 8px; }
-.footer-col h4 { color: #f59e0b; margin: 0 0 10px; font-size: 12px; }
-.footer-col p { margin: 4px 0; }
+.btn-primary:disabled {
+  background: #ccc;            /* grey when it can't be clicked */
+  cursor: not-allowed;
+}
 
-.booking-form { max-width: 400px; display: flex; flex-direction: column; gap: 14px; }
-.booking-form input, .booking-form select, .booking-form textarea { padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
-.booking-form textarea { min-height: 80px; }
+.btn-primary:not(:disabled):hover {
+  background: var(--blue-dark);   /* darker blue on hover, only when enabled */
+}
 
-.auth-page { display: flex; min-height: 100vh; }
-.auth-side { width: 34%; min-width: 260px; background: #0a3d91; color: #fff; padding: 40px 36px; display: flex; flex-direction: column; justify-content: space-between; }
-.auth-side h2 { font-size: 22px; margin: 0 0 12px; }
-.auth-side p { font-size: 13px; opacity: 0.85; max-width: 260px; line-height: 1.5; margin: 0; }
-.auth-side-footer { font-size: 11px; opacity: 0.8; line-height: 1.6; }
-.auth-main { flex: 1; background: #f3f5f9; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
-.auth-card { width: 100%; max-width: 440px; background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-.auth-card h1 { font-size: 20px; margin: 0 0 4px; color: #111827; }
-.auth-sub { font-size: 12px; color: #6b7280; margin: 0 0 16px; }
-.auth-tabs { display: flex; border: 1px solid #0b57c4; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-.auth-tab { flex: 1; padding: 9px; border: none; background: #fff; color: #0b57c4; font-weight: 600; font-size: 12px; cursor: pointer; }
-.auth-tab.active { background: #0b57c4; color: #fff; }
-.auth-form { display: flex; flex-direction: column; gap: 12px; }
-.auth-field { display: flex; flex-direction: column; gap: 4px; }
-.auth-label { font-size: 12px; font-weight: 600; color: #111827; }
-.auth-label-row { display: flex; justify-content: space-between; align-items: center; }
-.auth-hint { font-size: 11px; color: #6b7280; }
-.auth-field input, .auth-form input { padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: inherit; width: 100%; }
-.auth-field input:focus { outline: 2px solid #bfdbfe; border-color: #0b57c4; }
-.auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.auth-note { background: #eaf1fd; color: #1e3a8a; font-size: 12px; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
-.auth-success { background: #dcfce7; color: #15803d; font-size: 12px; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
-.auth-error { background: #fee2e2; color: #b91c1c; font-size: 12px; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; }
-.auth-submit { padding: 11px; background: #0b57c4; color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; }
-.auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.auth-switch { text-align: center; font-size: 12px; color: #6b7280; margin-top: 14px; }
-.auth-link { color: #0b57c4; font-weight: 600; font-size: 12px; }
+/*
+   10. FOOTER
+*/
+.footer {
+  background: #262626;
+  color: #cfcfcf;
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 32px 40px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.footer-left {
+  max-width: 380px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.footer-col h4 {
+  color: var(--orange);
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.footer-col p {
+  margin: 4px 0;
+}
+
+/*
+   11. BOOKING FORM
+*/
+.booking-form {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;   /* fields stacked vertically */
+  gap: 14px;
+}
+
+.booking-form input,
+.booking-form select,
+.booking-form textarea {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.booking-form textarea {
+  min-height: 80px;
+}
+
+/*
+   12. LOGIN / REGISTER PAGES
+*/
+.auth-page {
+  display: flex;        /* blue side panel + form side by side */
+  min-height: 100vh;
+}
+
+.auth-side {
+  width: 34%;
+  min-width: 260px;
+  background: #255463;
+  color: #fff;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;   /* text at top, small note at bottom */
+}
+
+.auth-side h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.auth-side p {
+  font-size: 13px;
+  opacity: 0.85;
+  max-width: 260px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.auth-side-footer {
+  font-size: 11px;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+.auth-main {
+  flex: 1;                 /* take the remaining width */
+  background: #f3f5f9;
+  display: flex;
+  align-items: center;     /* center the card vertically */
+  justify-content: center; /* and horizontally */
+  padding: 32px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);   /* soft shadow */
+}
+
+.auth-card h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+  color: #111827;
+}
+
+.auth-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 16px;
+}
+
+/* Login / Register switch tabs */
+.auth-tabs {
+  display: flex;
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.auth-tab {
+  flex: 1;   /* both tabs share the width equally */
+  padding: 9px;
+  border: none;
+  background: #fff;
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.auth-tab.active {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* Form fields */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auth-hint {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* MERGED: the two old input rules were doing the same job */
+.auth-field input,
+.auth-form input {
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;   /* use the same font as the page */
+  width: 100%;
+}
+
+.auth-field input:focus {
+  outline: 2px solid #bfdbfe;      /* light blue glow when typing */
+  border-color: var(--blue);
+}
+
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* two fields side by side */
+  gap: 12px;
+}
+
+/* Message boxes: info, success, error */
+.auth-note,
+.auth-success,
+.auth-error {
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.auth-note    { background: #eaf1fd; color: #1e3a8a; }   /* blue info */
+.auth-success { background: #dcfce7; color: #15803d; }   /* green success */
+.auth-error   { background: #fee2e2; color: #b91c1c; }   /* red error */
+
+.auth-submit {
+  padding: 11px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 14px;
+}
+
+.auth-link {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/*
+   13. RESPONSIVE: adjust the layout on smaller screens
+*/
+
+/* Tablets: 2 card columns, hero stacks vertically */
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .hero { flex-direction: column; }
+}
+
+/* Phones: 1 card column */
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* Login/Register on small screens: stack the panels */
 @media (max-width: 800px) {
   .auth-page { flex-direction: column; }
   .auth-side { width: 100%; padding: 24px; gap: 16px; }
   .auth-row { grid-template-columns: 1fr; }
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.nav-brand strong {
+  display: block;
+  color: #1d4ed8;
+  font-size: 16px;
+}
+.nav-brand small {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+}
+.nav-logo-img {
+  height: 100px;      /* try 60px for smaller, 85px for larger */
+  width: auto;
+  display: block;
+}
+
+.navbar {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.page > :has(.booking-layout, .confirm-wrap) { flex: 1; }
+.page > :has(.booking-layout) .title { margin-bottom: 16px; }
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root > .page {
+  flex: 1;
 }

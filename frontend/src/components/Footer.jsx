@@ -22,8 +22,10 @@ function Footer() {
       <div className="footer-col">
         <h4>CONTACT &amp; INFO</h4>
         <p>Phuentsholing, Chhukha, Bhutan</p>
-        <p>dsa.cst@rub.edu.bt</p>
-        <p>+975-5-252877</p>
+        <p>kelzangdorji.cst@rub.edu.bt</p>
+        <p>17666628</p>
+        <p>purnabdrmongar.cst@rub.edu.bt</p>
+        <p>17362124</p>
       </div>
     </footer>
   );
