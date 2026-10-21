@@ -73,6 +73,9 @@
 }
 
 .registration-success-button {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
   display: block;
   padding: 11px 14px;
   border-radius: 5px;
@@ -85,6 +88,11 @@
 
 .registration-success-button:hover {
   background: #06489e;
+}
+
+.registration-success-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .registration-success-secondary {

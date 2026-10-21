@@ -58,7 +58,6 @@ function BookingForm() {
     setSubmitting(true);
     try {
       const data = await apiCall('/bookings', 'POST', {
-        user_id: user.id,
         facility_id: Number(facilityId),
         booking_date: date,
         start_time: start,

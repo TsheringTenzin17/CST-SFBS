@@ -1,13 +1,40 @@
 // =============================================================
 // Backend/tests/conflict-test.js  —  Objective O3: zero double bookings
 // =============================================================
-const { api, post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
+const { api, post, createUser, facilityId, check, finish } = require('./helpers');
+const pool = require('../src/db');
+
+async function conflictFreeTuesday(facilityIds) {
+  const firstTuesday = new Date(Date.UTC(2027, 0, 5));
+  const startWeek = Math.floor(Math.random() * 52);
+
+  for (let offset = 0; offset < 52; offset += 1) {
+    const candidate = new Date(firstTuesday);
+    candidate.setUTCDate(firstTuesday.getUTCDate() + ((startWeek + offset) % 52) * 7);
+    const date = candidate.toISOString().slice(0, 10);
+    const conflicts = await pool.query(
+      `SELECT 1 FROM bookings
+       WHERE facility_id = ANY($1::int[]) AND booking_date = $2::date AND status <> 'cancelled'
+       UNION ALL
+       SELECT 1 FROM maintenance_blocks
+       WHERE facility_id = ANY($1::int[]) AND $2::date BETWEEN start_date AND end_date
+       LIMIT 1`,
+      [facilityIds, date]
+    );
+    if (conflicts.rows.length === 0) return date;
+  }
+
+  throw new Error('Could not find an unoccupied Tuesday for the conflict test');
+}
 
 async function main() {
   const alice = await createUser('student');
   const bob = await createUser('student');
-  const date = dateOnWeekday(2); // a Tuesday
   const basketball = await facilityId('Basketball Court');
+  const court1 = await facilityId('Badminton Court 1');
+  const court2 = await facilityId('Badminton Court 2');
+  const volleyball = await facilityId('Volleyball Court (Male)');
+  const date = await conflictFreeTuesday([basketball, court1, court2, volleyball]);
   const slot = { user_id: alice, facility_id: basketball, booking_date: date, start_time: '16:00', end_time: '17:00' };
 
   // ---- Test 1: 5 requests for the SAME slot at the SAME moment -------------
@@ -29,8 +56,6 @@ async function main() {
 
   // ---- Test 3: two DIFFERENT courts at the same time both succeed ----------
   console.log('Test 3: two courts, same time');
-  const court1 = await facilityId('Badminton Court 1');
-  const court2 = await facilityId('Badminton Court 2');
   const [c1, c2] = await Promise.all([
     post({ ...slot, facility_id: court1 }),
     post({ ...slot, user_id: bob, facility_id: court2 }),
@@ -40,14 +65,14 @@ async function main() {
 
   // ---- Test 4: cancelling frees the slot -------------------------------------
   console.log('Test 4: cancel then re-book');
-  const first = await post({ ...slot, facility_id: await facilityId('Volleyball Court (Male)') });
+  const first = await post({ ...slot, facility_id: volleyball });
   check('first booking succeeds', first.status === 201, `got ${first.status}`);
   const id = first.body.booking && first.body.booking.id;
   const wrong = await api('PATCH', `/bookings/${id}/cancel`, { user_id: bob });
   check("another user cannot cancel it -> 404", wrong.status === 404, `got ${wrong.status}`);
   const cancel = await api('PATCH', `/bookings/${id}/cancel`, { user_id: alice });
   check('the owner can cancel it', cancel.status === 200, `got ${cancel.status}`);
-  const again = await post({ ...slot, user_id: bob, facility_id: await facilityId('Volleyball Court (Male)') });
+  const again = await post({ ...slot, user_id: bob, facility_id: volleyball });
   check('the freed slot can be booked again', again.status === 201, `got ${again.status}`);
 }
 

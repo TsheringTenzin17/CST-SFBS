@@ -26,6 +26,7 @@ function notificationTitle(type = '') {
     booking_confirmed: 'Booking Confirmed',
     booking_cancelled: 'Booking Cancelled',
     booking_rescheduled: 'Booking Rescheduled',
+    booking_reminder: 'Booking Reminder',
     maintenance_scheduled: 'Maintenance Scheduled',
   };
   return titles[type] || 'System Notification';

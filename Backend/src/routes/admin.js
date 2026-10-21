@@ -8,9 +8,82 @@
 const express = require('express');
 const pool = require('../db');
 const { requireAdmin } = require('../auth');
+const { sendEmail } = require('../email');
 const router = express.Router();
 
 const ROLES = ['student', 'faculty', 'outsider', 'admin'];
+const SUPPORT_STATUSES = ['pending_review', 'in_progress', 'resolved'];
+
+router.get('/support-requests', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, name, email, message, status,
+              to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
+       FROM support_requests
+       ORDER BY created_at DESC, id DESC
+       LIMIT 250`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch support requests' });
+  }
+});
+
+router.patch('/support-requests/:id', requireAdmin, async (req, res) => {
+  const { status } = req.body;
+  if (!SUPPORT_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `status must be one of: ${SUPPORT_STATUSES.join(', ')}` });
+  }
+  try {
+    const result = await pool.query(
+      `WITH old_request AS (
+         SELECT id, status FROM support_requests WHERE id = $2 FOR UPDATE
+       ),
+       updated AS (
+         UPDATE support_requests request SET status = $1
+         FROM old_request
+         WHERE request.id = old_request.id
+         RETURNING request.id, request.user_id, request.name, request.email,
+                   request.message, request.status, request.created_at,
+                   old_request.status AS previous_status
+       )
+       SELECT id, user_id, name, email, message, status, previous_status,
+              to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
+       FROM updated`,
+      [status, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Support request not found' });
+    const { previous_status, ...request } = result.rows[0];
+    res.json({ request });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update support request' });
+  }
+});
+
+router.post('/support-requests/:id/notify-resolution', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, email, status FROM support_requests WHERE id = $1`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Support request not found' });
+    const request = result.rows[0];
+    if (request.status !== 'resolved') {
+      return res.status(400).json({ error: 'Mark the support request resolved before sending an update' });
+    }
+    await sendEmail({
+      to: request.email,
+      subject: 'Your CST-SFBS support request was resolved',
+      text: `Hello ${request.name},\n\nYour support request #${request.id} has been marked resolved by the DSA office.\n\nIf you still need help, reply to this email or contact the office directly.`,
+    });
+    res.json({ message: 'Resolution update email sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(503).json({ error: 'Could not send the resolution email. Check the email service configuration and try again.' });
+  }
+});
 
 router.get('/users', requireAdmin, async (req, res) => {
   try {

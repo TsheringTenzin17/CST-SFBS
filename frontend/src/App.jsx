@@ -16,6 +16,9 @@ import Notifications from './pages/Notifications';
 import ProfileSettings from './pages/ProfileSettings';
 import ContactConfirmation from './pages/ContactConfirmation';
 import RegistrationSuccess from './pages/RegistrationSuccess';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import FacilityDetail from './pages/FacilityDetail';
 import Rules from './pages/Rules';
 import Contact from './pages/Contact';
@@ -63,7 +66,9 @@ function App() {
   const { user, isLoading } = useAuth();
   const hideChrome =
     isLoading || user?.role === 'admin' || pathname === '/login' ||
-    pathname === '/register' || pathname === '/registration-success' || pathname.startsWith('/admin');
+    pathname === '/register' || pathname === '/registration-success' ||
+    pathname === '/verify-email' || pathname === '/forgot-password' ||
+    pathname === '/reset-password' || pathname.startsWith('/admin');
 
   return (
     <div className="page">
@@ -74,6 +79,9 @@ function App() {
         <Route path="/login" element={<AuthPage><Login /></AuthPage>} />
         <Route path="/register" element={<AuthPage><Register /></AuthPage>} />
         <Route path="/registration-success" element={<AuthPage><RegistrationSuccess /></AuthPage>} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin/*" element={<AdminPage><AdminDashboard /></AdminPage>} />
         <Route path="/book" element={<ClientPage requiresAuth><BookingForm /></ClientPage>} />
         <Route path="/booking-confirmed" element={<ClientPage requiresAuth><BookingConfirmation /></ClientPage>} />

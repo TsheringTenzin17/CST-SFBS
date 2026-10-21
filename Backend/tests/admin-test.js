@@ -1,8 +1,10 @@
 // =============================================================
 // Backend/tests/admin-test.js  —  admin tools, maintenance, summary
 // =============================================================
+const crypto = require('crypto');
 const { api, post, createUser, testCredentials, facilityId, dateOnWeekday, addMaintenanceBlock, check, finish } = require('./helpers');
 const pool = require('../src/db');
+const { processDueReminders } = require('../src/reminders');
 
 async function main() {
   const admin = await createUser('admin');
@@ -45,6 +47,18 @@ async function main() {
     ['student@example.com']
   );
   check('signed-in support request is associated with the user', storedRequest.rows[0]?.user_id === student);
+  r = await api('GET', '/admin/support-requests?admin_user_id=' + student);
+  check('support inbox is restricted to administrators', r.status === 403, `got ${r.status}`);
+  r = await api('GET', '/admin/support-requests?admin_user_id=' + admin);
+  check('an admin can view submitted support requests', r.status === 200 && Array.isArray(r.body), `got ${r.status}`);
+  const supportTicket = await pool.query(
+    `SELECT id FROM support_requests WHERE email = $1 ORDER BY id DESC LIMIT 1`,
+    ['student@example.com']
+  );
+  r = await api('PATCH', `/admin/support-requests/${supportTicket.rows[0].id}`, {
+    admin_user_id: admin, status: 'in_progress',
+  });
+  check('an admin can update a support ticket status', r.status === 200 && r.body.request.status === 'in_progress', `got ${r.status}`);
   const invalidSessionResponse = await fetch(`${process.env.API_URL || 'http://localhost:4000'}/support/requests`, {
     method: 'POST',
     headers: {
@@ -103,6 +117,54 @@ async function main() {
   });
   check('updated password can be used to sign in', passwordLogin.status === 200, `got ${passwordLogin.status}`);
 
+  console.log('Email verification and password recovery');
+  await pool.query('UPDATE users SET email_verified = false WHERE id = $1', [student]);
+  const unverifiedLogin = await fetch(`${process.env.API_URL || 'http://localhost:4000'}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: testCredentials(student).email, password: 'new-password-123' }),
+  });
+  const unverifiedData = await unverifiedLogin.json();
+  check('unverified accounts cannot sign in', unverifiedLogin.status === 403 && unverifiedData.code === 'EMAIL_NOT_VERIFIED', `got ${unverifiedLogin.status}`);
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  await pool.query(
+    `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at)
+     VALUES ($1, $2, 'email_verification', now() + interval '1 hour')`,
+    [crypto.createHash('sha256').update(verificationToken).digest('hex'), student]
+  );
+  r = await api('POST', '/auth/verify-email', { token: verificationToken });
+  check('a valid verification token enables the account', r.status === 200, `got ${r.status}`);
+  r = await api('POST', '/auth/verify-email', { token: verificationToken });
+  check('email verification link can be opened more than once safely', r.status === 200, `got ${r.status}`);
+
+  let resetToken;
+  if (process.env.NODE_ENV !== 'production' && (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM)) {
+    r = await api('POST', '/auth/forgot-password', { email: testCredentials(student).email });
+    resetToken = r.body.reset_url && new URL(r.body.reset_url).searchParams.get('token');
+    check(
+      'local password reset provides a link when email is not configured',
+      r.status === 200 && /^[a-f0-9]{64}$/i.test(resetToken || ''),
+      `got ${r.status}`
+    );
+  } else {
+    resetToken = crypto.randomBytes(32).toString('hex');
+    await pool.query(
+      `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at)
+       VALUES ($1, $2, 'password_reset', now() + interval '1 hour')`,
+      [crypto.createHash('sha256').update(resetToken).digest('hex'), student]
+    );
+  }
+  r = await api('POST', '/auth/reset-password', { token: resetToken, new_password: 'reset-password-456' });
+  check('a valid reset token updates the account password', r.status === 200, `got ${r.status}`);
+  const resetLogin = await fetch(`${process.env.API_URL || 'http://localhost:4000'}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: testCredentials(student).email, password: 'reset-password-456' }),
+  });
+  check('the reset password can be used to sign in', resetLogin.status === 200, `got ${resetLogin.status}`);
+  r = await api('POST', '/auth/reset-password', { token: resetToken, new_password: 'another-password-789' });
+  check('a password reset token cannot be reused', r.status === 400, `got ${r.status}`);
+
   console.log('User notifications');
   const ownNotification = await pool.query(
     `INSERT INTO notifications (user_id, type, message)
@@ -157,7 +219,39 @@ async function main() {
   check('an admin can load reports', r.status === 200 && r.body.totals !== undefined, `got ${r.status}`);
 
   console.log('Admin cancel + reschedule');
-  const made = await post({ user_id: student, facility_id: basketball, booking_date: tuesday, start_time: '16:00', end_time: '17:00' });
+  r = await api('POST', '/bookings', {
+    facility_id: basketball, booking_date: tuesday, start_time: '16:00', end_time: '17:00',
+  });
+  check('booking creation requires authentication', r.status === 401, `got ${r.status}`);
+  r = await api('GET', `/bookings/user/${student}`);
+  check('my bookings requires authentication', r.status === 401, `got ${r.status}`);
+  r = await api('GET', `/bookings/user/${other}?test_user_id=${student}`);
+  check('a user cannot view another account bookings', r.status === 403, `got ${r.status}`);
+
+  const forgedOwnerBooking = await api('POST', '/bookings', {
+    test_user_id: student,
+    user_id: other,
+    facility_id: basketball,
+    booking_date: tuesday,
+    start_time: '16:00',
+    end_time: '17:00',
+  });
+  const forgedOwner = await pool.query('SELECT user_id FROM bookings WHERE id = $1', [
+    forgedOwnerBooking.body.booking?.id,
+  ]);
+  check(
+    'booking owner comes from the authenticated account, not request body',
+    forgedOwnerBooking.status === 201 && forgedOwner.rows[0]?.user_id === student,
+    `got ${forgedOwnerBooking.status} ${JSON.stringify(forgedOwnerBooking.body)}`
+  );
+  r = await api('GET', `/bookings/user/${student}?test_user_id=${student}`);
+  check(
+    'a user can view their own bookings',
+    r.status === 200 && r.body.some((booking) => booking.id === forgedOwnerBooking.body.booking.id),
+    `got ${r.status}`
+  );
+
+  const made = forgedOwnerBooking;
   const id = made.body.booking.id;
   let bookingNotice = await pool.query(
     `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_confirmed'
@@ -280,6 +374,56 @@ async function main() {
   check('an admin can change a role', r.status === 200 && r.body.user.role === 'faculty', `got ${r.status}`);
   r = await api('PATCH', `/admin/users/${admin}/role`, { admin_user_id: admin, role: 'student' });
   check('an admin cannot remove their own admin role', r.status === 400, `got ${r.status}`);
+
+  console.log('Scheduled booking reminders');
+  await pool.query(
+    `INSERT INTO user_notification_preferences (user_id, booking_updates, game_reminders, maintenance_alerts)
+     VALUES ($1, true, true, true)
+     ON CONFLICT (user_id) DO UPDATE SET game_reminders = true`,
+    [student]
+  );
+  const reminderBooking = await pool.query(
+    `WITH slot AS (
+       SELECT (now() + interval '1 hour') AT TIME ZONE 'Asia/Thimphu' AS local_start
+     )
+     INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
+     SELECT $1, $2, local_start::date, local_start::time,
+            (local_start + interval '1 hour')::time, 'Reminder test', 'approved'
+     FROM slot RETURNING id`,
+    [student, basketball]
+  );
+  await pool.query(
+    `INSERT INTO user_notification_preferences (user_id, booking_updates, game_reminders, maintenance_alerts)
+     VALUES ($1, true, false, false)
+     ON CONFLICT (user_id) DO UPDATE SET game_reminders = false`,
+    [other]
+  );
+  await pool.query(
+    `WITH slot AS (
+       SELECT (now() + interval '1 hour') AT TIME ZONE 'Asia/Thimphu' AS local_start
+     )
+     INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
+     SELECT $1, $2, local_start::date, local_start::time,
+            (local_start + interval '1 hour')::time, 'Reminder opt-out test', 'approved'
+     FROM slot`,
+    [other, basketball]
+  );
+  await processDueReminders();
+  await processDueReminders();
+  const reminderRows = await pool.query(
+    `SELECT lead_hours FROM booking_reminders WHERE booking_id = $1`,
+    [reminderBooking.rows[0].id]
+  );
+  const reminderNotifications = await pool.query(
+    `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_reminder'`,
+    [student]
+  );
+  const optedOutReminders = await pool.query(
+    `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_reminder'`,
+    [other]
+  );
+  check('24-hour and 2-hour reminders are generated once per booking', reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2);
+  check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
 }
 
 main()

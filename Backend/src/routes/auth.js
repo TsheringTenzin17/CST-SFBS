@@ -6,11 +6,38 @@
 // to hashes the first time that user signs in.
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const pool = require('../db');
 const { authenticate, createSessionToken } = require('../auth');
+const { sendEmail } = require('../email');
 const router = express.Router();
 
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+async function issueToken(userId, purpose, expiresInHours) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await pool.query(
+    `DELETE FROM auth_tokens WHERE user_id = $1 AND purpose = $2 AND consumed_at IS NULL`,
+    [userId, purpose]
+  );
+  await pool.query(
+    `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at)
+     VALUES ($1, $2, $3, now() + ($4 * interval '1 hour'))`,
+    [hashToken(token), userId, purpose, expiresInHours]
+  );
+  return token;
+}
+
+function actionUrl(path, token) {
+  const url = new URL(path, `${FRONTEND_URL}/`);
+  url.searchParams.set('token', token);
+  return url.toString();
+}
 
 // 02210145.cst@rub.edu.bt -> student ; kwangdi.cst@rub.edu.bt -> faculty (staff)
 function roleFromCollegeEmail(email) {
@@ -46,11 +73,27 @@ router.post('/register', async (req, res) => {
     // Store only a bcrypt hash for newly registered accounts.
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, full_name, email, role`,
+      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, false) RETURNING id, full_name, email, role`,
       [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null]
     );
-    res.status(201).json({ user: result.rows[0] });
+    const user = result.rows[0];
+    const token = await issueToken(user.id, 'email_verification', 24);
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Verify your CST-SFBS account',
+        text: `Hello ${user.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nIf you did not create this account, you can ignore this message.`,
+      });
+      res.status(201).json({ user, verification_email_sent: true });
+    } catch (emailError) {
+      console.error(emailError);
+      res.status(503).json({
+        error: 'Your account was created, but the verification email could not be sent. Configure the email service and request another verification email.',
+        account_created: true,
+        user,
+      });
+    }
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'An account with this email already exists' });
     console.error(err);
@@ -66,7 +109,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, full_name, email, role, password_hash FROM users
+      `SELECT id, full_name, email, role, password_hash, email_verified FROM users
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
       [identifier]
     );
@@ -84,13 +127,157 @@ router.post('/login', async (req, res) => {
       }
     }
     if (!ok) return res.status(401).json({ error: 'Invalid email/ID or password' });
+    if (!row.email_verified) {
+      return res.status(403).json({
+        error: 'Verify your email before signing in. You can request another verification email from the registration page.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
 
-    const { password_hash, ...user } = row;
+    const { password_hash, email_verified, ...user } = row;
     // Never return the stored password hash; issue a session token for subsequent requests.
     res.json({ user, token: createSessionToken(user.id) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+router.post('/resend-verification', async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  try {
+    const result = await pool.query(
+      'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND email_verified = false',
+      [email]
+    );
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const token = await issueToken(user.id, 'email_verification', 24);
+      await sendEmail({
+        to: user.email,
+        subject: 'Verify your CST-SFBS account',
+        text: `Hello ${user.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nIf you did not create this account, you can ignore this message.`,
+      });
+    }
+    res.json({ message: 'If an unverified account exists for that email, a verification link has been sent.' });
+  } catch (err) {
+    console.error(err);
+    res.status(503).json({ error: 'Could not send the verification email. Please try again later.' });
+  }
+});
+
+router.post('/verify-email', async (req, res) => {
+  const { token } = req.body;
+  if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+    return res.status(400).json({ error: 'Invalid or expired verification link' });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await client.query(
+      `UPDATE auth_tokens SET consumed_at = now()
+       WHERE token_hash = $1 AND purpose = 'email_verification'
+         AND consumed_at IS NULL AND expires_at > now()
+       RETURNING user_id`,
+      [hashToken(token)]
+    );
+    if (result.rows.length === 0) {
+      const alreadyVerified = await client.query(
+        `SELECT 1 FROM auth_tokens t
+         JOIN users u ON u.id = t.user_id
+         WHERE t.token_hash = $1 AND t.purpose = 'email_verification'
+           AND t.consumed_at IS NOT NULL AND u.email_verified = true`,
+        [hashToken(token)]
+      );
+      if (alreadyVerified.rows.length > 0) {
+        await client.query('COMMIT');
+        return res.json({ message: 'Email is already verified. You can sign in.' });
+      }
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Invalid or expired verification link' });
+    }
+    await client.query('UPDATE users SET email_verified = true WHERE id = $1', [result.rows[0].user_id]);
+    await client.query('COMMIT');
+    res.json({ message: 'Email verified. You can now sign in.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Could not verify email' });
+  } finally {
+    client.release();
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  try {
+    const result = await pool.query(
+      'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND email_verified = true',
+      [email]
+    );
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const token = await issueToken(user.id, 'password_reset', 1);
+      const resetUrl = actionUrl('/reset-password', token);
+      if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) {
+        if (process.env.NODE_ENV !== 'production') {
+          return res.json({
+            message: 'Email delivery is not configured. Use this local development reset link (valid for one hour).',
+            reset_url: resetUrl,
+          });
+        }
+        throw new Error('Email is not configured. Set RESEND_API_KEY and RESEND_FROM.');
+      }
+      await sendEmail({
+        to: user.email,
+        subject: 'Reset your CST-SFBS password',
+        text: `Hello ${user.full_name},\n\nReset your password within one hour:\n${resetUrl}\n\nIf you did not request this, you can ignore this message.`,
+      });
+    }
+    res.json({ message: 'If a verified account exists for that email, password reset instructions have been sent.' });
+  } catch (err) {
+    console.error(err);
+    res.status(503).json({ error: 'Could not send password reset instructions. Please try again later.' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, new_password } = req.body;
+  if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+    return res.status(400).json({ error: 'Invalid or expired password reset link' });
+  }
+  if (typeof new_password !== 'string' || new_password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const passwordHash = await bcrypt.hash(new_password, 10);
+    await client.query('BEGIN');
+    const result = await client.query(
+      `UPDATE auth_tokens SET consumed_at = now()
+       WHERE token_hash = $1 AND purpose = 'password_reset'
+         AND consumed_at IS NULL AND expires_at > now()
+       RETURNING user_id`,
+      [hashToken(token)]
+    );
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Invalid or expired password reset link' });
+    }
+    await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, result.rows[0].user_id]);
+    await client.query('COMMIT');
+    res.json({ message: 'Password reset successfully. Sign in with your new password.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Could not reset password' });
+  } finally {
+    client.release();
   }
 });
 

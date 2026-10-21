@@ -79,13 +79,28 @@ function Register() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.account_created) {
+          navigate('/registration-success', {
+            replace: true,
+            state: {
+              email: data.user?.email || form.email.trim().toLowerCase(),
+              role: data.user?.role || (isStaff ? roleFromEmail(form.email) : 'outsider'),
+              verification_email_sent: false,
+            },
+          });
+          return;
+        }
         setError(data.error || 'Registration failed');
         return;
       }
       // Carry only confirmation details to the success screen; credentials stay out of route state.
       navigate('/registration-success', {
         replace: true,
-        state: { email: data.user.email, role: data.user.role },
+        state: {
+          email: data.user.email,
+          role: data.user.role,
+          verification_email_sent: data.verification_email_sent,
+        },
       });
     } catch {
       setError('Could not reach the server. Is the backend running?');
@@ -172,8 +187,8 @@ function Register() {
 
         <div className="auth-note">
           {isStaff
-            ? 'Your account is active as soon as you register.'
-            : 'Your account is active as soon as you register. Commercial rates apply; payment is handled offline with the DSA office.'}
+            ? 'You must verify your email before signing in.'
+            : 'Verify your email before signing in. Commercial rates apply; payment is handled offline with the DSA office.'}
         </div>
 
         <button className="auth-submit" type="submit" disabled={loading}>

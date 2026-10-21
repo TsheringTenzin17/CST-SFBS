@@ -90,7 +90,7 @@ async function main() {
   r = await book(student, basketball, 'not-a-date', '16:00', '17:00');
   check('a malformed date is rejected', r.status === 400, `got ${r.status}`);
   r = await book(999999999, basketball, tuesday, '16:00', '17:00');
-  check('an unknown user is rejected', r.status === 404, `got ${r.status}`);
+  check('an unknown user without a valid session is rejected', r.status === 401, `got ${r.status}`);
 }
 
 main()
