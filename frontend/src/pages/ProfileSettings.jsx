@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
 import './ProfileSettings.css';
@@ -12,7 +12,6 @@ const DEFAULT_PREFERENCES = {
 
 function ProfileSettings() {
   const { user, updateUser } = useAuth();
-  const location = useLocation();
   const [profile, setProfile] = useState(null);
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -117,7 +116,7 @@ function ProfileSettings() {
 
   return (
     <main className="main profile-settings-page">
-      <h1 className="title">{location.pathname === '/settings' ? 'Profile & Settings' : 'My Profile'}</h1>
+      <h1 className="title">Profile &amp; Settings</h1>
       <p className="subtitle">Manage your account details, security, and notification preferences.</p>
 
       {message && <p className={`profile-message ${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>{message.text}</p>}

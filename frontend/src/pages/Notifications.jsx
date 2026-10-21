@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiCall } from '../utils/api';
 import './Notifications.css';
 
@@ -54,14 +54,27 @@ function Notifications() {
   const [markingId, setMarkingId] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let active = true;
-    apiCall('/notifications')
-      .then((result) => { if (active) setNotifications(result); })
-      .catch((requestError) => { if (active) setError(requestError.message); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+  const loadNotifications = useCallback(async () => {
+    try {
+      const result = await apiCall('/notifications');
+      setNotifications(result);
+      setError(null);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadNotifications();
+    const refreshInterval = window.setInterval(loadNotifications, 30000);
+    window.addEventListener('focus', loadNotifications);
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener('focus', loadNotifications);
+    };
+  }, [loadNotifications]);
 
   const unreadCount = notifications.filter((notification) => !notification.is_read).length;
   const visibleNotifications = useMemo(() => notifications.filter((notification) => {

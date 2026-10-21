@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
@@ -22,7 +22,7 @@ function MyBookings() {
   const [cancelingId, setCancelingId] = useState(null);
   const [message, setMessage] = useState(null);
 
-  async function loadBookings() {
+  const loadBookings = useCallback(async () => {
     if (!user) return;
     try {
       const result = await apiCall(`/bookings/user/${user.id}`);
@@ -32,11 +32,17 @@ function MyBookings() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
 
   useEffect(() => {
     loadBookings();
-  }, [user]);
+    const refreshInterval = window.setInterval(loadBookings, 30000);
+    window.addEventListener('focus', loadBookings);
+    return () => {
+      window.clearInterval(refreshInterval);
+      window.removeEventListener('focus', loadBookings);
+    };
+  }, [loadBookings]);
 
   async function handleCancel(booking) {
     if (!window.confirm(`Cancel booking B-${booking.id}?`)) return;

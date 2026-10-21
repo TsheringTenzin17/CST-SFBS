@@ -286,6 +286,19 @@ async function main() {
   check('a student cannot reschedule', r.status === 403, `got ${r.status}`);
   r = await api('PATCH', `/bookings/${id}/reschedule`, { admin_user_id: admin, booking_date: tuesday, start_time: '18:00', end_time: '19:00' });
   check('an admin can reschedule to a free slot', r.status === 200, `got ${r.status}`);
+  const adminRescheduleNotification = await pool.query(
+    `SELECT type, message FROM notifications
+     WHERE user_id = $1 AND type = 'booking_rescheduled'
+       AND message LIKE '%moved by an admin to%'
+     ORDER BY id DESC LIMIT 1`,
+    [student]
+  );
+  check(
+    'admin rescheduling creates a client notification with the new time',
+    adminRescheduleNotification.rows[0]?.type === 'booking_rescheduled' &&
+      adminRescheduleNotification.rows[0]?.message.includes(`${tuesday} (18:00-19:00)`),
+    adminRescheduleNotification.rows[0]?.message
+  );
   await post({ user_id: other, facility_id: basketball, booking_date: tuesday, start_time: '20:00', end_time: '21:00' });
   r = await api('PATCH', `/bookings/${id}/reschedule`, { admin_user_id: admin, booking_date: tuesday, start_time: '20:00', end_time: '21:00' });
   check('rescheduling onto a taken slot -> 409', r.status === 409, `got ${r.status}`);
@@ -296,11 +309,17 @@ async function main() {
   r = await api('PATCH', `/bookings/${id}`, { status: 'cancelled', admin_user_id: admin, reason: 'test cancellation' });
   check('an admin can cancel any booking', r.status === 200, `got ${r.status}`);
   const notification = await pool.query(
-    `SELECT message FROM notifications WHERE user_id = $1 AND type = 'booking_cancelled'
+    `SELECT type, message FROM notifications WHERE user_id = $1 AND type = 'booking_cancelled'
+     AND message LIKE '%Reason: test cancellation%'
      ORDER BY id DESC LIMIT 1`,
     [student]
   );
-  check('cancellation reason is included in the user notification', notification.rows[0]?.message.includes('Reason: test cancellation'), notification.rows[0]?.message);
+  check(
+    'admin cancellation creates a client notification with the reason',
+    notification.rows[0]?.type === 'booking_cancelled' &&
+      notification.rows[0]?.message.includes('Reason: test cancellation'),
+    notification.rows[0]?.message
+  );
   r = await post({ user_id: other, facility_id: basketball, booking_date: tuesday, start_time: '18:00', end_time: '19:00' });
   check('a cancelled booking frees its slot', r.status === 201, `got ${r.status}`);
 

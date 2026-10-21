@@ -89,7 +89,7 @@ function App() {
         <Route path="/my-bookings" element={<ClientPage requiresAuth><MyBookings /></ClientPage>} />
         <Route path="/my-bookings/:id/reschedule" element={<ClientPage requiresAuth><RescheduleBooking /></ClientPage>} />
         <Route path="/notifications" element={<ClientPage requiresAuth><Notifications /></ClientPage>} />
-        <Route path="/profile" element={<ClientPage requiresAuth><ProfileSettings /></ClientPage>} />
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/settings" element={<ClientPage requiresAuth><ProfileSettings /></ClientPage>} />
         <Route path="/facilities/:id" element={<ClientPage><FacilityDetail /></ClientPage>} />
         <Route path="/rules" element={<ClientPage><Rules /></ClientPage>} />
