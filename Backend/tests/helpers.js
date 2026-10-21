@@ -16,19 +16,24 @@ let failures = 0;
 
 // ---- calling the API -------------------------------------------------------
 async function api(method, path, body) {
-  let adminId = body && body.admin_user_id;
+  let adminId = body && (body.admin_user_id || body.test_user_id);
   if (!adminId) {
-    const query = path.match(/[?&]admin_user_id=(\d+)/);
+    const query = path.match(/[?&](?:admin_user_id|test_user_id)=(\d+)/);
     if (query) adminId = query[1];
   }
-  const token = adminId ? await sessionToken(adminId) : null;
+    const requestBody = body && { ...body };
+    if (requestBody) {
+      delete requestBody.admin_user_id;
+      delete requestBody.test_user_id;
+    }
+    const token = adminId ? await sessionToken(adminId) : null;
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: requestBody ? JSON.stringify(requestBody) : undefined,
   });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
@@ -61,6 +66,10 @@ async function createUser(role) {
   created.users.push(id);
   credentials.set(id, { email, password });
   return id;
+}
+
+function testCredentials(userId) {
+  return credentials.get(Number(userId));
 }
 
 async function facilityId(name) {
@@ -107,4 +116,4 @@ async function finish() {
   process.exit(failures === 0 ? 0 : 1);
 }
 
-module.exports = { api, post, createUser, facilityId, dateOnWeekday, addMaintenanceBlock, check, finish };
+module.exports = { api, post, createUser, testCredentials, facilityId, dateOnWeekday, addMaintenanceBlock, check, finish };

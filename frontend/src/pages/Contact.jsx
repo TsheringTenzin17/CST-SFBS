@@ -1,14 +1,12 @@
-// =============================================================
-// frontend/src/pages/Contact.jsx  —  Help & Contact  (owner: Samdrup, stretch)
-// =============================================================
-// Route:  /help
-// There is no mail server behind this project, so the "Send a message"
-// button opens the visitor's own email app (mailto:) instead of pretending
-// to send something. That keeps the page honest.
+// Help & Contact form. Requests are stored by the backend and receive a ticket ID;
+// this flow does not send email, so the confirmation says the request is recorded.
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
+import { apiCall } from '../utils/api';
 import './Contact.css';
 
-const DSA_EMAIL = 'kelzangdorji.cst@rub.edu.bt';
+export const DSA_EMAIL = 'kelzangdorji.cst@rub.edu.bt';
 const STEPS = [
   { title: 'Browse facilities', text: 'Open Facilities and choose a sport.' },
   { title: 'Check availability', text: 'Pick a date and see which slots are free.' },
@@ -17,14 +15,26 @@ const STEPS = [
 ];
 
 function Contact() {
-  const [name, setName] = useState('');
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [name, setName] = useState(user?.full_name || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function openEmail(e) {
+  async function submitRequest(e) {
     e.preventDefault();
-    const subject = encodeURIComponent('CST-SFBS question');
-    const body = encodeURIComponent(`${message}\n\n${name}`);
-    window.location.href = `mailto:${DSA_EMAIL}?subject=${subject}&body=${body}`;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const ticket = await apiCall('/support/requests', 'POST', { name, email, message });
+      navigate('/help/confirmation', { state: { ticket } });
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -47,14 +57,30 @@ function Contact() {
       <div className="contact-grid">
         <div className="contact-card">
           <div><strong>Office of the Dean of Student Affairs</strong></div>
-          <p>Email: {DSA_EMAIL}</p>
+          <p>Email: <a href={`mailto:${DSA_EMAIL}`}>{DSA_EMAIL}</a></p>
           <p>Phone: 17666628</p>
           <p>Phuentsholing, Chhukha, Bhutan</p>
         </div>
-        <form className="contact-card" onSubmit={openEmail}>
-          <label className="contact-field">Your name<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-          <label className="contact-field">Your question<textarea value={message} onChange={(e) => setMessage(e.target.value)} required /></label>
-          <button className="btn-primary" type="submit">Open in my email app</button>
+        <form className="contact-card" onSubmit={submitRequest}>
+          <h3>Send a message</h3>
+          {error && <p className="contact-error" role="alert">{error}</p>}
+          <label className="contact-field">
+            Your name
+            <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} required />
+          </label>
+          <label className="contact-field">
+            Response email
+            <input type="email" value={email} maxLength={254} onChange={(e) => setEmail(e.target.value)} required />
+          </label>
+          <label className="contact-field">
+            Your question
+            <textarea value={message} maxLength={3000} onChange={(e) => setMessage(e.target.value)} required />
+          </label>
+          <p className="contact-hint">We’ll save your request and show a ticket number for follow-up.</p>
+          <button className="btn-primary" type="submit" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Submit to DSA'}
+          </button>
+          <Link className="contact-inbox-link" to={`mailto:${DSA_EMAIL}`}>Or email the DSA office directly</Link>
         </form>
       </div>
     </main>

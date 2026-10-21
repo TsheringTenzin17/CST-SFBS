@@ -43,6 +43,16 @@ export function AuthProvider({ children }) {
     localStorage.setItem('cst_token', token);
   }
 
+  // Keep the header and stored session profile in sync after profile edits.
+  function updateUser(updatedFields) {
+    setUser((current) => {
+      if (!current) return current;
+      const updated = { ...current, ...updatedFields };
+      localStorage.setItem('cst_user', JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   function logout() {
     setUser(null);
     localStorage.removeItem('cst_user');
@@ -50,7 +60,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

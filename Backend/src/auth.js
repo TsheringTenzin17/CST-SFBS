@@ -1,14 +1,18 @@
 const crypto = require('crypto');
 const pool = require('./db');
 
+// Shared session helpers used by routes to authenticate requests and restrict admin actions.
+// Set SESSION_SECRET in the environment so existing tokens remain valid across server restarts.
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const SESSION_DURATION_SECONDS = 12 * 60 * 60;
 
+// Base64url-encode the token payload; the HMAC below provides integrity, not encryption.
 function encode(value) {
   return Buffer.from(JSON.stringify(value)).toString('base64url');
 }
 
 function createSessionToken(userId) {
+  // The token contains the user ID and expiration time, followed by a server-generated signature.
   const payload = encode({
     sub: Number(userId),
     exp: Math.floor(Date.now() / 1000) + SESSION_DURATION_SECONDS,
@@ -18,6 +22,7 @@ function createSessionToken(userId) {
 }
 
 function authenticate(req, res, next) {
+  // Protected requests must include the token in the Authorization header.
   const authorization = req.get('authorization') || '';
   const match = authorization.match(/^Bearer ([\w-]+\.[\w-]+)$/);
   if (!match) return res.status(401).json({ error: 'Authentication required' });
@@ -30,6 +35,7 @@ function authenticate(req, res, next) {
   } catch {
     return res.status(401).json({ error: 'Invalid or expired session' });
   }
+  // Compare signatures in constant time to avoid leaking comparison details.
   if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) {
     return res.status(401).json({ error: 'Invalid or expired session' });
   }
@@ -44,6 +50,7 @@ function authenticate(req, res, next) {
     return res.status(401).json({ error: 'Invalid or expired session' });
   }
 
+  // Load the current user record so deleted accounts and updated roles take effect immediately.
   pool.query('SELECT id, full_name, email, role FROM users WHERE id = $1', [session.sub])
     .then((result) => {
       if (result.rows.length === 0) return res.status(401).json({ error: 'Account no longer exists' });
@@ -57,6 +64,7 @@ function authenticate(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
+  // Authenticate first, then allow the request only if the current account has the admin role.
   authenticate(req, res, () => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admins only' });
     next();

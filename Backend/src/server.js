@@ -17,6 +17,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/auth', require('./routes/auth'));
 app.use('/facilities', require('./routes/facilities'));
 app.use('/bookings', require('./routes/bookings'));
+app.use('/notifications', require('./routes/notifications'));
+app.use('/support', require('./routes/support'));
 app.use('/maintenance', require('./routes/maintenance'));
 app.use('/admin', require('./routes/admin'));
 

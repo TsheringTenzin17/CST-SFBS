@@ -1,0 +1,245 @@
+.conflict-page.main {
+  width: min(100%, 1180px);
+  min-height: 0;
+  padding-top: 32px;
+  padding-bottom: 44px;
+}
+
+.conflict-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid #f87171;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.conflict-alert-icon {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.conflict-alert strong {
+  font-size: 14px;
+}
+
+.conflict-alert p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.conflict-load-error {
+  margin: 0 0 16px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.conflict-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.5fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.conflict-request-card,
+.conflict-options-card {
+  padding: 18px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.conflict-request-card h2,
+.conflict-options-card h2 {
+  margin: 0 0 8px;
+  color: #0757bf;
+  font-size: 16px;
+}
+
+.conflict-request-card h2 {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf0f2;
+  color: #333;
+}
+
+.conflict-request-card dl {
+  display: grid;
+  gap: 15px;
+  margin: 16px 0;
+}
+
+.conflict-request-card dt {
+  margin-bottom: 5px;
+  color: #737b84;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.conflict-request-card dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.conflict-request-card .conflict-requested {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.conflict-back {
+  display: block;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  color: #374151;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.conflict-back:hover {
+  background: #f8fafc;
+}
+
+.conflict-options-subtitle {
+  margin: 0 0 14px;
+  color: #737b84;
+  font-size: 12px;
+}
+
+.conflict-suggestions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.conflict-suggestion {
+  display: flex;
+  min-width: 0;
+  min-height: 150px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+
+.conflict-suggestion:hover {
+  border-color: #0757bf;
+}
+
+.conflict-suggestion.selected {
+  border: 2px solid #0757bf;
+  background: #f8fbff;
+}
+
+.conflict-suggestion-top {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+  color: #0757bf;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.conflict-suggestion-top small {
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 9px;
+  text-transform: none;
+}
+
+.conflict-suggestion-facility {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.conflict-suggestion-time {
+  color: #0757bf;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.conflict-suggestion-label {
+  margin-top: auto;
+  color: #737b84;
+  font-size: 10px;
+}
+
+.conflict-empty {
+  padding: 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.conflict-selection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #edf0f2;
+  font-size: 11px;
+}
+
+.conflict-continue {
+  padding: 10px 14px;
+  border-radius: 5px;
+  background: #0757bf;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.conflict-continue:hover {
+  background: #06489e;
+}
+
+@media (max-width: 760px) {
+  .conflict-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .conflict-suggestions {
+    grid-template-columns: 1fr;
+  }
+
+  .conflict-suggestion {
+    min-height: 0;
+  }
+
+  .conflict-selection {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

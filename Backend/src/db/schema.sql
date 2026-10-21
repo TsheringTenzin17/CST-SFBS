@@ -52,7 +52,26 @@ CREATE TABLE IF NOT EXISTS notifications (
   type VARCHAR(30),
   message TEXT,
   is_read BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_notification_preferences (
+  user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  booking_updates BOOLEAN NOT NULL DEFAULT true,
+  game_reminders BOOLEAN NOT NULL DEFAULT true,
+  maintenance_alerts BOOLEAN NOT NULL DEFAULT true,
+  updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS support_requests (
+  id BIGSERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE SET NULL,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(254) NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending_review'
+    CHECK (status IN ('pending_review', 'in_progress', 'resolved')),
+  created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_facility_date ON bookings(facility_id, booking_date);

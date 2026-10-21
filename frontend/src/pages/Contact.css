@@ -12,3 +12,8 @@
 .contact-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; }
 .contact-field input, .contact-field textarea { padding: 9px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: inherit; }
 .contact-field textarea { min-height: 90px; }
+.contact-card h3 { margin: 0; font-size: 16px; }
+.contact-card a { color: #0757bf; }
+.contact-card .contact-inbox-link { font-size: 12px; text-align: center; }
+.contact-card .contact-hint { color: #666; font-size: 11px; }
+.contact-card .contact-error { padding: 9px; border-radius: 5px; background: #fef2f2; color: #b91c1c; }

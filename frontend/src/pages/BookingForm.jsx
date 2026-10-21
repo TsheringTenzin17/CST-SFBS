@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { prettyDate } from '../utils/format';
 import { apiCall } from '../utils/api';
+import ConflictPanel from '../components/ConflictPanel';
 import './Booking.css';
 
 const ROLE_NAMES = { student: 'Student', faculty: 'Faculty / Staff', outsider: 'Outsider (commercial)', admin: 'Admin' };
@@ -15,18 +16,24 @@ function BookingForm() {
   const date = params.get('date');
   const start = params.get('start');
   const end = params.get('end');
+  const slotKey = JSON.stringify([facilityId, date, start, end]);
 
   const [facility, setFacility] = useState(null);
+  const [facilities, setFacilities] = useState([]);
   const [purpose, setPurpose] = useState('');
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState(null);
-  const [conflict, setConflict] = useState(false);
+  const [conflictSlot, setConflictSlot] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const conflict = conflictSlot === slotKey;
 
   useEffect(() => {
     apiCall('/facilities')
-      .then((all) => setFacility(all.find((f) => f.id === Number(facilityId)) || null))
-      .catch(() => {});
+      .then((all) => {
+        setFacilities(all);
+        setFacility(all.find((f) => f.id === Number(facilityId)) || null);
+      })
+      .catch((requestError) => setError(requestError.message));
   }, [facilityId]);
 
   if (!facilityId || !date || !start || !end) {
@@ -47,7 +54,7 @@ function BookingForm() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
-    setConflict(false);
+    setConflictSlot(null);
     setSubmitting(true);
     try {
       const data = await apiCall('/bookings', 'POST', {
@@ -68,13 +75,28 @@ function BookingForm() {
       });
     } catch (requestError) {
       if (requestError.status === 409) {
-        setConflict(true);
+        // A conflict means availability changed after the user selected the slot; offer fresh alternatives.
+        setConflictSlot(slotKey);
       } else {
         setError(requestError.message || 'Booking failed');
       }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (conflict && facility) {
+    const courts = facilities.filter((item) => item.group_name === facility.group_name);
+    return (
+      <ConflictPanel
+        facility={facility}
+        courts={courts}
+        date={date}
+        start={start}
+        end={end}
+        user={user}
+      />
+    );
   }
 
   return (
