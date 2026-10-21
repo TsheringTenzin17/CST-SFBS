@@ -8,8 +8,19 @@ const cors = require('cors');
 const app = express();
 
 // FRONTEND_URL (set on Render) limits which website may call this API.
-// Left empty during development = allow every origin.
-app.use(cors({ origin: process.env.FRONTEND_URL || true }));
+// Development can be permissive; production must provide an explicit allowlist.
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  throw new Error('FRONTEND_URL must be configured in production.');
+}
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? allowedOrigins
+    : (allowedOrigins.length > 0 ? allowedOrigins : true),
+}));
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -24,6 +35,9 @@ app.use('/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 4000;
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`CST-SFBS backend running on port ${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`CST-SFBS backend running on port ${PORT}`);
+    require('./reminders').startReminderScheduler();
+  });
 }
 module.exports = app;

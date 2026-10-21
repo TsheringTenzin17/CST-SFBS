@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) NOT NULL CHECK (role IN ('student','faculty','outsider','admin')),
   password_hash VARCHAR(255) NOT NULL,
   contact_number VARCHAR(30),
+  email_verified BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP DEFAULT now()
 );
 
@@ -72,6 +73,24 @@ CREATE TABLE IF NOT EXISTS support_requests (
   status VARCHAR(20) NOT NULL DEFAULT 'pending_review'
     CHECK (status IN ('pending_review', 'in_progress', 'resolved')),
   created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  token_hash CHAR(64) PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  purpose VARCHAR(30) NOT NULL CHECK (purpose IN ('email_verification', 'password_reset')),
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  consumed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS booking_reminders (
+  id BIGSERIAL PRIMARY KEY,
+  booking_id INT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  scheduled_for TIMESTAMPTZ NOT NULL,
+  lead_hours SMALLINT NOT NULL CHECK (lead_hours IN (2, 24)),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (booking_id, scheduled_for, lead_hours)
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_facility_date ON bookings(facility_id, booking_date);

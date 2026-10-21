@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import AuthLayout from '../components/AuthLayout';
+import { apiCall } from '../utils/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
@@ -14,12 +15,15 @@ function Login() {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [resending, setResending] = useState(false);
   const justRegistered = location.state?.registered;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setInfo(null);
+    setVerificationPending(false);
     const id = identifier.trim();
     setLoading(true);
     try {
@@ -31,6 +35,7 @@ function Login() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Login failed');
+        setVerificationPending(data.code === 'EMAIL_NOT_VERIFIED');
         return;
       }
       if (!data.token) {
@@ -43,6 +48,19 @@ function Login() {
       setError('Could not reach the server. Is the backend running?');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function resendVerification() {
+    setResending(true);
+    setInfo('');
+    try {
+      const result = await apiCall('/auth/resend-verification', 'POST', { email: identifier.trim() });
+      setInfo(result.message);
+    } catch (requestError) {
+      setInfo(requestError.message);
+    } finally {
+      setResending(false);
     }
   }
 
@@ -69,16 +87,7 @@ function Login() {
         <div className="auth-field">
           <div className="auth-label-row">
             <span className="auth-label">Password</span>
-            <a
-              href="#"
-              className="auth-link"
-              onClick={(e) => {
-                e.preventDefault();
-                setInfo('Password reset is not available yet. Please contact the DSA office.');
-              }}
-            >
-              Forgot password?
-            </a>
+            <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
           </div>
           <input
             type="password"
@@ -95,6 +104,11 @@ function Login() {
         </button>
       </form>
 
+      {verificationPending && identifier.includes('@') && (
+        <button className="auth-link" disabled={resending} onClick={resendVerification} type="button">
+          {resending ? 'Sending…' : 'Resend verification email'}
+        </button>
+      )}
       <p className="auth-switch">
         New here? <Link to="/register" className="auth-link">Create an account</Link>
       </p>

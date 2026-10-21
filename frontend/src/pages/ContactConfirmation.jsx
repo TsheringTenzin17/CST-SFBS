@@ -32,7 +32,7 @@ function ContactConfirmation() {
         <div className="contact-next-steps">
           <h2>What happens next?</h2>
           <p>Your request is recorded in the system. Email <a href={`mailto:${DSA_EMAIL}`}>{DSA_EMAIL}</a> directly if you need to follow up.</p>
-          <p>This system does not send an email confirmation yet. Keep the ticket ID for reference.</p>
+          <p>A confirmation email is not sent on submission. The DSA office can email you when your ticket is resolved.</p>
         </div>
 
         <div className="contact-confirm-actions">

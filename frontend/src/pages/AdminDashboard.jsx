@@ -4,6 +4,7 @@ import { useAuth } from '../AuthContext';
 import AdminReports from './AdminReports';
 import AdminUsers from './AdminUsers';
 import AdminMaintenance from './AdminMaintenance';
+import AdminSupport from './AdminSupport';
 import { apiCall } from '../utils/api';
 import './admin.css';
 
@@ -11,6 +12,7 @@ const navigation = [
   'Bookings',
   'Maintenance Blocks',
   'Users',
+  'Support Requests',
   'Reports',
 ];
 
@@ -358,6 +360,11 @@ function AdminDashboard() {
         {activeTab === 'Reports' && <section className="admin-panel admin-tab-panel">
           <div className="admin-panel-heading"><h2>Reports &amp; Analytics</h2></div>
           <AdminReports />
+        </section>}
+
+        {activeTab === 'Support Requests' && <section className="admin-panel admin-tab-panel">
+          <div className="admin-panel-heading"><h2>Support Requests</h2></div>
+          <AdminSupport />
         </section>}
       </main>
     </div>

@@ -16,7 +16,7 @@ let failures = 0;
 
 // ---- calling the API -------------------------------------------------------
 async function api(method, path, body) {
-  let adminId = body && (body.admin_user_id || body.test_user_id);
+  let adminId = body && (body.admin_user_id || body.test_user_id || body.user_id);
   if (!adminId) {
     const query = path.match(/[?&](?:admin_user_id|test_user_id)=(\d+)/);
     if (query) adminId = query[1];
@@ -37,12 +37,14 @@ async function api(method, path, body) {
   });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
-const post = (body) => api('POST', '/bookings', body);
+const post = (body) => api('POST', '/bookings', { ...body, test_user_id: body.user_id });
 
 async function sessionToken(userId) {
-  if (sessions.has(Number(userId))) return sessions.get(Number(userId));
-  const account = credentials.get(Number(userId));
-  if (!account) throw new Error(`No test credentials for user ${userId}`);
+  const numericUserId = Number(userId);
+  if (Number.isNaN(numericUserId)) return null;
+  if (sessions.has(numericUserId)) return sessions.get(numericUserId);
+  const account = credentials.get(numericUserId);
+  if (!account) return null;
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -50,7 +52,7 @@ async function sessionToken(userId) {
   });
   const data = await res.json();
   if (!res.ok || !data.token) throw new Error(data.error || 'Could not authenticate test user');
-  sessions.set(Number(userId), data.token);
+  sessions.set(numericUserId, data.token);
   return data.token;
 }
 

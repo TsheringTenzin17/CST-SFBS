@@ -141,10 +141,10 @@ function checkSlotInput(date, start, end) {
 // ---------------------------------------------------------------
 
 // ---- POST /bookings : make a booking -------------------------------------
-router.post('/', async (req, res) => {
-  const { user_id, facility_id, booking_date, purpose } = req.body;
-  if (!user_id || !facility_id || !booking_date || !req.body.start_time || !req.body.end_time) {
-    return res.status(400).json({ error: 'user_id, facility_id, booking_date, start_time and end_time are required' });
+router.post('/', authenticate, async (req, res) => {
+  const { facility_id, booking_date, purpose } = req.body;
+  if (!facility_id || !booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'facility_id, booking_date, start_time and end_time are required' });
   }
   const start = hhmm(req.body.start_time);
   const end = hhmm(req.body.end_time);
@@ -160,20 +160,13 @@ router.post('/', async (req, res) => {
     // This is what guarantees zero double bookings (Objective O3).
     await client.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [facility_id]);
 
-    const userResult = await client.query('SELECT role FROM users WHERE id = $1', [user_id]);
-    if (userResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'User not found' });
-    }
-    const userRole = userResult.rows[0].role;
-
     const slot = await validateSlot(client, { facilityId: facility_id, date: booking_date, start, end });
     if (!slot.ok) {
       await client.query('ROLLBACK');
       return res.status(slot.status).json({ error: slot.message });
     }
 
-    const eligibility = checkEligibility(userRole, slot.rule, booking_date, start);
+    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start);
     if (!eligibility.ok) {
       await client.query('ROLLBACK');
       return res.status(eligibility.status).json({ error: eligibility.message });
@@ -183,11 +176,11 @@ router.post('/', async (req, res) => {
     const inserted = await client.query(
       `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'approved') RETURNING id, status`,
-      [user_id, facility_id, booking_date, start, end, purpose || null]
+      [req.user.id, facility_id, booking_date, start, end, purpose || null]
     );
     await addBookingNotification(
       client,
-      user_id,
+      req.user.id,
       'booking_confirmed',
       `Your booking for ${booking_date} (${start}-${end}) is confirmed.`
     );
@@ -205,9 +198,10 @@ router.post('/', async (req, res) => {
 });
 
 // ---- GET /bookings/user/:userId : "My Bookings" --------------------------
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', authenticate, async (req, res) => {
   const userId = Number(req.params.userId);
   if (!Number.isInteger(userId)) return res.status(400).json({ error: 'Invalid user id' });
+  if (userId !== req.user.id) return res.status(403).json({ error: 'You can only view your own bookings' });
   try {
     const result = await pool.query(
       `SELECT b.id, b.status, b.purpose, b.facility_id,
