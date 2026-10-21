@@ -4,7 +4,7 @@ import UserMenu from './UserMenu';
 
 function Header() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isActive = (path) => (location.pathname === path ? 'active' : '');
 
   return (
@@ -17,7 +17,6 @@ function Header() {
         <Link to="/facilities" className={isActive('/facilities')}>Facilities</Link>
         <Link to="/my-bookings" className={isActive('/my-bookings')}>My Bookings</Link>
         <Link to="/help" className={isActive('/help')}>Help &amp; Contact</Link>
-        {user?.role === 'admin' && <Link to="/admin" className={isActive('/admin')}>Admin</Link>}
       </nav>
       {user ? (
         <UserMenu />

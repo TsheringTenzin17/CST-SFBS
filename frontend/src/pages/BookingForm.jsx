@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { prettyDate } from '../utils/format';
+import { apiCall } from '../utils/api';
 import './Booking.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const ROLE_NAMES = { student: 'Student', faculty: 'Faculty / Staff', outsider: 'Outsider (commercial)', admin: 'Admin' };
 
 function BookingForm() {
@@ -24,8 +24,7 @@ function BookingForm() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/facilities`)
-      .then((res) => res.json())
+    apiCall('/facilities')
       .then((all) => setFacility(all.find((f) => f.id === Number(facilityId)) || null))
       .catch(() => {});
   }, [facilityId]);
@@ -51,27 +50,14 @@ function BookingForm() {
     setConflict(false);
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          facility_id: Number(facilityId),
-          booking_date: date,
-          start_time: start,
-          end_time: end,
-          purpose,
-        }),
+      const data = await apiCall('/bookings', 'POST', {
+        user_id: user.id,
+        facility_id: Number(facilityId),
+        booking_date: date,
+        start_time: start,
+        end_time: end,
+        purpose,
       });
-      const data = await res.json();
-      if (res.status === 409) {
-        setConflict(true);
-        return;
-      }
-      if (!res.ok) {
-        setError(data.error || 'Booking failed');
-        return;
-      }
       navigate('/booking-confirmed', {
         state: {
           bookingId: data.booking.id,
@@ -80,8 +66,12 @@ function BookingForm() {
           role: user.role,
         },
       });
-    } catch {
-      setError('Could not reach the server. Is the backend running?');
+    } catch (requestError) {
+      if (requestError.status === 409) {
+        setConflict(true);
+      } else {
+        setError(requestError.message || 'Booking failed');
+      }
     } finally {
       setSubmitting(false);
     }

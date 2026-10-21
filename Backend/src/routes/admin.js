@@ -1,20 +1,19 @@
 // =============================================================
 // Backend/src/routes/admin.js  —  users + reports for the admin dashboard
 // =============================================================
-// GET   /admin/users?admin_user_id=             list accounts
+// GET   /admin/users                            list accounts
 // PATCH /admin/users/:id/role                   change an account's role
-// GET   /admin/reports?admin_user_id=           numbers for the Reports tab
-// Every route checks that the caller is an admin.
+// GET   /admin/reports                          numbers for the Reports tab
+// Every route checks the signed-in user's current database role.
 const express = require('express');
 const pool = require('../db');
-const { isAdmin } = require('../adminCheck');
+const { requireAdmin } = require('../auth');
 const router = express.Router();
 
 const ROLES = ['student', 'faculty', 'outsider', 'admin'];
 
-router.get('/users', async (req, res) => {
+router.get('/users', requireAdmin, async (req, res) => {
   try {
-    if (!(await isAdmin(req.query.admin_user_id))) return res.status(403).json({ error: 'Admins only' });
     // password_hash is deliberately NOT selected.
     const result = await pool.query(
       `SELECT id, full_name, email, role, student_staff_id, contact_number,
@@ -30,12 +29,11 @@ router.get('/users', async (req, res) => {
 
 // This is also how a NEW admin is created from the website: an existing
 // admin promotes an account that has already registered.
-router.patch('/users/:id/role', async (req, res) => {
-  const { admin_user_id, role } = req.body;
+router.patch('/users/:id/role', requireAdmin, async (req, res) => {
+  const { role } = req.body;
   if (!ROLES.includes(role)) return res.status(400).json({ error: `role must be one of: ${ROLES.join(', ')}` });
   try {
-    if (!(await isAdmin(admin_user_id))) return res.status(403).json({ error: 'Admins only' });
-    if (Number(req.params.id) === Number(admin_user_id) && role !== 'admin') {
+    if (Number(req.params.id) === req.user.id && role !== 'admin') {
       return res.status(400).json({ error: 'You cannot remove your own admin role (you would lock yourself out)' });
     }
     const result = await pool.query(
@@ -50,10 +48,8 @@ router.patch('/users/:id/role', async (req, res) => {
   }
 });
 
-router.get('/reports', async (req, res) => {
+router.get('/reports', requireAdmin, async (req, res) => {
   try {
-    if (!(await isAdmin(req.query.admin_user_id))) return res.status(403).json({ error: 'Admins only' });
-
     const [totals, byFacility, byRole, users] = await Promise.all([
       pool.query(
         `SELECT COUNT(*)::int AS total,

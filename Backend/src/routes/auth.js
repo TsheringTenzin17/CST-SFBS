@@ -7,6 +7,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
+const { authenticate, createSessionToken } = require('../auth');
 const router = express.Router();
 
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
@@ -83,11 +84,15 @@ router.post('/login', async (req, res) => {
     if (!ok) return res.status(401).json({ error: 'Invalid email/ID or password' });
 
     const { password_hash, ...user } = row;
-    res.json({ user });
+    res.json({ user, token: createSessionToken(user.id) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
   }
+});
+
+router.get('/me', authenticate, (req, res) => {
+  res.json({ user: req.user });
 });
 
 module.exports = router;
