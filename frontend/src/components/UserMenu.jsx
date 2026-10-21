@@ -76,9 +76,9 @@ function UserMenu() {
 
           <div className="user-menu-divider" />
 
-          <Link to="/profile" role="menuitem" className="user-menu-item" onClick={() => setOpen(false)}>
+          <Link to="/settings" role="menuitem" className="user-menu-item" onClick={() => setOpen(false)}>
             <svg {...icon}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
-            My Profile
+            Profile &amp; Settings
           </Link>
           <Link to="/my-bookings" role="menuitem" className="user-menu-item" onClick={() => setOpen(false)}>
             <svg {...icon}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
@@ -88,11 +88,6 @@ function UserMenu() {
             <svg {...icon}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></svg>
             Notifications
           </Link>
-          <Link to="/settings" role="menuitem" className="user-menu-item" onClick={() => setOpen(false)}>
-            <svg {...icon}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
-            Settings
-          </Link>
-
           <div className="user-menu-divider" />
 
           <button type="button" role="menuitem" className="user-menu-item user-menu-logout" onClick={handleLogout}>
