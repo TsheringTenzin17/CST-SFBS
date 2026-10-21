@@ -5,6 +5,7 @@ import AuthLayout from '../components/AuthLayout';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
 
+// The backend independently applies this rule; the helper only gives registrants immediate feedback.
 // Role comes from the college email, as in the design:
 // 02210145.cst@rub.edu.bt -> student, kwangdi.cst@rub.edu.bt -> staff (faculty)
 function roleFromEmail(email) {
@@ -81,7 +82,11 @@ function Register() {
         setError(data.error || 'Registration failed');
         return;
       }
-      navigate('/login', { state: { registered: true } });
+      // Carry only confirmation details to the success screen; credentials stay out of route state.
+      navigate('/registration-success', {
+        replace: true,
+        state: { email: data.user.email, role: data.user.role },
+      });
     } catch {
       setError('Could not reach the server. Is the backend running?');
     } finally {

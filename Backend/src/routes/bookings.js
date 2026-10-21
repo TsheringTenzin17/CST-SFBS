@@ -13,9 +13,22 @@
 //   C. routes
 const express = require('express');
 const pool = require('../db');
-const { requireAdmin } = require('../auth');
+const { authenticate, requireAdmin } = require('../auth');
 const { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const router = express.Router();
+
+async function addBookingNotification(queryable, userId, type, message) {
+  const preferences = await queryable.query(
+    'SELECT booking_updates FROM user_notification_preferences WHERE user_id = $1',
+    [userId]
+  );
+  // Missing preference rows use the enabled-by-default behavior from the settings API.
+  if (preferences.rows[0]?.booking_updates === false) return;
+  await queryable.query(
+    'INSERT INTO notifications (user_id, type, message) VALUES ($1, $2, $3)',
+    [userId, type, message]
+  );
+}
 
 // ---------------------------------------------------------------
 // A. HELPERS
@@ -172,9 +185,11 @@ router.post('/', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, 'approved') RETURNING id, status`,
       [user_id, facility_id, booking_date, start, end, purpose || null]
     );
-    await client.query(
-      `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_confirmed', $2)`,
-      [user_id, `Your booking for ${booking_date} (${start}-${end}) is confirmed.`]
+    await addBookingNotification(
+      client,
+      user_id,
+      'booking_confirmed',
+      `Your booking for ${booking_date} (${start}-${end}) is confirmed.`
     );
 
     await client.query('COMMIT');
@@ -195,7 +210,7 @@ router.get('/user/:userId', async (req, res) => {
   if (!Number.isInteger(userId)) return res.status(400).json({ error: 'Invalid user id' });
   try {
     const result = await pool.query(
-      `SELECT b.id, b.status, b.purpose,
+      `SELECT b.id, b.status, b.purpose, b.facility_id,
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
               to_char(b.start_time, 'HH24:MI') AS start_time,
               to_char(b.end_time, 'HH24:MI') AS end_time,
@@ -213,23 +228,45 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // ---- PATCH /bookings/:id/cancel : a user cancels their OWN booking -------
-router.patch('/:id/cancel', async (req, res) => {
-  const { user_id } = req.body;
-  if (!user_id) return res.status(400).json({ error: 'user_id is required' });
+router.patch('/:id/cancel', authenticate, async (req, res) => {
+  const bookingId = Number(req.params.id);
+  if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'Invalid booking id' });
+  }
+
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+    const result = await client.query(
       `UPDATE bookings SET status = 'cancelled'
        WHERE id = $1 AND user_id = $2 AND status = 'approved'
-       RETURNING id, status`,
-      [req.params.id, user_id]
+       RETURNING id, user_id, status,
+                 to_char(booking_date, 'YYYY-MM-DD') AS booking_date,
+                 to_char(start_time, 'HH24:MI') AS start_time,
+                 to_char(end_time, 'HH24:MI') AS end_time`,
+      [bookingId, req.user.id]
     );
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Booking not found, not yours, or already cancelled' });
     }
-    res.json({ booking: result.rows[0] });
+
+    const booking = result.rows[0];
+    await addBookingNotification(
+      client,
+      booking.user_id,
+      'booking_cancelled',
+      `Your booking for ${booking.booking_date} (${booking.start_time}-${booking.end_time}) was cancelled.`
+    );
+
+    await client.query('COMMIT');
+    res.json({ booking: { id: booking.id, status: booking.status } });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Failed to cancel booking' });
+  } finally {
+    client.release();
   }
 });
 
@@ -277,9 +314,11 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     }
 
     const b = result.rows[0];
-    await client.query(
-      `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_cancelled', $2)`,
-      [b.user_id, `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin. Reason: ${reason.trim()}`]
+    await addBookingNotification(
+      client,
+      b.user_id,
+      'booking_cancelled',
+      `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin. Reason: ${reason.trim()}`
     );
     await client.query('COMMIT');
     res.json({ booking: { id: b.id, status: 'cancelled' } });
@@ -292,7 +331,77 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// ---- PATCH /bookings/:id/reschedule : admin moves a booking --------------
+// ---- PATCH /bookings/:id/reschedule-request : owner moves own booking ----
+router.patch('/:id/reschedule-request', authenticate, async (req, res) => {
+  const { booking_date, reason } = req.body;
+  if (!booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'booking_date, start_time and end_time are required' });
+  }
+  if (typeof reason !== 'string' || !reason.trim()) {
+    return res.status(400).json({ error: 'A reason for rescheduling is required' });
+  }
+  if (reason.trim().length > 500) {
+    return res.status(400).json({ error: 'The rescheduling reason must be 500 characters or fewer' });
+  }
+  const start = hhmm(req.body.start_time);
+  const end = hhmm(req.body.end_time);
+  const inputError = checkSlotInput(booking_date, start, end);
+  if (inputError) return res.status(400).json({ error: inputError });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const existing = await client.query(
+      `SELECT id, user_id, facility_id FROM bookings
+       WHERE id = $1 AND user_id = $2 AND status = 'approved' FOR UPDATE`,
+      [req.params.id, req.user.id]
+    );
+    if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Upcoming confirmed booking not found' });
+    }
+    const booking = existing.rows[0];
+
+    await client.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [booking.facility_id]);
+
+    const slot = await validateSlot(client, {
+      facilityId: booking.facility_id, date: booking_date, start, end, excludeBookingId: booking.id,
+    });
+    if (!slot.ok) {
+      await client.query('ROLLBACK');
+      return res.status(slot.status).json({ error: slot.message });
+    }
+
+    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start);
+    if (!eligibility.ok) {
+      await client.query('ROLLBACK');
+      return res.status(eligibility.status).json({ error: eligibility.message });
+    }
+
+    await client.query(
+      'UPDATE bookings SET booking_date = $1, start_time = $2, end_time = $3 WHERE id = $4',
+      [booking_date, start, end, booking.id]
+    );
+    await addBookingNotification(
+      client,
+      booking.user_id,
+      'booking_rescheduled',
+      `Your booking was rescheduled to ${booking_date} (${start}-${end}). Reason: ${reason.trim()}`
+    );
+    await client.query('COMMIT');
+    res.json({ booking: { id: booking.id, booking_date, start_time: start, end_time: end } });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') return res.status(409).json({ error: CONFLICT_MESSAGE });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to reschedule booking' });
+  } finally {
+    client.release();
+  }
+});
+
+// ---- PATCH /bookings/:id/reschedule : admin moves any booking -------------
 // Same safety rules as a new booking (rule exists, not maintenance, no
 // overlap, length limit) — an admin can move a booking but cannot create a
 // double booking.
@@ -338,9 +447,11 @@ router.patch('/:id/reschedule', requireAdmin, async (req, res) => {
       'UPDATE bookings SET booking_date = $1, start_time = $2, end_time = $3 WHERE id = $4',
       [booking_date, start, end, booking.id]
     );
-    await client.query(
-      `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_rescheduled', $2)`,
-      [booking.user_id, `Your booking was moved by an admin to ${booking_date} (${start}-${end}).`]
+    await addBookingNotification(
+      client,
+      booking.user_id,
+      'booking_rescheduled',
+      `Your booking was moved by an admin to ${booking_date} (${start}-${end}).`
     );
     await client.query('COMMIT');
     res.json({ booking: { id: booking.id, booking_date, start_time: start, end_time: end } });

@@ -34,24 +34,68 @@ router.post('/', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
   }
   if (end_date < start_date) return res.status(400).json({ error: 'End date cannot be before start date' });
+  if (reason != null && (typeof reason !== 'string' || reason.trim().length > 500)) {
+    return res.status(400).json({ error: 'Reason must be 500 characters or fewer' });
+  }
+  const cleanReason = typeof reason === 'string' ? reason.trim() : '';
 
+  const client = await pool.connect();
+  let transactionStarted = false;
   try {
-    const inserted = await pool.query(
+    await client.query('BEGIN');
+    transactionStarted = true;
+
+    const inserted = await client.query(
       `INSERT INTO maintenance_blocks (facility_id, start_date, end_date, reason, created_by)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [facility_id, start_date, end_date, reason || null, req.user.id]
+      [facility_id, start_date, end_date, cleanReason || null, req.user.id]
     );
-    // Tell the admin how many existing bookings are now affected so they can
-    // cancel or reschedule them from the Bookings tab.
-    const affected = await pool.query(
+
+    // Count affected reservations and notify each affected account once, respecting saved preferences.
+    const affected = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings
        WHERE facility_id = $1 AND status <> 'cancelled' AND booking_date BETWEEN $2 AND $3`,
       [facility_id, start_date, end_date]
     );
-    res.status(201).json({ id: inserted.rows[0].id, affected_bookings: affected.rows[0].n });
+    const recipients = await client.query(
+      `SELECT b.user_id, COUNT(*)::int AS booking_count, f.name AS facility_name
+       FROM bookings b
+       JOIN facilities f ON f.id = b.facility_id
+       LEFT JOIN user_notification_preferences p ON p.user_id = b.user_id
+       WHERE b.facility_id = $1
+         AND b.status <> 'cancelled'
+         AND b.booking_date BETWEEN $2 AND $3
+         AND COALESCE(p.maintenance_alerts, true) = true
+       GROUP BY b.user_id, f.name`,
+      [facility_id, start_date, end_date]
+    );
+
+    for (const recipient of recipients.rows) {
+      const reasonText = cleanReason ? ` Reason: ${cleanReason}` : '';
+      await client.query(
+        `INSERT INTO notifications (user_id, type, message)
+         VALUES ($1, 'maintenance_scheduled', $2)`,
+        [
+          recipient.user_id,
+          `Maintenance has been scheduled for ${recipient.facility_name} from ${start_date} to ${end_date}. ` +
+            `${recipient.booking_count} of your active booking(s) may be affected.${reasonText}`,
+        ]
+      );
+    }
+
+    await client.query('COMMIT');
+    transactionStarted = false;
+    res.status(201).json({
+      id: inserted.rows[0].id,
+      affected_bookings: affected.rows[0].n,
+      notified_users: recipients.rows.length,
+    });
   } catch (err) {
+    if (transactionStarted) await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Failed to create maintenance block' });
+  } finally {
+    client.release();
   }
 });
 

@@ -1,0 +1,239 @@
+.notifications-page.main {
+  width: min(100%, 1120px);
+  min-height: 0;
+  padding-top: 34px;
+  padding-bottom: 46px;
+}
+
+.notifications-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.notifications-heading .subtitle {
+  margin-bottom: 0;
+}
+
+.notifications-mark-all {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #0757bf;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notifications-mark-all:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.notifications-mark-all:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.notifications-error {
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.notifications-layout {
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.notifications-filters {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.notifications-filters button {
+  display: flex;
+  min-height: 36px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #606a75;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notifications-filters button:hover {
+  background: #f3f6f9;
+}
+
+.notifications-filters button.active {
+  background: #e8f1ff;
+  color: #0757bf;
+  font-weight: 600;
+}
+
+.notifications-filters button span {
+  color: #7c8793;
+  font-size: 11px;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.notification-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dfe3e8;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.notification-card.unread {
+  border-left-color: #0757bf;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 5%);
+}
+
+.notification-card.confirmed { border-left-color: #22c55e; }
+.notification-card.cancelled { border-left-color: #ef4444; }
+.notification-card.maintenance { border-left-color: #f59e0b; }
+.notification-card.update { border-left-color: #3b82f6; }
+
+.notification-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #0757bf;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.notification-card.confirmed .notification-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.notification-card.cancelled .notification-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.notification-card.maintenance .notification-icon {
+  background: #fef3c7;
+  color: #b77900;
+}
+
+.notification-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-content h2 {
+  margin: 1px 0 4px;
+  font-size: 13px;
+}
+
+.notification-content p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notification-time {
+  flex: 0 0 auto;
+  color: #858d96;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.notification-mark-read {
+  margin-top: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0757bf;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.notification-mark-read:hover {
+  text-decoration: underline;
+}
+
+.notification-mark-read:disabled {
+  color: #9ca3af;
+  cursor: wait;
+}
+
+.notifications-empty {
+  margin: 0;
+  padding: 24px 16px;
+  border: 1px solid #dfe3e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .notifications-page.main {
+    padding: 26px 16px 36px;
+  }
+
+  .notifications-heading {
+    flex-direction: column;
+  }
+
+  .notifications-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .notifications-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 440px) {
+  .notification-card {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .notification-icon {
+    width: 29px;
+    height: 29px;
+  }
+
+  .notification-time {
+    font-size: 9px;
+  }
+}

@@ -9,7 +9,7 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
