@@ -5,32 +5,62 @@
 // afterwards, so tests can be re-run any number of times on the shared
 // database without leaving junk behind or colliding with each other.
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const pool = require('../src/db');
 
 const API_URL = process.env.API_URL || 'http://localhost:4000';
 const created = { users: [], blocks: [] };
+const credentials = new Map();
+const sessions = new Map();
 let failures = 0;
 
 // ---- calling the API -------------------------------------------------------
 async function api(method, path, body) {
+  let adminId = body && body.admin_user_id;
+  if (!adminId) {
+    const query = path.match(/[?&]admin_user_id=(\d+)/);
+    if (query) adminId = query[1];
+  }
+  const token = adminId ? await sessionToken(adminId) : null;
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
 const post = (body) => api('POST', '/bookings', body);
 
+async function sessionToken(userId) {
+  if (sessions.has(Number(userId))) return sessions.get(Number(userId));
+  const account = credentials.get(Number(userId));
+  if (!account) throw new Error(`No test credentials for user ${userId}`);
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: account.email, password: account.password }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.token) throw new Error(data.error || 'Could not authenticate test user');
+  sessions.set(Number(userId), data.token);
+  return data.token;
+}
+
 // ---- test data ---------------------------------------------------------------
 async function createUser(role) {
   const email = `test-${role}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
+  const password = `test-password-${Math.random()}`;
   const r = await pool.query(
-    `INSERT INTO users (full_name, email, role, password_hash) VALUES ($1, $2, $3, 'test-only') RETURNING id`,
-    [`Test ${role}`, email, role]
+    `INSERT INTO users (full_name, email, role, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+    [`Test ${role}`, email, role, await bcrypt.hash(password, 10)]
   );
-  created.users.push(r.rows[0].id);
-  return r.rows[0].id;
+  const id = r.rows[0].id;
+  created.users.push(id);
+  credentials.set(id, { email, password });
+  return id;
 }
 
 async function facilityId(name) {

@@ -19,6 +19,7 @@ pool.query(sql)
   .then((result) => {
     const last = Array.isArray(result) ? result[result.length - 1] : result;
     if (last && last.rows && last.rows.length > 0) console.table(last.rows);
+    if (last && last.command && last.command !== 'SELECT' && last.rowCount != null) console.log(`${last.command}: ${last.rowCount} row(s) affected`);
     console.log('Done.');
   })
   .catch((err) => console.error('Failed:', err.message))

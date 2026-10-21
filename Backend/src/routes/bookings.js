@@ -4,7 +4,7 @@
 // POST   /bookings                  make a booking (instant confirmation)
 // GET    /bookings/user/:userId     one user's own bookings        (My Bookings page)
 // PATCH  /bookings/:id/cancel       a user cancels their own booking
-// GET    /bookings?admin_user_id=   all bookings                   (admin only)
+// GET    /bookings                  all bookings                   (admin only)
 // PATCH  /bookings/:id              admin cancels any booking, with a reason
 // PATCH  /bookings/:id/reschedule   admin moves a booking          (admin only)
 //
@@ -13,7 +13,7 @@
 //   C. routes
 const express = require('express');
 const pool = require('../db');
-const { isAdmin } = require('../adminCheck');
+const { requireAdmin } = require('../auth');
 const { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const router = express.Router();
 
@@ -233,12 +233,9 @@ router.patch('/:id/cancel', async (req, res) => {
   }
 });
 
-// ---- GET /bookings?admin_user_id= : every booking (admin) ----------------
-router.get('/', async (req, res) => {
+// ---- GET /bookings : every booking (admin) -------------------------------
+router.get('/', requireAdmin, async (req, res) => {
   try {
-    if (!(await isAdmin(req.query.admin_user_id))) {
-      return res.status(403).json({ error: 'Only an admin can see all bookings' });
-    }
     const result = await pool.query(
       `SELECT b.id, b.status, b.purpose,
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
@@ -259,29 +256,39 @@ router.get('/', async (req, res) => {
 
 // ---- PATCH /bookings/:id : admin cancels any booking ---------------------
 // Exception handling only (no-shows, rule violations, closures).
-router.patch('/:id', async (req, res) => {
-  const { status, admin_user_id, reason } = req.body;
+router.patch('/:id', requireAdmin, async (req, res) => {
+  const { status, reason } = req.body;
   if (status !== 'cancelled') return res.status(400).json({ error: "Only status 'cancelled' is supported" });
+  if (typeof reason !== 'string' || !reason.trim()) {
+    return res.status(400).json({ error: 'A cancellation reason is required' });
+  }
+  const client = await pool.connect();
   try {
-    if (!(await isAdmin(admin_user_id))) return res.status(403).json({ error: 'Only an admin can cancel any booking' });
-
-    const result = await pool.query(
+    await client.query('BEGIN');
+    const result = await client.query(
       `UPDATE bookings SET status = 'cancelled' WHERE id = $1 AND status <> 'cancelled'
        RETURNING id, user_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                  to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
       [req.params.id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found or already cancelled' });
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Booking not found or already cancelled' });
+    }
 
     const b = result.rows[0];
-    await pool.query(
+    await client.query(
       `INSERT INTO notifications (user_id, type, message) VALUES ($1, 'booking_cancelled', $2)`,
-      [b.user_id, `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin.${reason ? ' Reason: ' + reason : ''}`]
+      [b.user_id, `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin. Reason: ${reason.trim()}`]
     );
+    await client.query('COMMIT');
     res.json({ booking: { id: b.id, status: 'cancelled' } });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Failed to cancel booking' });
+  } finally {
+    client.release();
   }
 });
 
@@ -289,10 +296,10 @@ router.patch('/:id', async (req, res) => {
 // Same safety rules as a new booking (rule exists, not maintenance, no
 // overlap, length limit) — an admin can move a booking but cannot create a
 // double booking.
-router.patch('/:id/reschedule', async (req, res) => {
-  const { admin_user_id, booking_date } = req.body;
-  if (!admin_user_id || !booking_date || !req.body.start_time || !req.body.end_time) {
-    return res.status(400).json({ error: 'admin_user_id, booking_date, start_time and end_time are required' });
+router.patch('/:id/reschedule', requireAdmin, async (req, res) => {
+  const { booking_date } = req.body;
+  if (!booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'booking_date, start_time and end_time are required' });
   }
   const start = hhmm(req.body.start_time);
   const end = hhmm(req.body.end_time);
@@ -301,9 +308,6 @@ router.patch('/:id/reschedule', async (req, res) => {
 
   const client = await pool.connect();
   try {
-    if (!(await isAdmin(admin_user_id))) {
-      return res.status(403).json({ error: 'Only an admin can reschedule a booking' });
-    }
     await client.query('BEGIN');
 
     const existing = await client.query(

@@ -33,8 +33,12 @@ function Login() {
         setError(data.error || 'Login failed');
         return;
       }
-      login(data.user);
-      navigate('/');
+      if (!data.token) {
+        setError('The server did not return a valid session. Please try again.');
+        return;
+      }
+      login(data.user, data.token);
+      navigate(data.user.role === 'admin' ? '/admin' : '/', { replace: true });
     } catch {
       setError('Could not reach the server. Is the backend running?');
     } finally {

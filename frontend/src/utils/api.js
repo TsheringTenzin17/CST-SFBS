@@ -9,9 +9,13 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 export async function apiCall(path, method = 'GET', body) {
   let res;
   try {
+    const token = localStorage.getItem('cst_token');
     res = await fetch(`${API_URL}${path}`, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {

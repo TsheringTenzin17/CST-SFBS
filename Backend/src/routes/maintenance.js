@@ -3,12 +3,12 @@
 // =============================================================
 // GET    /maintenance                       list all blocks (anyone can read)
 // POST   /maintenance                       add a block      (admin only)
-// DELETE /maintenance/:id?admin_user_id=    remove a block   (admin only)
+// DELETE /maintenance/:id                  remove a block   (admin only)
 // While a block covers a date, the booking API refuses that facility
 // and the availability page shows "closed for maintenance".
 const express = require('express');
 const pool = require('../db');
-const { isAdmin } = require('../adminCheck');
+const { requireAdmin } = require('../auth');
 const { isValidDate } = require('../time');
 const router = express.Router();
 
@@ -28,20 +28,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  const { admin_user_id, facility_id, start_date, end_date, reason } = req.body;
+router.post('/', requireAdmin, async (req, res) => {
+  const { facility_id, start_date, end_date, reason } = req.body;
   if (!facility_id || !isValidDate(start_date) || !isValidDate(end_date)) {
     return res.status(400).json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
   }
   if (end_date < start_date) return res.status(400).json({ error: 'End date cannot be before start date' });
 
   try {
-    if (!(await isAdmin(admin_user_id))) return res.status(403).json({ error: 'Only an admin can block a facility' });
-
     const inserted = await pool.query(
       `INSERT INTO maintenance_blocks (facility_id, start_date, end_date, reason, created_by)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [facility_id, start_date, end_date, reason || null, admin_user_id]
+      [facility_id, start_date, end_date, reason || null, req.user.id]
     );
     // Tell the admin how many existing bookings are now affected so they can
     // cancel or reschedule them from the Bookings tab.
@@ -57,9 +55,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
-    if (!(await isAdmin(req.query.admin_user_id))) return res.status(403).json({ error: 'Only an admin can remove a block' });
     await pool.query('DELETE FROM maintenance_blocks WHERE id = $1', [req.params.id]);
     res.json({ deleted: true });
   } catch (err) {

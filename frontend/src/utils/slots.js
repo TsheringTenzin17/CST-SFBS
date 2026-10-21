@@ -21,7 +21,7 @@ export const ROLE_LABELS = {
 };
 
 export const STATE_LABELS = {
-  maintenance: 'Closed (maintenance)',
+  maintenance: 'Closed for maintenance',
   past: 'Passed',
   unavailable: 'Not bookable',
   booked: 'Booked',
