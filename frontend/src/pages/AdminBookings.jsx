@@ -198,4 +198,4 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
       )}
     </section>
   );
-}doe
+}

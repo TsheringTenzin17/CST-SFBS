@@ -73,7 +73,8 @@ function App() {
   return (
     <div className="page">
       {!hideChrome && <Header />}
-      <Routes>
+      <div className="page-content">
+        <Routes>
         <Route path="/" element={<ClientPage><Home /></ClientPage>} />
         <Route path="/facilities" element={<ClientPage><Facilities /></ClientPage>} />
         <Route path="/login" element={<AuthPage><Login /></AuthPage>} />
@@ -97,8 +98,9 @@ function App() {
         <Route path="/help" element={<ClientPage><Contact /></ClientPage>} />
         <Route path="/help/confirmation" element={<ClientPage><ContactConfirmation /></ClientPage>} />
       </Routes>
-      {!hideChrome && <Footer />}
     </div>
+    {!hideChrome && <Footer />}
+  </div>
   );
 }
 

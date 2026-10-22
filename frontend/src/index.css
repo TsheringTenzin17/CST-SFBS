@@ -715,3 +715,5 @@ html { scroll-behavior: smooth; }
   .page-fade { animation: none; }
   * { transition: none !important; }
 }
+
+#root > .page { flex: 1; min-height: 0; }
