@@ -13,6 +13,7 @@ const { sendEmail } = require('../email');
 const router = express.Router();
 
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
+const OUTSIDER_EMAIL = /^[^@\s]+@gmail\.com$/i;
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 function hashToken(token) {
@@ -62,6 +63,9 @@ router.post('/register', async (req, res) => {
     if (requestedRole === 'student' || requestedRole === 'faculty') {
       return res.status(400).json({ error: 'Student and staff accounts need a college email ending .cst@rub.edu.bt' });
     }
+       if (!OUTSIDER_EMAIL.test(email)) {
+     return res.status(400).json({ error: 'Use your college email (.cst@rub.edu.bt) or a Gmail address (@gmail.com) to register.' });
+   }
     role = 'outsider';
   }
 
@@ -223,14 +227,17 @@ router.post('/forgot-password', async (req, res) => {
       const user = result.rows[0];
       const token = await issueToken(user.id, 'password_reset', 1);
       const resetUrl = actionUrl('/reset-password', token);
-      if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) {
+            const emailConfigured =
+        (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) ||
+        (process.env.RESEND_API_KEY && process.env.RESEND_FROM);
+      if (!emailConfigured) {
         if (process.env.NODE_ENV !== 'production') {
           return res.json({
             message: 'Email delivery is not configured. Use this local development reset link (valid for one hour).',
             reset_url: resetUrl,
           });
         }
-        throw new Error('Email is not configured. Set RESEND_API_KEY and RESEND_FROM.');
+        throw new Error('Email is not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
       }
       await sendEmail({
         to: user.email,
