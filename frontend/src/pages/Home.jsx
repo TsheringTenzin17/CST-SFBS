@@ -4,7 +4,7 @@
 // Sections:  1. data   2. hero banner   3. "Our Sports Arenas" cards
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DESCRIPTIONS } from '../facilityMeta';
+import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities } from '../utils/availability';
 import { todayString } from '../utils/slots';
@@ -57,7 +57,7 @@ function Home() {
               <Link to={`/facilities/${f.courtIds[0]}`} className="card card-link" key={f.group_name}>
                 <img
                   className="card-img"
-                  src={`/images/${f.type}.jpg`}
+                  src={IMAGES[f.type]}
                   alt={f.displayName}
                   onError={(e) => { e.target.style.visibility = 'hidden'; }}
                 />
