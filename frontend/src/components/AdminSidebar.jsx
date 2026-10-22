@@ -1,37 +1,43 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
-// The ONE admin menu. To add or rename an admin page, change this list only.
+// key = what AdminDashboard checks, label = what the sidebar shows
 export const ADMIN_NAV = [
-  { to: '/admin/bookings', label: 'Bookings' },
-  { to: '/admin/maintenance', label: 'Maintenance Blocks' },
-  { to: '/admin/users', label: 'Users' },
-  { to: '/admin/support', label: 'Support Requests' },
-  { to: '/admin/reports', label: 'Reports' },
+  { to: '/admin/dashboard',   key: 'Dashboard',          label: 'Dashboard' },
+  { to: '/admin/bookings',    key: 'Bookings',           label: 'Manage Bookings' },
+  { to: '/admin/maintenance', key: 'Maintenance Blocks', label: 'Maintenance Blocks' },
+  { to: '/admin/users',       key: 'Users',              label: 'Registered Users' },
+  { to: '/admin/reports',     key: 'Reports',            label: 'Reports & Analysis' },
+  { to: '/admin/support',     key: 'Support Requests',   label: 'System Settings' },
 ];
 
-function AdminSidebar({ onLogout }) {
+export default function AdminSidebar({ onLogout }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <aside className="admin-sidebar">
-      <div className="admin-brand">
-        <span className="admin-brand-mark">C</span>
-        <span>CST-SFBS</span>
-      </div>
-      <nav className="admin-nav" aria-label="Admin navigation">
-        {ADMIN_NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) => `admin-nav-item${isActive ? ' is-active' : ''}`}
-          >
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-        <button className="admin-nav-item admin-logout" onClick={onLogout} type="button">
-          Sign out
-        </button>
-      </nav>
-    </aside>
+    <>
+      <button className="adm-menu-btn" aria-expanded={open} aria-controls="adm-sidebar" onClick={() => setOpen((o) => !o)}>
+        Menu
+      </button>
+
+      <aside id="adm-sidebar" className={`adm-sidebar ${open ? 'open' : ''}`}>
+        <div className="adm-brand">
+          <img src="/images/logo.png" alt="" className="adm-logo" />
+          <b>CST-SFBS</b>
+          <small>College of Science and Technology</small>
+        </div>
+
+        <nav className="adm-nav" aria-label="Admin">
+          {ADMIN_NAV.map((l) => (
+            <NavLink key={l.to} to={l.to} onClick={() => setOpen(false)}
+              className={({ isActive }) => (isActive ? 'active' : '')}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {onLogout && <button className="adm-logout" onClick={onLogout}>Log out</button>}
+      </aside>
+    </>
   );
 }
-
-export default AdminSidebar;
