@@ -4,7 +4,7 @@
 // Sections:  1. data   2. filter + sort   3. page layout
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DESCRIPTIONS } from '../facilityMeta';
+import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities, slotsText } from '../utils/availability';
 import { todayString } from '../utils/slots';
@@ -69,7 +69,7 @@ function Facilities() {
             <div className="card" key={f.group_name}>
               <img
                 className="card-img"
-                src={`/images/${f.type}.jpg`}
+                src={IMAGES[f.type]}
                 alt={f.displayName}
                 onError={(e) => { e.target.style.visibility = 'hidden'; }}
               />

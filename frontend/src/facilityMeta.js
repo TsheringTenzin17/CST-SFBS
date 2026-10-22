@@ -12,3 +12,12 @@ export const DESCRIPTIONS = {
   table_tennis: '2 professional-grade indoor tables with rubberized non-slip mat flooring and dedicated umpire stands.',
   archery: 'Authentic Bhutanese traditional and Olympic-grade compound archery range reaching standard long distances.',
 };
+
+export const IMAGES = {
+  football: '/images/fg.jpeg',
+  basketball: '/images/bb.jpeg',
+  volleyball: '/images/volleyball.jpeg',
+  badminton: '/images/bmt.jpeg',
+  table_tennis: '/images/tt.jpeg',
+  archery: '/images/archery.jpeg',
+};
