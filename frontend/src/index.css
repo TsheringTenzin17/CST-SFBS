@@ -4,7 +4,7 @@
 */
 :root {
   --blue: #255463;        /* main brand  dark cyan/blue */
-  --blue-dark: #0947a3;   /* darker blue for button hover */
+  --blue-dark: #1a3d48;   /* darker teal for button hover / active menu item */
   --orange: #f59e0b;      /* accent orange */
   --green: #16a34a;       /* green button color */
   --border: #e5e5e5;      /* light grey lines and borders */

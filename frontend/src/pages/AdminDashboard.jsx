@@ -1,22 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import AdminReports from './AdminReports';
 import AdminUsers from './AdminUsers';
 import AdminMaintenance from './AdminMaintenance';
 import AdminSupport from './AdminSupport';
+import AdminSidebar, { ADMIN_NAV } from '../components/AdminSidebar';
 import { apiCall } from '../utils/api';
 import './admin.css';
 
-const navigation = [
-  'Bookings',
-  'Maintenance Blocks',
-  'Users',
-  'Support Requests',
-  'Reports',
-];
-
-const CHART_COLORS = ['#0755b6', '#24a148', '#f59e0b', '#8b5cf6', '#ef4444', '#06a6a6'];
+const CHART_COLORS = ['#255463', '#24a148', '#f59e0b', '#8b5cf6', '#ef4444', '#06a6a6'];
 
 function formatDate(value) {
   return String(value || '').slice(0, 10) || '—';
@@ -30,7 +23,9 @@ function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState('Bookings');
+  const { pathname } = useLocation();
+  // The tab comes from the URL (/admin/users, /admin/reports, ...) so refresh and back button work.
+  const activeTab = (ADMIN_NAV.find((item) => pathname.startsWith(item.to)) || ADMIN_NAV[0]).label;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [facilityFilter, setFacilityFilter] = useState('');
@@ -148,28 +143,7 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <span className="admin-brand-mark">A</span>
-          <span>Admin Control</span>
-        </div>
-        <nav className="admin-nav" aria-label="Admin navigation">
-          {navigation.map((item) => (
-            <button
-              aria-current={activeTab === item ? 'page' : undefined}
-              className={`admin-nav-item${activeTab === item ? ' is-active' : ''}`}
-              key={item}
-              onClick={() => setActiveTab(item)}
-              type="button"
-            >
-              <span>{item}</span>
-            </button>
-          ))}
-          <button className="admin-nav-item admin-logout" onClick={handleLogout} type="button">
-            Sign out
-          </button>
-        </nav>
-      </aside>
+      <AdminSidebar onLogout={handleLogout} />
 
       <main className="admin-content">
         <header className="admin-page-header">

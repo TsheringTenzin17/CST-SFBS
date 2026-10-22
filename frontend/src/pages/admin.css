@@ -9,7 +9,7 @@
 .admin-sidebar {
   flex: 0 0 200px;
   padding: 16px 12px;
-  background: #255463;
+  background: var(--blue);
   color: #fff;
 }
 
@@ -28,7 +28,7 @@
   height: 25px;
   place-items: center;
   border-radius: 5px;
-  background: #f59e0b;
+  background: var(--orange);
   color: #fff;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .admin-nav-item.is-active {
-  background: #06458f;
+  background: var(--blue-dark);
   font-weight: 700;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .admin-denied a {
-  color: #0755b6;
+  color: var(--blue);
 }
 
 .admin-nav-item.is-disabled {
@@ -122,7 +122,7 @@
 
 .admin-page-header h1 {
   margin: 0 0 4px;
-  color: #0755b6;
+  color: var(--blue);
   font-size: 26px;
 }
 
@@ -163,7 +163,7 @@
 }
 
 .admin-stat-card .admin-stat-blue {
-  color: #0755b6;
+  color: var(--blue);
 }
 
 .admin-stat-card .admin-stat-red {
@@ -248,7 +248,7 @@
 }
 
 .admin-support-request header a {
-  color: #0755b6;
+  color: var(--blue);
   font-size: 13px;
 }
 
@@ -544,7 +544,7 @@
 }
 
 .admin-primary-button {
-  background: #0755b6;
+  background: var(--blue);
   color: #fff;
 }
 
@@ -640,3 +640,8 @@
     flex-basis: 170px;
   }
 }
+
+/* Sidebar links are <a> (NavLink) now, not <button> */
+a.admin-nav-item { text-decoration: none; }
+.admin-nav-item:hover { background: rgba(255, 255, 255, 0.12); }
+.admin-nav-item.is-active, .admin-nav-item.is-active:hover { background: var(--blue-dark); }
