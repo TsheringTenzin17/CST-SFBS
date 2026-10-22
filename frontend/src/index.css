@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap");
+
 /*
    1. VARIABLES: colors used all over the site.
    Change a color here and it updates everywhere.
@@ -20,9 +22,15 @@
 
 body {
   margin: 0;                                        /* remove the browser's default gap */
-  font-family: 'Roboto', system-ui, sans-serif;     /* use Roboto, else the system font */
+  font-family: Barlow, system-ui, sans-serif;
   background: #f7f7f7;                              /* light grey page background */
   color: #1a1a1a;                                   /* near-black text */
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
 }
 
 a {

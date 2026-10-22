@@ -202,32 +202,41 @@
 }
 
 .my-bookings-reschedule {
-  margin-right: 10px;
-  color: #0757bf;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #dbe8eb;
+  color: #245562;
+  font: 600 12px Barlow, sans-serif;
   text-decoration: none;
 }
 
 .my-bookings-reschedule:hover {
-  text-decoration: underline;
+  background: #245562;
+  color: #fff;
 }
 
 .my-bookings-cancel {
+  margin-left: 6px;
   padding: 6px 10px;
   border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: #b91c1c;
-  font-size: 12px;
+  border-radius: 8px;
+  background: #fbe9e8;
+  color: #b4322d;
+  font: 600 12px Barlow, sans-serif;
   cursor: pointer;
 }
 
 .my-bookings-cancel:hover:not(:disabled) {
-  background: #fef2f2;
+  background: #b4322d;
+  color: #fff;
 }
 
 .my-bookings-cancel:disabled {
-  color: #999;
+  opacity: 0.6;
   cursor: wait;
 }
 
