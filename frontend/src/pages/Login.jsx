@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout, { SPORTS } from '../components/AuthLayout';
 import { apiCall } from '../utils/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -65,7 +65,11 @@ function Login() {
   }
 
   return (
-    <AuthLayout tagline="Nurturing sporting excellence, teamwork and healthy campus life.">
+      <AuthLayout
+        headline={<>Book your court.<br />Play your game.</>}
+        tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
+        chips={SPORTS}
+      >
       <h1>Sign in</h1>
       <p className="auth-sub">Students, staff and outsiders use the same sign-in.</p>
 
