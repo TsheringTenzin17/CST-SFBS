@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout, { SPORTS } from '../components/AuthLayout';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
@@ -116,11 +116,9 @@ function Register() {
 
   return (
     <AuthLayout
-      tagline={
-        isStaff
-          ? 'Nurturing sporting excellence, teamwork and healthy campus life.'
-          : 'Outside groups and commercial users are welcome to book under the college facility rules.'
-      }
+      headline={<>Join the game.<br />Book your court.</>}
+      tagline="Create an account to reserve campus sports facilities in a few taps, without conflicts."
+      chips={SPORTS}
     >
       <h1>Create your account</h1>
       <p className="auth-sub">

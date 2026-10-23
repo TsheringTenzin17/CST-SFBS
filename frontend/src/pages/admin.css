@@ -1,18 +1,3 @@
-/* =====================================================================
-   CST-SFBS ADMIN STYLES
-   Sections:
-   1. Theme + layout
-   2. Sidebar
-   3. Main content, stat cards, panels
-   4. Buttons, forms, errors
-   5. Dashboard (usage chart, quick actions)
-   6. Manage Bookings (filters, table, badges, action forms)
-   7. Registered Users
-   8. Reports & Analysis
-   9. System Settings / Support
-   10. Mobile + reduced motion
-   ===================================================================== */
-
 /* ===== 1. Theme + layout ===== */
 .admin-dashboard {
   --theme: #245562;
@@ -60,8 +45,18 @@
   display: flex;
   flex-direction: column;
 }
-.adm-brand { padding: 0 8px 24px; }
-.adm-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+.adm-brand { padding: 0 8px 20px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+
+.adm-logo {
+  display: block;
+  width: 100%;
+  height: 64px;
+  object-fit: contain;
+  padding: 8px 12px;
+  background: #fff;                 /* light badge so the navy logo is always visible */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
 .adm-brand b { display: block; font: 700 24px/1.1 "Barlow Condensed", sans-serif; margin-top: 12px; }
 .adm-brand small { display: block; color: #cfe3e8; font-size: 12px; line-height: 1.3; margin-top: 2px; }
 
