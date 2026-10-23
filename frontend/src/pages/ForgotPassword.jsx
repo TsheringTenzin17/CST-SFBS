@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout, { SPORTS } from '../components/AuthLayout';
 import { apiCall } from '../utils/api';
 
 function ForgotPassword() {
@@ -28,9 +28,16 @@ function ForgotPassword() {
   }
 
   return (
-    <AuthLayout tagline="Nurturing sporting excellence, teamwork and healthy campus life.">
+    <AuthLayout
+      headline={<>Book your court.<br />Play your game.</>}
+      tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
+      chips={SPORTS}
+    >
       <h1>Reset your password</h1>
-      <p className="auth-sub">Enter your account email and we’ll send a one-hour reset link if a verified account exists.</p>
+      <p className="auth-sub">
+        Enter your account email and we’ll send a one-hour reset link if a verified account exists.
+      </p>
+
       {message && <p className="auth-note" role="status">{message}</p>}
       {resetUrl && (
         <p className="auth-note">
@@ -38,16 +45,26 @@ function ForgotPassword() {
         </p>
       )}
       {error && <p className="auth-error" role="alert">{error}</p>}
+
       <form onSubmit={submit} className="auth-form">
         <label className="auth-field">
           <span className="auth-label">Email</span>
-          <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
         </label>
         <button className="auth-submit" disabled={loading} type="submit">
           {loading ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
-      <p className="auth-switch"><Link className="auth-link" to="/login">Back to sign in</Link></p>
+
+      <p className="auth-switch">
+        <Link className="auth-link" to="/login">Back to sign in</Link>
+      </p>
     </AuthLayout>
   );
 }
