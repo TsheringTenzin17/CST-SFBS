@@ -83,8 +83,8 @@ function Rules() {
           <p className="rule-note">The DSA left archery open, so these hours were proposed by the project team.</p>
           <ul>
             <li>Monday – Friday: 4:00 PM – 6:00 PM (daylight only).</li>
-            <li>Saturday – Sunday: 9:00 AM – 4:00 PM.</li>
-            <li>1-hour bookings.</li>
+            <li>Saturday – Sunday: 8:00 AM – 10:00 PM.</li>
+            <li>2-hour bookings.</li>
           </ul>
         </section>
       </div>
