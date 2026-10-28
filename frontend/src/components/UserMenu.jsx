@@ -43,6 +43,13 @@ function UserMenu() {
 
   const name = titleCase(user.full_name ?? user.name ?? '');
   const role = titleCase(user.role || 'Student');
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 
   return (
     <div className="user-menu" ref={ref}>
@@ -56,6 +63,7 @@ function UserMenu() {
         aria-expanded={open}
       >
         <svg {...icon}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="10" r="3" /><path d="M6.17 18.9a7 7 0 0 1 11.66 0" /></svg>
+        <span className="user-menu-btn-avatar" aria-hidden="true">{initials}</span>
         <span className="user-menu-btn-name">{name}</span>
         <svg {...icon} width="16" height="16" className={`user-menu-chevron ${open ? 'open' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
       </button>
