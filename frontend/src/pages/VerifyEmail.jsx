@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import AuthLayout from '../components/AuthLayout';
+import AuthLayout, { SPORTS } from '../components/AuthLayout';
 import { apiCall } from '../utils/api';
 
 function VerifyEmail() {
@@ -28,7 +28,11 @@ function VerifyEmail() {
   }, [token]);
 
   return (
-    <AuthLayout tagline="Nurturing sporting excellence, teamwork and healthy campus life.">
+    <AuthLayout
+      headline={['Book your court.', 'Play your game.']}
+      tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
+      chips={SPORTS}
+    >
       <h1>{error ? 'Email verification failed' : 'Verify your email'}</h1>
       <p className={error ? 'auth-error' : 'auth-note'} role="status">{message}</p>
       {error

@@ -1,9 +1,3 @@
-// =============================================================
-// Backend/src/routes/auth.js  —  register + login
-// =============================================================
-// POST /auth/register   POST /auth/login
-// Passwords are hashed with bcrypt. Old plain-text passwords are upgraded
-// to hashes the first time that user signs in.
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -47,7 +41,7 @@ function roleFromCollegeEmail(email) {
 }
 
 router.post('/register', async (req, res) => {
-  const { full_name, student_staff_id, password, contact_number, role: requestedRole } = req.body;
+  const { full_name, password, contact_number, organization, role: requestedRole } = req.body;
   const email = (req.body.email || '').trim().toLowerCase();
 
   if (!full_name || !email || !password) {
@@ -55,18 +49,40 @@ router.post('/register', async (req, res) => {
   }
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
-  // Assign student/staff roles from email shape; public registration cannot create admins.
+  // Role (and the student ID) always come from the email, never from the request.
+  // Public registration cannot create admins.
   let role;
+  let student_staff_id = null; // staff and outsiders have no ID
   if (COLLEGE_EMAIL.test(email)) {
+    if (requestedRole === 'outsider') {
+      return res.status(400).json({ error: 'College emails must register as Student or Staff' });
+    }
     role = roleFromCollegeEmail(email);
+    if (requestedRole && requestedRole !== role) {
+      return res.status(400).json({
+        error: role === 'student'
+          ? 'This is a student email. Pick the Student option.'
+          : 'This is a staff email. Pick the Staff option.',
+      });
+    }
+    if (role === 'student') student_staff_id = email.split('.cst@')[0];
   } else {
     if (requestedRole === 'student' || requestedRole === 'faculty') {
       return res.status(400).json({ error: 'Student and staff accounts need a college email ending .cst@rub.edu.bt' });
     }
-       if (!OUTSIDER_EMAIL.test(email)) {
-     return res.status(400).json({ error: 'Use your college email (.cst@rub.edu.bt) or a Gmail address (@gmail.com) to register.' });
-   }
+    if (!OUTSIDER_EMAIL.test(email)) {
+      return res.status(400).json({ error: 'Use your college email (.cst@rub.edu.bt) or a Gmail address (@gmail.com) to register.' });
+    }
     role = 'outsider';
+  }
+
+  // Outsiders must give an organization name (or a team name). Students and staff do not.
+  const organizationName = role === 'outsider' ? String(organization || '').trim() : null;
+  if (role === 'outsider' && !organizationName) {
+    return res.status(400).json({ error: 'Enter your organization name, or your team name if you are not with an organization.' });
+  }
+  if (organizationName && organizationName.length > 120) {
+    return res.status(400).json({ error: 'Organization or team name must be 120 characters or fewer' });
   }
 
   try {
@@ -77,9 +93,9 @@ router.post('/register', async (req, res) => {
     // Store only a bcrypt hash for newly registered accounts.
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, false) RETURNING id, full_name, email, role`,
-      [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null]
+      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, organization, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, false) RETURNING id, full_name, email, role`,
+      [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null, organizationName]
     );
     const user = result.rows[0];
     const token = await issueToken(user.id, 'email_verification', 24);
