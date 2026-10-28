@@ -23,6 +23,7 @@ import FacilityDetail from './pages/FacilityDetail';
 import Rules from './pages/Rules';
 import Contact from './pages/Contact';
 import ScrollToTop from './components/ScrollToTop';
+import LiveNotice from './components/LiveNotice';
 
 function ClientPage({ children, requiresAuth = false }) {
   const { user, isLoading } = useAuth();
@@ -73,6 +74,7 @@ function App() {
   return (
     <div className="page">
       {!hideChrome && <Header />}
+      {!hideChrome && <LiveNotice />}
       <div className="page-content">
         <Routes>
         <Route path="/" element={<ClientPage><Home /></ClientPage>} />

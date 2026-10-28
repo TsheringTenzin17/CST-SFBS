@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import UserMenu from './UserMenu';
+import './Header.css';
 
 function Header() {
   const location = useLocation();
@@ -10,7 +11,7 @@ function Header() {
   return (
     <header className="header">
       <Link to="/" className="nav-brand">
-      <img src="/images/logo.png" alt="CST-SFBS logo" className="nav-logo-img" />
+      <img src="/images/white_logo.png" alt="CST-SFBS logo" className="nav-logo-img" />
     </Link>
       <nav className="nav">
         <Link to="/" className={isActive('/')}>Home</Link>
