@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
-import { prettyDate } from '../utils/format';
 import { todayString } from '../utils/slots';
 import './Mybookings.css';
+
+const PORTAL_TITLES = { student: 'Student Booking Portal', faculty: 'Faculty Booking Portal' };
 
 function bookingStatus(booking, today) {
   if (booking.status === 'cancelled') return 'Cancelled';
@@ -14,6 +15,23 @@ function bookingStatus(booking, today) {
   return booking.status;
 }
 
+// '2026-10-25' -> '25 Oct 2026'
+function shortDate(value) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// '15:00' -> '03:00 PM'
+function time12(value) {
+  const [hour, minute] = value.split(':').map(Number);
+  return `${String(hour % 12 || 12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+const FILTERS = [
+  ['all', 'All'],
+  ['upcoming', 'Upcoming'],
+  ['past', 'Past & cancelled'],
+];
+
 function MyBookings() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,6 +39,7 @@ function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [cancelingId, setCancelingId] = useState(null);
   const [message, setMessage] = useState(null);
+  const [filter, setFilter] = useState('all');
 
   const loadBookings = useCallback(async () => {
     if (!user) return;
@@ -68,17 +87,21 @@ function MyBookings() {
   }
 
   const today = todayString();
-  const upcomingCount = bookings.filter(
-    (booking) => booking.status !== 'cancelled' && booking.booking_date >= today
-  ).length;
+  const isUpcoming = (booking) => booking.status !== 'cancelled' && booking.booking_date >= today;
+  const upcomingCount = bookings.filter(isUpcoming).length;
   const confirmedCount = bookings.filter((booking) => booking.status === 'approved').length;
+  const visibleBookings = bookings.filter((booking) => {
+    if (filter === 'upcoming') return isUpcoming(booking);
+    if (filter === 'past') return !isUpcoming(booking);
+    return true;
+  });
 
   return (
     <main className="main my-bookings">
       <div className="my-bookings-heading">
         <div>
-          <h1 className="title">Student Booking Portal</h1>
-          <p className="subtitle">View your reservations and manage upcoming sessions.</p>
+          <h1 className="title">{PORTAL_TITLES[user?.role] || 'Booking Portal'}</h1>
+          <p className="subtitle">View schedules, cancellations, and your reservation history.</p>
         </div>
         <Link className="my-bookings-book-button" to="/facilities">+ Book New Session</Link>
       </div>
@@ -96,23 +119,42 @@ function MyBookings() {
         </article>
         <article className="my-bookings-stat">
           <span>Upcoming Bookings</span>
-          <strong className="upcoming">{upcomingCount} Active</strong>
+          <strong>{upcomingCount} Active</strong>
         </article>
         <article className="my-bookings-stat">
           <span>Confirmed Bookings</span>
-          <strong className="confirmed">{confirmedCount}</strong>
+          <strong>{confirmedCount} {confirmedCount === 1 ? 'Game' : 'Games'}</strong>
         </article>
       </section>
 
       <section className="my-bookings-reservations">
-        <h2>Recent &amp; Upcoming Reservations</h2>
+        <div className="my-bookings-toolbar">
+          <h2>Recent &amp; Upcoming Reservations</h2>
+          <div className="my-bookings-filters" role="group" aria-label="Filter reservations">
+            {FILTERS.map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className={filter === key ? 'active' : ''}
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading && <p className="my-bookings-empty">Loading your bookings…</p>}
         {!loading && bookings.length === 0 && (
           <p className="my-bookings-empty">
             No bookings yet. <Link to="/facilities">Browse facilities to book a session.</Link>
           </p>
         )}
-        {!loading && bookings.length > 0 && (
+        {!loading && bookings.length > 0 && visibleBookings.length === 0 && (
+          <p className="my-bookings-empty">Nothing to show in this view.</p>
+        )}
+        {!loading && visibleBookings.length > 0 && (
           <div className="my-bookings-table-wrap">
             <table className="my-bookings-table">
               <thead>
@@ -121,24 +163,24 @@ function MyBookings() {
                   <th scope="col">Facility</th>
                   <th scope="col">Date &amp; Time</th>
                   <th scope="col">Status</th>
-                  <th scope="col">Actions</th>
+                  <th scope="col" className="my-bookings-actions-head">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((booking) => {
+                {visibleBookings.map((booking) => {
                   const status = bookingStatus(booking, today);
                   const canCancel = status === 'Confirmed';
                   const statusClass = status.toLowerCase().replaceAll(' ', '-');
 
                   return (
                     <tr key={booking.id}>
-                      <td className="my-bookings-id">B-{booking.id}</td>
-                      <td className="my-bookings-facility">{booking.facility_name}</td>
-                      <td>
-                        <span>{prettyDate(booking.booking_date)}</span>
-                        <span className="my-bookings-time">{booking.start_time} – {booking.end_time}</span>
+                      <td className="my-bookings-id" data-label="Booking ID">B-{booking.id}</td>
+                      <td className="my-bookings-facility" data-label="Facility">{booking.facility_name}</td>
+                      <td data-label="Date & Time">
+                        <span className="my-bookings-date">{shortDate(booking.booking_date)}</span>
+                        <span className="my-bookings-time">{time12(booking.start_time)} – {time12(booking.end_time)}</span>
                       </td>
-                      <td><span className={`my-bookings-status ${statusClass}`}>{status}</span></td>
+                      <td data-label="Status"><span className={`my-bookings-status ${statusClass}`}>{status}</span></td>
                       <td className="my-bookings-actions">
                         {canCancel && (
                           <Link className="my-bookings-reschedule" to={`/my-bookings/${booking.id}/reschedule`}>

@@ -15,51 +15,52 @@ INSERT INTO facilities (name, type, group_name, court_label, capacity, location,
   ('Archery Range', 'archery', 'Archery Range', NULL, 10, 'Main Campus', NULL, true)
 ON CONFLICT (name) DO NOTHING;
 
--- 2. Football Ground — daily 6-8am free student slot (all 7 days)
-INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
-SELECT f.id, d, '06:00'::time, '08:00'::time, 'student', NULL, 'none', 'Daily free student slot (football only)'
-FROM facilities f, generate_series(0,6) AS d
+-- 2. Football Ground — DSA timetable (see Timings.docx)
+--    timetable: 'all' = every day; 'standard' = no tournament; 'tournament' = department tournament period.
+--    day_booking_cap = max bookings per day across all capped rules (weekend student matches).
+--    NOTE: 'student_female' needs a gender field on users before anyone can book it.
+INSERT INTO schedule_rules
+  (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, timetable, day_booking_cap, notes)
+SELECT f.id, r.dow, r.s::time, r.e::time, r.role, r.fb_role, r.fb_type, r.tt, r.cap::smallint, r.note
+FROM facilities f
+CROSS JOIN (VALUES
+  -- Monday (1): ground maintenance all day
+  (1, '06:00', '22:00', 'maintenance',    NULL,         'none',         'all',        NULL, 'Monday: ground maintenance'),
+  -- Tuesday (2)
+  (2, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Tuesday: students'),
+  (2, '16:00', '18:00', 'student',        NULL,         'none',         'all',        NULL, 'Tuesday: students'),
+  (2, '18:00', '20:00', 'commercial',     NULL,         'none',         'all',        NULL, 'Tuesday: hiring'),
+  (2, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Tuesday 8-10 PM: students (department tournament)'),
+  (2, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Tuesday 8-10 PM: hiring'),
+  -- Wednesday (3)
+  (3, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Wednesday: students'),
+  (3, '16:00', '18:00', 'student',        NULL,         'none',         'tournament', NULL, 'Wednesday 4-6 PM: students (department tournament)'),
+  (3, '16:00', '18:00', 'student_female', NULL,         'none',         'standard',   NULL, 'Wednesday 4-6 PM: reserved for female students'),
+  (3, '18:00', '20:00', 'student_female', 'commercial', 'auto_release', 'tournament', NULL, 'Wednesday 6-8 PM: female students first; opens to hiring 1 hour before'),
+  (3, '18:00', '20:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Wednesday 6-8 PM: hiring'),
+  (3, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Wednesday 8-10 PM: students (department tournament)'),
+  (3, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Wednesday 8-10 PM: hiring'),
+  -- Thursday (4)
+  (4, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Thursday: students'),
+  (4, '16:00', '18:00', 'student',        NULL,         'none',         'all',        NULL, 'Thursday: students'),
+  (4, '18:00', '20:00', 'faculty',        NULL,         'none',         'all',        NULL, 'Thursday 6-8 PM: reserved for staff'),
+  (4, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Thursday 8-10 PM: students (department tournament)'),
+  (4, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Thursday 8-10 PM: hiring'),
+  -- Friday (5)
+  (5, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Friday: students'),
+  (5, '16:00', '18:00', 'student',        NULL,         'none',         'all',        NULL, 'Friday: students'),
+  (5, '18:00', '20:00', 'commercial',     NULL,         'none',         'all',        NULL, 'Friday: hiring'),
+  (5, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Friday 8-10 PM: students (department tournament)'),
+  (5, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Friday 8-10 PM: hiring'),
+  -- Saturday (6): max 3 student matches, then hiring 4-10 PM
+  (6, '06:00', '12:00', 'student',        NULL,         'none',         'all',        3,    'Saturday: max 3 student matches (6-8, 8-10, 10-12)'),
+  (6, '16:00', '22:00', 'commercial',     NULL,         'none',         'all',        NULL, 'Saturday: hiring 4-10 PM'),
+  -- Sunday (0): 4 slots listed but only 3 bookings, then the day closes for students
+  (0, '06:00', '12:00', 'student',        NULL,         'none',         'all',        3,    'Sunday: max 3 student bookings per day (6-8, 8-10, 10-12, 2-4)'),
+  (0, '14:00', '16:00', 'student',        NULL,         'none',         'all',        3,    'Sunday: max 3 student bookings per day (6-8, 8-10, 10-12, 2-4)'),
+  (0, '16:00', '22:00', 'commercial',     NULL,         'none',         'all',        NULL, 'Sunday: hiring 4-10 PM')
+) AS r(dow, s, e, role, fb_role, fb_type, tt, cap, note)
 WHERE f.name = 'Football Ground'
-ON CONFLICT DO NOTHING;
-
--- 3. Football Ground — weekday schedule
-INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
-SELECT id, 1, '16:00'::time, '22:00'::time, 'maintenance', NULL, 'none', 'Monday: maintenance / college team practice, all evening' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 2, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Tuesday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 2, '18:00'::time, '20:00'::time, 'commercial', NULL, 'none', 'Tuesday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 2, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Tuesday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 3, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Wednesday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 3, '18:00'::time, '20:00'::time, 'faculty_female', 'commercial', 'auto_release', 'Wednesday: Female Faculty first claim, admin releases to Commercial if unused' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 3, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Wednesday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 4, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Thursday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 4, '18:00'::time, '20:00'::time, 'faculty_male', NULL, 'none', 'Thursday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 4, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Thursday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 5, '16:00'::time, '18:00'::time, 'student', NULL, 'none', 'Friday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 5, '18:00'::time, '20:00'::time, 'commercial', NULL, 'none', 'Friday' FROM facilities WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, 5, '20:00'::time, '22:00'::time, 'any', NULL, 'none', 'Friday: student or commercial, first to book' FROM facilities WHERE name = 'Football Ground'
-ON CONFLICT DO NOTHING;
-
--- 4. Football Ground — weekend schedule (0=Sun, 6=Sat)
-INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
-SELECT id, d, '08:00'::time, '16:00'::time, 'student', NULL, 'none', 'Weekend: 3 matches reserved for students before 4pm'
-FROM facilities, generate_series(0,6,6) AS d
-WHERE name = 'Football Ground'
-UNION ALL
-SELECT id, d, '16:00'::time, '22:00'::time, 'commercial', NULL, 'none', 'Weekend: commercial use 4-10pm'
-FROM facilities, generate_series(0,6,6) AS d
-WHERE name = 'Football Ground'
 ON CONFLICT DO NOTHING;
 
 -- 5. Basketball, Volleyball, Badminton, Table Tennis — weekdays 4-10pm;

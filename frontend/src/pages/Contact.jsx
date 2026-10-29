@@ -1,17 +1,24 @@
 // Help & Contact form. Requests are stored by the backend and receive a ticket ID;
 // this flow does not send email, so the confirmation says the request is recorded.
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
 import './Contact.css';
 
 export const DSA_EMAIL = 'kelzangdorji.cst@rub.edu.bt';
 const STEPS = [
-  { title: 'Browse facilities', text: 'Open Facilities and choose a sport.' },
-  { title: 'Check availability', text: 'Pick a date and see which slots are free.' },
-  { title: 'Book a slot', text: 'Confirm your details and agree to the rules.' },
-  { title: 'Get confirmation', text: 'Your booking is confirmed instantly. Carry your ID card.' },
+  { title: 'Browse Facilities', text: 'Explore our list of athletic courts, football grounds, traditional archery ranges, and indoor table tennis halls.' },
+  { title: 'Check Availability', text: 'Select a preferred date and view live time slots. See real-time availability based on student and faculty schedules.' },
+  { title: 'Book a Slot', text: 'Input your Student/Staff ID, select your role, accept university athletic regulations, and lock your slot.' },
+  { title: 'Get Confirmation', text: 'Receive a confirmation receipt and check-in guide. Present your physical ID card to safety and security on arrival.' },
+];
+
+const OFFICE_DETAILS = [
+  { label: 'Office', value: 'Office of the Dean of Student Affairs' },
+  { label: 'Email Support', value: DSA_EMAIL, href: `mailto:${DSA_EMAIL}` },
+  { label: 'Contact Hotline', value: '17666628', href: 'tel:17666628' },
+  { label: 'Address', value: 'Phuentsholing, Chhukha, Bhutan' },
 ];
 
 function Contact() {
@@ -38,11 +45,18 @@ function Contact() {
   }
 
   return (
-    <main className="main">
-      <h1 className="title">Help &amp; Contact</h1>
-      <p className="subtitle">CST-SFBS is the booking system for the sports facilities of the College of Science and Technology.</p>
+    <main className="main contact-page">
+      <section className="contact-about">
+        <h1>About CST-SFBS</h1>
+        <p>
+          The College of Science and Technology Sports Facility Booking System (CST-SFBS) is a state-of-the-art
+          administrative portal designed to coordinate athletic scheduling, recreational court assignments, and
+          tournament rules. Managed under the Dean of Student Affairs (DSA), the system services students, academic
+          staff, and registered commercial partners in Phuentsholing, Chhukha, Bhutan.
+        </p>
+      </section>
 
-      <h2 className="section-title">How it works</h2>
+      <h2 className="section-title">How It Works</h2>
       <div className="steps">
         {STEPS.map((s, i) => (
           <div className="step" key={s.title}>
@@ -53,34 +67,47 @@ function Contact() {
         ))}
       </div>
 
-      <h2 className="section-title">Contact the DSA office</h2>
+      <h2 className="section-title section-title-lg">Contact &amp; Support</h2>
       <div className="contact-grid">
-        <div className="contact-card">
-          <div><strong>Office of the Dean of Student Affairs</strong></div>
-          <p>Email: <a href={`mailto:${DSA_EMAIL}`}>{DSA_EMAIL}</a></p>
-          <p>Phone: 17666628</p>
-          <p>Phuentsholing, Chhukha, Bhutan</p>
+        <div className="contact-info">
+          <h3>DSA Office Coordinates</h3>
+          <dl>
+            {OFFICE_DETAILS.map((d) => (
+              <div className="contact-info-row" key={d.label}>
+                <dt>{d.label}</dt>
+                <dd>{d.href ? <a href={d.href}>{d.value}</a> : d.value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
-        <form className="contact-card" onSubmit={submitRequest}>
-          <h3>Send a message</h3>
+
+        <form className="contact-form" onSubmit={submitRequest}>
+          <h3>Send us a Message</h3>
           {error && <p className="contact-error" role="alert">{error}</p>}
+          <div className="contact-form-row">
+            <label className="contact-field">
+              Your Name
+              <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} required />
+            </label>
+            <label className="contact-field">
+              Your Email
+              <input type="email" value={email} maxLength={254} onChange={(e) => setEmail(e.target.value)} required />
+            </label>
+          </div>
           <label className="contact-field">
-            Your name
-            <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} required />
-          </label>
-          <label className="contact-field">
-            Response email
-            <input type="email" value={email} maxLength={254} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label className="contact-field">
-            Your question
-            <textarea value={message} maxLength={3000} onChange={(e) => setMessage(e.target.value)} required />
+            Message / Query
+            <textarea
+              value={message}
+              maxLength={3000}
+              placeholder="How can we help you?"
+              onChange={(e) => setMessage(e.target.value)}
+              required
+            />
           </label>
           <p className="contact-hint">We’ll save your request and show a ticket number for follow-up.</p>
-          <button className="btn-primary" type="submit" disabled={submitting}>
-            {submitting ? 'Sending…' : 'Submit to DSA'}
+          <button className="contact-submit" type="submit" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Submit Message'}
           </button>
-          <Link className="contact-inbox-link" to={`mailto:${DSA_EMAIL}`}>Or email the DSA office directly</Link>
         </form>
       </div>
     </main>

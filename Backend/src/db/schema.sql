@@ -31,7 +31,20 @@ CREATE TABLE IF NOT EXISTS schedule_rules (
   primary_role VARCHAR(30) NOT NULL,
   fallback_role VARCHAR(30),
   fallback_type VARCHAR(20) DEFAULT 'none',
-  notes TEXT
+  notes TEXT,
+  timetable VARCHAR(20) NOT NULL DEFAULT 'all'
+    CHECK (timetable IN ('all', 'standard', 'tournament')),
+  day_booking_cap SMALLINT CHECK (day_booking_cap IS NULL OR day_booking_cap > 0)
+);
+
+CREATE TABLE IF NOT EXISTS tournament_periods (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  CHECK (end_date >= start_date)
 );
 
 CREATE TABLE IF NOT EXISTS bookings (

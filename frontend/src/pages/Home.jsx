@@ -92,18 +92,28 @@ function Home() {
       <nav className="sport-category-strip" aria-label="Browse sports facilities">
         <span className="sport-category-title">Browse by Sport</span>
         {[
-          ['⚽', 'Football'],
-          ['🏀', 'Basketball'],
-          ['🏹', 'Archery'],
-          ['🏸', 'Badminton'],
-          ['🏓', 'Table Tennis'],
-          ['🏐', 'Volleyball'],
-        ].map(([icon, sport]) => (
-          <Link to="/facilities" className="sport-category-item" key={sport}>
-            <span className="sport-category-icon" aria-hidden="true">{icon}</span>
-            <span>{sport}</span>
-          </Link>
-        ))}
+          ['⚽', 'Football', 'football'],
+          ['🏀', 'Basketball', 'basketball'],
+          ['🏹', 'Archery', 'archery'],
+          ['🏸', 'Badminton', 'badminton'],
+          ['🏓', 'Table Tennis', 'table_tennis'],
+          ['🏐', 'Volleyball', 'volleyball'],
+        ].map(([icon, sport, type]) => {
+          // Open that sport's own page (its first court). Until the facilities have
+          // loaded, fall back to the full facilities list.
+          const card = cards.find((item) => item.type === type);
+          return (
+            <Link
+              to={card ? `/facilities/${card.courtIds[0]}` : '/facilities'}
+              className="sport-category-item"
+              key={sport}
+              title={`View ${sport} slots`}
+            >
+              <span className="sport-category-icon" aria-hidden="true">{icon}</span>
+              <span>{sport}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       <section className="availability-finder" aria-label="Find available sports slots">

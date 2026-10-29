@@ -7,7 +7,6 @@ import ConflictPanel from '../components/ConflictPanel';
 import './Booking.css';
 
 const ROLE_NAMES = { student: 'Student', faculty: 'Faculty / Staff', outsider: 'Outsider (commercial)', admin: 'Admin' };
-const SPORT_ICONS = { football: '⚽', basketball: '🏀', volleyball: '🏐', badminton: '🏸', table_tennis: '🏓', archery: '🎯' };
 
 function formatTime(value) {
   if (!value) return '';
@@ -16,11 +15,28 @@ function formatTime(value) {
 }
 
 function bookingMode(role) {
-  if (role === 'student') return 'Student Booking Mode (Free)';
-  if (role === 'faculty') return 'Faculty & Staff Booking Mode';
-  if (role === 'outsider') return 'Commercial Booking Mode';
-  return ROLE_NAMES[role] || role;
+  if (role === 'student') return { name: 'Student Booking Mode', tag: 'Free' };
+  if (role === 'faculty') return { name: 'Faculty & Staff Booking Mode', tag: null };
+  if (role === 'outsider') return { name: 'Commercial Booking Mode', tag: 'Pay offline' };
+  return { name: ROLE_NAMES[role] || role, tag: null };
 }
+
+function sportLabel(type) {
+  if (!type) return 'Facility';
+  return type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+// Rules shown in the summary card. Football is the only facility on turf.
+function rulesFor(type) {
+  return [
+    'Present a valid Student/Faculty ID card at the security desk on arrival.',
+    type === 'football'
+      ? 'Clean athletic footwear is mandatory on the synthetic turf.'
+      : 'Clean athletic footwear is required on the facility.',
+  ];
+}
+
+const STEPS = ['Choose slot', 'Your details', 'Confirmation'];
 
 function identityField(role, user) {
   if (role === 'student') {
@@ -141,36 +157,60 @@ function BookingForm() {
       {error && <p className="error">{error}</p>}
 
       <div className="booking-layout">
+        <ol className="booking-steps" aria-label="Booking progress">
+          {STEPS.map((label, index) => (
+            <li key={label} className={index === 0 ? 'done' : index === 1 ? 'current' : ''}>
+              <span className="step-dot">{index === 0 ? '✓' : index + 1}</span>
+              {label}
+            </li>
+          ))}
+        </ol>
+
         <aside className="summary-card">
-          <div className="summary-heading">
-            <h3>Booking Summary</h3>
-            <span>{SPORT_ICONS[facility?.type] || '🏟'} <small>{facility?.type === 'football' ? 'Football' : facility?.type || 'Facility'}</small></span>
-          </div>
-          <div className="summary-section">
+          <div className="summary-head">
+            <span className="summary-badge">{sportLabel(facility?.type)}</span>
             <div className="summary-label">Facility</div>
-            <div className="summary-value">{facility ? facility.name : '…'}</div>
+            <div className="summary-facility">{facility ? facility.name : '…'}</div>
           </div>
-          <div className="summary-section">
-            <div className="summary-label">Date &amp; Time</div>
-            <div className="summary-value">{prettyDate(date)}</div>
-            <div className="summary-time">{formatTime(start)} – {formatTime(end)}</div>
-          </div>
-          <div className="summary-section">
-            <div className="summary-label">Allocated User Group</div>
-            <div className="summary-value">{bookingMode(bookingUser.role)}</div>
-          </div>
-          <div className="rules-brief">
-            <strong>Rules Brief:</strong>
-            <ul>
-              <li>Valid Student/Faculty ID card must be presented to the security desk on arrival.</li>
-              <li>Clean athletic footwear is mandatory on the synthetic turf.</li>
-            </ul>
+          <div className="summary-body">
+            <div className="summary-item">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+              <div>
+                <div className="summary-label">Date</div>
+                <div className="summary-value">{prettyDate(date)}</div>
+              </div>
+            </div>
+            <div className="summary-item">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              <div>
+                <div className="summary-label">Time</div>
+                <div className="summary-value">{formatTime(start)} – {formatTime(end)}</div>
+              </div>
+            </div>
+            {(() => {
+              const mode = bookingMode(bookingUser.role);
+              return (
+                <div className="summary-group">
+                  <div>
+                    <div className="summary-label">User group</div>
+                    <div className="summary-group-name">{mode.name}</div>
+                  </div>
+                  {mode.tag && <span className="summary-tag">{mode.tag}</span>}
+                </div>
+              );
+            })()}
+            <div className="rules-brief">
+              <strong>Rules brief</strong>
+              <ul>
+                {rulesFor(facility?.type).map((rule) => <li key={rule}>{rule}</li>)}
+              </ul>
+            </div>
           </div>
         </aside>
 
         <form className="form-card" onSubmit={handleSubmit}>
           <h2>Facility Booking Request</h2>
-          <p className="booking-intro">Please complete the credentials below to submit your scheduling reservation.</p>
+          <p className="booking-intro">Complete your details to reserve this slot. Fields marked * are required.</p>
           {(() => {
             const identity = identityField(bookingUser.role, bookingUser);
             return (

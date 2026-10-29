@@ -7,6 +7,17 @@
 // backend that needs "now" must call bhutanNow() instead.
 
 const TZ = 'Asia/Thimphu';
+const WINDOW_MODE = 'current'; // 'current' | 'next' | 'both'
+
+function bookingWindow() {
+  const today = bhutanNow().date;
+  const d = new Date(`${today}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // this Monday
+  const add = (n) => { const x = new Date(d); x.setUTCDate(d.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const to = WINDOW_MODE === 'both' ? add(13) : WINDOW_MODE === 'next' ? add(13) : add(6);
+  const from = WINDOW_MODE === 'next' ? add(7) : today;
+  return { from, to, nextOpens: add(7) }; // next week opens Monday 00:00 Bhutan time
+}
 
 // Returns { date: 'YYYY-MM-DD', minutes: minutes since midnight } in Bhutan time.
 function bhutanNow() {

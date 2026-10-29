@@ -8,6 +8,7 @@ const router = express.Router();
 
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
 const OUTSIDER_EMAIL = /^[^@\s]+@gmail\.com$/i;
+const PHONE_PATTERN = /^\+?[\d\s()-]{7,20}$/; // e.g. 77682600 or +975 77682600
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 function hashToken(token) {
@@ -28,6 +29,21 @@ async function issueToken(userId, purpose, expiresInHours) {
   return token;
 }
 
+// Email-change links remember WHICH address they confirm (auth_tokens.new_email).
+async function issueEmailChangeToken(userId, newEmail, expiresInHours) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await pool.query(
+    `DELETE FROM auth_tokens WHERE user_id = $1 AND purpose = 'email_change' AND consumed_at IS NULL`,
+    [userId]
+  );
+  await pool.query(
+    `INSERT INTO auth_tokens (token_hash, user_id, purpose, new_email, expires_at)
+     VALUES ($1, $2, 'email_change', $3, now() + ($4 * interval '1 hour'))`,
+    [hashToken(token), userId, newEmail, expiresInHours]
+  );
+  return token;
+}
+
 function actionUrl(path, token) {
   const url = new URL(path, `${FRONTEND_URL}/`);
   url.searchParams.set('token', token);
@@ -41,13 +57,18 @@ function roleFromCollegeEmail(email) {
 }
 
 router.post('/register', async (req, res) => {
-  const { full_name, password, contact_number, organization, role: requestedRole } = req.body;
+  const { full_name, password, contact_number, organization, role: requestedRole, gender } = req.body;  
   const email = (req.body.email || '').trim().toLowerCase();
+  
 
   if (!full_name || !email || !password) {
     return res.status(400).json({ error: 'full_name, email and password are required' });
   }
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+  if (!['female', 'male'].includes(gender)) {
+     return res.status(400).json({ error: 'Select your gender (female or male).' });
+   }
 
   // Role (and the student ID) always come from the email, never from the request.
   // Public registration cannot create admins.
@@ -93,9 +114,9 @@ router.post('/register', async (req, res) => {
     // Store only a bcrypt hash for newly registered accounts.
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, organization, email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, false) RETURNING id, full_name, email, role`,
-      [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null, organizationName]
+      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, organization, gender, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false) RETURNING id, full_name, email, role`,
+      [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null, organizationName, gender]
     );
     const user = result.rows[0];
     const token = await issueToken(user.id, 'email_verification', 24);
@@ -130,7 +151,7 @@ router.post('/login', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, full_name, email, role, password_hash, email_verified,
-              student_staff_id, contact_number, organization FROM users
+              student_staff_id, contact_number, organization, gender FROM users
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
       [identifier]
     );
@@ -315,7 +336,7 @@ router.get('/profile', authenticate, async (req, res) => {
     const [profile, preferences] = await Promise.all([
       pool.query(
         `SELECT id, full_name, email, role, student_staff_id, contact_number,
-                organization, to_char(created_at, 'YYYY-MM-DD') AS joined
+                organization, gender, to_char(created_at, 'YYYY-MM-DD') AS joined
          FROM users WHERE id = $1`,
         [req.user.id]
       ),
@@ -326,8 +347,23 @@ router.get('/profile', authenticate, async (req, res) => {
       ),
     ]);
     if (profile.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
+    // An unconfirmed email change, if any. Never let this lookup break the profile page
+    // (for example if the email-change migration has not been run yet).
+    let pendingEmail = null;
+    try {
+      const pending = await pool.query(
+        `SELECT new_email FROM auth_tokens
+         WHERE user_id = $1 AND purpose = 'email_change'
+           AND consumed_at IS NULL AND expires_at > now()
+         ORDER BY created_at DESC LIMIT 1`,
+        [req.user.id]
+      );
+      pendingEmail = pending.rows[0]?.new_email || null;
+    } catch (pendingError) {
+      console.error('Could not look up pending email change:', pendingError.message);
+    }
     res.json({
-      profile: profile.rows[0],
+      profile: { ...profile.rows[0], pending_email: pendingEmail },
       preferences: preferences.rows[0] || {
         booking_updates: true,
         game_reminders: true,
@@ -341,20 +377,28 @@ router.get('/profile', authenticate, async (req, res) => {
 });
 
 router.patch('/profile', authenticate, async (req, res) => {
-  const { full_name, contact_number } = req.body;
+  const { full_name, contact_number, gender } = req.body;
   if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 120) {
     return res.status(400).json({ error: 'Name is required and must be 120 characters or fewer' });
   }
-  if (contact_number != null && (typeof contact_number !== 'string' || contact_number.trim().length > 30)) {
-    return res.status(400).json({ error: 'Phone number must be 30 characters or fewer' });
+  if (contact_number != null && typeof contact_number !== 'string') {
+    return res.status(400).json({ error: 'Phone number must be text' });
+  }
+  if (contact_number && contact_number.trim() && !PHONE_PATTERN.test(contact_number.trim())) {
+    return res.status(400).json({ error: 'Enter a valid phone number (digits, spaces, + - ( ) only, 7-20 characters)' });
+  }
+  if (gender != null && !['female', 'male'].includes(gender)) {
+    return res.status(400).json({ error: 'Gender must be female or male' });
   }
 
   try {
+    // gender = COALESCE(gender, $3): it can be set once, but not changed afterwards,
+    // so nobody can switch gender just to book a gender-specific slot.
     const result = await pool.query(
-      `UPDATE users SET full_name = $1, contact_number = $2
-       WHERE id = $3
-       RETURNING id, full_name, email, role, student_staff_id, contact_number, organization`,
-      [full_name.trim(), contact_number?.trim() || null, req.user.id]
+      `UPDATE users SET full_name = $1, contact_number = $2, gender = COALESCE(gender, $3)
+       WHERE id = $4
+       RETURNING id, full_name, email, role, student_staff_id, contact_number, organization, gender`,
+      [full_name.trim(), contact_number?.trim() || null, gender || null, req.user.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
     res.json({ profile: result.rows[0] });
@@ -362,6 +406,118 @@ router.patch('/profile', authenticate, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to update profile' });
   }
+});
+
+// ---- Change email (outsiders only) ---------------------------------------
+// Student and staff emails (.cst@rub.edu.bt) decide the account's role and ID,
+// so they cannot be changed here. Outsiders confirm the NEW address by link;
+// the old address keeps working until that link is opened.
+router.post('/email-change', authenticate, async (req, res) => {
+  if (req.user.role !== 'outsider') {
+    return res.status(403).json({
+      error: 'College email addresses cannot be changed here. Contact the DSA office through Help & Contact.',
+    });
+  }
+  const { new_email, current_password } = req.body;
+  const newEmail = typeof new_email === 'string' ? new_email.trim().toLowerCase() : '';
+  if (!newEmail || newEmail.length > 150 || !OUTSIDER_EMAIL.test(newEmail)) {
+    return res.status(400).json({ error: 'Enter a valid Gmail address (ending @gmail.com).' });
+  }
+  if (newEmail === String(req.user.email).toLowerCase()) {
+    return res.status(400).json({ error: 'That is already your email address.' });
+  }
+  if (typeof current_password !== 'string' || !current_password) {
+    return res.status(400).json({ error: 'Enter your current password to change your email.' });
+  }
+
+  try {
+    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
+    const passwordHash = result.rows[0].password_hash;
+    const validPassword = passwordHash.startsWith('$2')
+      ? await bcrypt.compare(current_password, passwordHash)
+      : current_password === passwordHash;
+    if (!validPassword) return res.status(400).json({ error: 'Current password is incorrect' });
+
+    const taken = await pool.query('SELECT 1 FROM users WHERE LOWER(email) = $1', [newEmail]);
+    if (taken.rows.length > 0) return res.status(409).json({ error: 'An account with this email already exists' });
+
+    const token = await issueEmailChangeToken(req.user.id, newEmail, 24);
+    await sendEmail({
+      to: newEmail,
+      subject: 'Confirm your new CST-SFBS email address',
+      text: `Hello ${req.user.full_name},\n\nConfirm this address as your new CST-SFBS email within 24 hours:\n${actionUrl('/confirm-email-change', token)}\n\nIf you did not ask for this, ignore this message. Your email will not change.`,
+    });
+    res.json({ message: `We sent a confirmation link to ${newEmail}. Your email changes once you open it.`, pending_email: newEmail });
+  } catch (err) {
+    console.error(err);
+    res.status(503).json({ error: 'Could not send the confirmation email. Please try again later.' });
+  }
+});
+
+// The link is opened from the NEW mailbox, so possession of the token is the proof (no login needed).
+router.post('/confirm-email-change', async (req, res) => {
+  const { token } = req.body;
+  if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+    return res.status(400).json({ error: 'Invalid or expired confirmation link' });
+  }
+  const client = await pool.connect();
+  let oldEmail = null;
+  let fullName = '';
+  let newEmail = null;
+  try {
+    await client.query('BEGIN');
+    const consumed = await client.query(
+      `UPDATE auth_tokens SET consumed_at = now()
+       WHERE token_hash = $1 AND purpose = 'email_change'
+         AND consumed_at IS NULL AND expires_at > now()
+       RETURNING user_id, new_email`,
+      [hashToken(token)]
+    );
+    if (consumed.rows.length === 0) {
+      // Opening the same link twice should not look like a failure.
+      const already = await client.query(
+        `SELECT u.email FROM auth_tokens t JOIN users u ON u.id = t.user_id
+         WHERE t.token_hash = $1 AND t.purpose = 'email_change'
+           AND t.consumed_at IS NOT NULL AND LOWER(u.email) = LOWER(t.new_email)`,
+        [hashToken(token)]
+      );
+      await client.query('ROLLBACK');
+      if (already.rows.length > 0) {
+        return res.json({ message: 'Your email address was already updated.', email: already.rows[0].email });
+      }
+      return res.status(400).json({ error: 'Invalid or expired confirmation link' });
+    }
+
+    const { user_id: userId } = consumed.rows[0];
+    newEmail = consumed.rows[0].new_email;
+    const current = await client.query('SELECT email, full_name, role FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    if (current.rows.length === 0 || current.rows[0].role !== 'outsider') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Invalid or expired confirmation link' });
+    }
+    oldEmail = current.rows[0].email;
+    fullName = current.rows[0].full_name;
+
+    await client.query('UPDATE users SET email = $1, email_verified = true WHERE id = $2', [newEmail, userId]);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email already exists' });
+    console.error(err);
+    return res.status(500).json({ error: 'Could not update your email address' });
+  } finally {
+    client.release();
+  }
+
+  // Tell the OLD address so a hijacked account cannot silently change email. Best effort only.
+  sendEmail({
+    to: oldEmail,
+    subject: 'Your CST-SFBS email address was changed',
+    text: `Hello ${fullName},\n\nThe email on your CST-SFBS account was changed to ${newEmail}.\n\nIf this was not you, contact the DSA office right away.`,
+  }).catch((emailError) => console.error('Could not notify the old email address:', emailError.message));
+
+  res.json({ message: 'Your email address has been updated.', email: newEmail });
 });
 
 router.patch('/password', authenticate, async (req, res) => {

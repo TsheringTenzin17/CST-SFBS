@@ -15,6 +15,7 @@ const express = require('express');
 const pool = require('../db');
 const { authenticate, requireAdmin } = require('../auth');
 const { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
+const { timetableForDate } = require('../timetable');
 const router = express.Router();
 
 async function addBookingNotification(queryable, userId, type, message) {
@@ -36,7 +37,9 @@ async function addBookingNotification(queryable, userId, type, message) {
 
 // Which user roles may book a slot whose rule says `ruleRole`?
 // 'any' = students and outsiders; 'everyone' also includes faculty/staff.
-function isRoleEligible(userRole, ruleRole) {
+// 'student_female' is only for female students (needs users.gender).
+function isRoleEligible(userRole, ruleRole, gender) {
+  if (ruleRole === 'student_female') return userRole === 'student' && gender === 'female';
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
@@ -56,29 +59,36 @@ function isWithinAutoReleaseWindow(bookingDate, startTime) {
 
 // Decide whether `userRole` may book the slot covered by `rule`.
 // Returns { ok: true } or { ok: false, status, message }.
-function checkEligibility(userRole, rule, bookingDate, startTime) {
-  if (userRole === 'admin') return { ok: true };
-
+function checkEligibility(userRole, rule, bookingDate, startTime, gender) {  if (userRole === 'admin') return { ok: true };
   if (rule.primary_role === 'maintenance') {
     return { ok: false, status: 403, message: 'This slot is reserved for maintenance / college team practice.' };
   }
-  if (isRoleEligible(userRole, rule.primary_role)) return { ok: true };
-
-  if (rule.fallback_role && rule.fallback_type === 'auto_release' && isRoleEligible(userRole, rule.fallback_role)) {
+  if (isRoleEligible(userRole, rule.primary_role, gender)) return { ok: true };
+  if (rule.fallback_role && rule.fallback_type === 'auto_release' && isRoleEligible(userRole, rule.fallback_role, gender)) {
     if (isWithinAutoReleaseWindow(bookingDate, startTime)) return { ok: true };
     return {
       ok: false,
       status: 403,
-      message: 'This slot is reserved for faculty until 1 hour before it starts. Please try again closer to the time.',
+      message: `This slot is reserved for ${RESERVED_FOR[rule.primary_role] || 'another group'} until 1 hour before it starts. Please try again closer to the time.`,
     };
+  }
+  if (RESERVED_FOR[rule.primary_role]) {
+    return { ok: false, status: 403, message: `This slot is reserved for ${RESERVED_FOR[rule.primary_role]}.` };
   }
   return { ok: false, status: 403, message: `Role '${userRole}' is not eligible for this slot (${rule.primary_role}).` };
 }
 
+const RESERVED_FOR = {
+  student_female: 'female students',
+  faculty: 'faculty',
+  faculty_male: 'male faculty',
+  faculty_female: 'female faculty',
+};
+
 const CONFLICT_MESSAGE = 'This slot was just booked by someone else. Please choose another.';
 
 // ---------------------------------------------------------------
-// B. validateSlot — the rules that apply to ANY booking or move
+// B. validateSlot - the rules that apply to ANY booking or move
 // ---------------------------------------------------------------
 // Checks, in order: facility exists + is open, length limit, a schedule rule
 // covers the time, no maintenance block, no overlapping booking.
@@ -95,12 +105,15 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
     return { ok: false, status: 400, message: `Bookings for this facility are limited to ${maxMin} minutes` };
   }
 
+  // Only the rules of today's timetable apply (tournament period or standard).
+  const timetable = await timetableForDate(client, date);
   const ruleResult = await client.query(
-    `SELECT primary_role, fallback_role, fallback_type FROM schedule_rules
+    `SELECT primary_role, fallback_role, fallback_type, day_booking_cap FROM schedule_rules
      WHERE facility_id = $1 AND day_of_week = $2
+       AND timetable IN ('all', $5)
        AND start_time <= $3::time AND end_time >= $4::time
      ORDER BY start_time LIMIT 1`,
-    [facilityId, dayOfWeek(date), start, end]
+    [facilityId, dayOfWeek(date), start, end, timetable]
   );
   if (ruleResult.rows.length === 0) {
     return { ok: false, status: 400, message: 'No booking rule covers this facility/day/time. Pick a slot shown on the availability page.' };
@@ -124,7 +137,27 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
   );
   if (overlap.rows.length > 0) return { ok: false, status: 409, message: CONFLICT_MESSAGE };
 
-  return { ok: true, rule: ruleResult.rows[0] };
+  // Daily cap (weekend student matches): once `day_booking_cap` bookings exist
+  // inside the capped rules of that day, the rest of the day closes.
+  const rule = ruleResult.rows[0];
+  if (rule.day_booking_cap) {
+    const used = await client.query(
+      `SELECT COUNT(*)::int AS n FROM bookings b
+       WHERE b.facility_id = $1 AND b.booking_date = $2 AND b.status <> 'cancelled' AND b.id <> $3
+         AND EXISTS (
+           SELECT 1 FROM schedule_rules r
+           WHERE r.facility_id = b.facility_id AND r.day_of_week = $4
+             AND r.day_booking_cap IS NOT NULL AND r.timetable IN ('all', $5)
+             AND r.start_time <= b.start_time AND r.end_time >= b.end_time
+         )`,
+      [facilityId, date, excludeBookingId, dayOfWeek(date), timetable]
+    );
+    if (used.rows[0].n >= rule.day_booking_cap) {
+      return { ok: false, status: 409, message: `The limit of ${rule.day_booking_cap} bookings for this day has been reached.` };
+    }
+  }
+
+  return { ok: true, rule };
 }
 
 // Shared input checks. Returns an error message, or null when the input is fine.
@@ -166,7 +199,7 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(slot.status).json({ error: slot.message });
     }
 
-    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start);
+    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start, req.user.gender);
     if (!eligibility.ok) {
       await client.query('ROLLBACK');
       return res.status(eligibility.status).json({ error: eligibility.message });
@@ -372,7 +405,7 @@ router.patch('/:id/reschedule-request', authenticate, async (req, res) => {
       return res.status(slot.status).json({ error: slot.message });
     }
 
-    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start);
+    const eligibility = checkEligibility(req.user.role, slot.rule, booking_date, start, req.user.gender);
     if (!eligibility.ok) {
       await client.query('ROLLBACK');
       return res.status(eligibility.status).json({ error: eligibility.message });

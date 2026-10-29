@@ -6,6 +6,7 @@ export const ADMIN_NAV = [
   { to: '/admin/dashboard',   key: 'Dashboard',          label: 'Dashboard' },
   { to: '/admin/bookings',    key: 'Bookings',           label: 'Manage Bookings' },
   { to: '/admin/maintenance', key: 'Maintenance Blocks', label: 'Maintenance Blocks' },
+  { to: '/admin/tournaments', key: 'Tournaments',        label: 'Tournament Dates' },
   { to: '/admin/users',       key: 'Users',              label: 'Registered Users' },
   { to: '/admin/reports',     key: 'Reports',            label: 'Reports & Analysis' },
   { to: '/admin/support',     key: 'Support Requests',   label: 'System Settings' },

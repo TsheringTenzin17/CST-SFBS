@@ -16,6 +16,7 @@ async function main() {
 
   const monday = dateOnWeekday(1);
   const tuesday = dateOnWeekday(2);
+  const wednesday = dateOnWeekday(3);
   const thursday = dateOnWeekday(4);
   const saturday = dateOnWeekday(6);
   const sunday = dateOnWeekday(0);
@@ -45,6 +46,24 @@ async function main() {
   check('student can book Saturday morning (before 4pm)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, saturday, '16:00', '18:00');
   check('student cannot book Saturday evening (commercial)', r.status === 403, `got ${r.status}`);
+  // Standard timetable (no tournament period covers these dates in the test DB)
+  r = await book(student, football, tuesday, '20:00', '22:00');
+  check('standard: student cannot book Tue 8-10pm (hiring)', r.status === 403, `got ${r.status}`);
+  r = await book(outsider, football, tuesday, '20:00', '22:00');
+  check('standard: outsider can book Tue 8-10pm (hiring)', r.status === 201, `got ${r.status}`);
+  r = await book(student, football, wednesday, '16:00', '18:00');
+  check('standard: Wed 4-6pm is reserved for female students (student blocked until gender exists)', r.status === 403, `got ${r.status}`);
+  r = await book(student, football, saturday, '12:00', '14:00');
+  check('football Saturday 12-4pm is not bookable', r.status === 400, `got ${r.status}`);
+  // Sunday: 4 slots listed but only 3 bookings, then the day closes
+  r = await book(student, football, sunday, '06:00', '08:00');
+  check('Sunday student match 1 of 3', r.status === 201, `got ${r.status}`);
+  r = await book(student, football, sunday, '08:00', '10:00');
+  check('Sunday student match 2 of 3', r.status === 201, `got ${r.status}`);
+  r = await book(student, football, sunday, '10:00', '12:00');
+  check('Sunday student match 3 of 3', r.status === 201, `got ${r.status}`);
+  r = await book(student, football, sunday, '14:00', '16:00');
+  check('Sunday 4th student booking is refused (daily cap of 3)', r.status === 409, `got ${r.status}`);
 
   console.log('Other sports (weekdays 4-10pm; weekends 8am-10pm)');
   r = await book(student, basketball, tuesday, '10:00', '11:00');

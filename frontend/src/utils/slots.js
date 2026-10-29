@@ -12,6 +12,7 @@
 export const ROLE_LABELS = {
   student: 'Students (free)',
   faculty: 'Faculty / Staff',
+  student_female: 'Female students',
   faculty_male: 'Male faculty',
   faculty_female: 'Female faculty',
   commercial: 'Commercial / outsiders',
@@ -25,6 +26,7 @@ export const STATE_LABELS = {
   past: 'Passed',
   unavailable: 'Not bookable',
   booked: 'Booked',
+  full: 'Daily limit reached',
   restricted: 'Not for your role',
   open: 'Available',
 };
@@ -46,7 +48,8 @@ const nowMinutes = () => {
 };
 
 // ---------- 3. who can book ----------
-function roleMatches(userRole, ruleRole) {
+function roleMatches(userRole, ruleRole, gender) {
+  if (ruleRole === 'student_female') return userRole === 'student' && gender === 'female';
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
@@ -57,11 +60,11 @@ function roleMatches(userRole, ruleRole) {
 
 // Same decision the backend makes, including the "opens to commercial
 // 1 hour before start" rule for the Wednesday faculty slot.
-export function canBookSlot(userRole, rule, date, startMin) {
+export function canBookSlot(userRole, rule, date, startMin, gender) {
   if (userRole === 'admin') return true;
   if (rule.primary_role === 'maintenance') return false;
-  if (roleMatches(userRole, rule.primary_role)) return true;
-  if (rule.fallback_type === 'auto_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role)) {
+  if (roleMatches(userRole, rule.primary_role, gender)) return true;
+  if (rule.fallback_type === 'auto_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
     const untilStart = startMin - nowMinutes();
     return date === todayString() && untilStart >= 0 && untilStart <= 60;
   }
@@ -89,7 +92,7 @@ export function isTaken(slot, bookings) {
 }
 
 // ---------- 5. slot state ----------
-// Returns one of: 'maintenance' | 'past' | 'unavailable' | 'booked' | 'restricted' | 'open'
+// Returns one of: 'maintenance' | 'past' | 'unavailable' | 'booked' | 'full' | 'restricted' | 'open'
 // `availability` is the object from GET /facilities/:id/availability.
 // With no signed-in user, a free slot is simply 'open' (the page shows "Sign in to book").
 export function slotState(slot, { date, availability, user }) {
@@ -98,7 +101,9 @@ export function slotState(slot, { date, availability, user }) {
   if (date < todayString() || (date === todayString() && startMin <= nowMinutes())) return 'past';
   if (slot.rule.primary_role === 'maintenance') return 'unavailable';
   if (isTaken(slot, availability.existing_bookings)) return 'booked';
-  if (user && !canBookSlot(user.role, slot.rule, date, startMin)) return 'restricted';
+  // weekend student matches: the day closes once the daily cap is used up
+  if (availability.cap_reached && slot.rule.day_booking_cap) return 'full';
+  if (user && !canBookSlot(user.role, slot.rule, date, startMin, user.gender)) return 'restricted';  
   return 'open';
 }
 

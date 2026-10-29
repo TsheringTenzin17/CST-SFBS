@@ -30,7 +30,7 @@ function Field({ label, hint, hintClass, children }) {
 }
 
 const EMPTY = {
-  full_name: '', email: '', phone: '',
+  full_name: '', email: '', phone: '', gender: '',
   organization: '', purpose: '', password: '', confirm: '',
 };
 
@@ -90,6 +90,10 @@ function Register() {
       setError('Enter your organization name, or your team name if you are not with an organization.');
       return;
     }
+    if (!form.gender) {
+      setError('Select your gender.');
+      return;
+    }
     if (form.password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -105,6 +109,7 @@ function Register() {
       password: form.password,
       contact_number: form.phone.trim(),
       role,
+      gender: form.gender,
     };
     let payload;
     if (isStudent) payload = { ...base, student_staff_id: studentId };
@@ -238,6 +243,14 @@ function Register() {
             </Field>
           </>
         )}
+
+        <Field label="Gender" hint="Used for gender-specific slots, like the female-student football slot.">
+          <select value={form.gender} onChange={set('gender')} required>
+            <option value="">Select…</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </Field>
 
         <div className="auth-row">
           <Field label="Password" hint="At least 8 characters.">

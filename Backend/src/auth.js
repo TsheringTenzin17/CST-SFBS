@@ -52,7 +52,7 @@ function authenticate(req, res, next) {
 
   // Load the current user record so deleted accounts and updated roles take effect immediately.
   pool.query(
-    `SELECT id, full_name, email, role, student_staff_id, contact_number, organization
+    `SELECT id, full_name, email, role, student_staff_id, contact_number, organization, gender
        FROM users WHERE id = $1`,
     [session.sub],
   )
