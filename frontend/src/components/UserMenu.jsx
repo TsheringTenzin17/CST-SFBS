@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import './UserMenu.css';
 
-// "TSHERING EUDEN" -> "Tshering Euden"
 const titleCase = (s = '') => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 const icon = {

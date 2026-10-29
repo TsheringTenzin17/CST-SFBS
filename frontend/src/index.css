@@ -11,6 +11,8 @@
   --green: #16a34a;       /* green button color */
   --border: #e5e5e5;      /* light grey lines and borders */
   --muted: #666;          /* soft grey text */
+  --body-font: Barlow, system-ui, sans-serif;
+  --heading-font: Barlow, system-ui, sans-serif;
 }
 
 /*
@@ -30,7 +32,14 @@ body {
 h1,
 h2,
 h3 {
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: Barlow, system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 a {
@@ -245,7 +254,7 @@ a {
 .hero-campus-name {
   margin: 0 0 24px;
   color: #173f4b;
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-size: clamp(25px, 3vw, 42px);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -264,7 +273,7 @@ a {
 .hero-celebrating,
 .hero-foundation {
   color: #1d8391;
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-size: clamp(28px, 4vw, 48px);
   font-weight: 700;
   line-height: 1;
@@ -286,7 +295,7 @@ a {
 
 .hero-years small {
   margin-left: 3px;
-  font-family: Barlow, sans-serif;
+  font-family: var(--body-font);
   font-size: 20px;
   vertical-align: top;
 }
@@ -443,7 +452,7 @@ a {
 
 .stats-ticker-item:last-child { border-right: 0; }
 .stats-ticker-item strong {
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-size: 42px;
   line-height: 1;
 }
@@ -485,7 +494,7 @@ a {
 
 .availability-heading h2 {
   margin: 0;
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-size: 34px;
   line-height: 0.95;
   text-transform: uppercase;
@@ -594,7 +603,7 @@ a {
   border-top: 1px solid rgba(23, 63, 75, 0.55);
   border-bottom: 1px solid rgba(23, 63, 75, 0.55);
   color: #173f4b;
-  font-family: Barlow, sans-serif;
+  font-family: var(--body-font);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -615,7 +624,7 @@ a {
 .hero-text h1 {
   margin: 0 0 18px;
   color: #173f4b;
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-size: clamp(68px, 8vw, 104px);
   font-weight: 700;
   letter-spacing: -0.025em;
@@ -728,15 +737,15 @@ a {
 }
 
 .title {
-  color: var(--blue);
+  color: var(--black);
   margin: 0 0 6px;
-  font-size: 26px;
+  font-size: 46px;
 }
 
 .subtitle {
   color: var(--muted);
   font-size: 13px;
-  margin: 0 0 24px;
+  margin: 0 10px 24px;
 }
 
 .error {
@@ -753,34 +762,83 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;   /* move items to a new line on small screens */
-  gap: 10px;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 16px 16px;
+  border: 1px solid #ececec;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.13);
 }
 
 .filter-tabs {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
 .tab {
-  border: 1px solid #ddd;
+  min-height: 42px;
+  border: 1px solid #dedede;
   background: #fff;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;   /* hand cursor on hover */
+  padding: 10px 18px;
+  border-radius: 4px;
+  color: #505050;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .tab.active {
-  background: var(--blue);   /* the selected tab turns blue */
-  color: #fff;
-  border-color: var(--blue);
+ border: 1px solid #295361;
+ background: #295361;
+ color: #fff;
+ box-shadow: none;
+}
+
+.tab:not(.active):hover {
+ border-color: #295361;
+ color: #295361;
+}
+
+.sort-label select:focus {
+ border-color: #295361;
+ box-shadow: 0 0 0 2px rgba(41, 83, 97, 0.18);
 }
 
 .sort-label {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
   color: #555;
+  font-size: 12px;
+}
+
+.sort-label select {
+  min-width: 214px;
+  height: 42px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0 34px 0 14px;
+  color: #222;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+
+@media (max-width: 900px) {
+  .filter-bar { align-items: stretch; flex-direction: column; }
+  .filter-tabs { overflow-x: auto; }
+  .sort-label { justify-content: flex-end; }
+}
+
+@media (max-width: 600px) {
+  .filter-bar { padding: 12px; }
+  .sort-label { align-items: stretch; flex-direction: column; gap: 6px; }
+  .sort-label select { width: 100%; }
 }
 
 /*

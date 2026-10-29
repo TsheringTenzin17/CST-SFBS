@@ -28,7 +28,7 @@
 .admin-dashboard h1,
 .admin-dashboard h2,
 .admin-dashboard h3 {
-  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--heading-font);
   font-weight: 700;
   margin: 0;
 }

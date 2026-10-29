@@ -13,7 +13,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
 import { ROLE_LABELS, STATE_LABELS, buildSlots, slotState, todayString, toHHMM, toMin } from '../utils/slots';
-import { DESCRIPTIONS } from '../facilityMeta';
+import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import './FacilityDetail.css';
 
 // ---------------------------------------------------------------
@@ -69,6 +69,21 @@ function formatTime(time) {
   const [hour, minute] = time.split(':').map(Number);
   const suffix = hour >= 12 ? 'PM' : 'AM';
   return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${suffix}`;
+}
+
+const OUTDOOR_TYPES = ['football', 'volleyball', 'archery'];
+
+function facilityCategory(type) {
+  return OUTDOOR_TYPES.includes(type) ? 'Outdoor Facility' : 'Indoor Facility';
+}
+
+function categoryIcon(type) {
+  if (type === 'football') return '⚽';
+  if (type === 'basketball') return '🏀';
+  if (type === 'volleyball') return '🏐';
+  if (type === 'badminton') return '🏸';
+  if (type === 'table_tennis') return '🏓';
+  return '🎯';
 }
 
 function FacilityDetail() {
@@ -147,7 +162,17 @@ function FacilityDetail() {
       <aside className="fd-left">
         <section className="fd-card fd-info-card">
           <Link to="/facilities" className="fd-back-link">All facilities</Link>
+          <div className="fd-category">
+            <span className="fd-category-icon" aria-hidden="true">{categoryIcon(facility.type)}</span>
+            <span>{facilityCategory(facility.type)}</span>
+          </div>
           <h1 className="fd-title">{facility.name}</h1>
+          <img
+            className="fd-img"
+            src={IMAGES[facility.type]}
+            alt={`${facility.name} facility`}
+            onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+          />
           <p className="fd-desc">{DESCRIPTIONS[facility.type] || ''}</p>
           <div className="fd-facts">
             <span>{facility.location}</span>

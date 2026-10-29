@@ -129,7 +129,8 @@ router.post('/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, full_name, email, role, password_hash, email_verified FROM users
+      `SELECT id, full_name, email, role, password_hash, email_verified,
+              student_staff_id, contact_number, organization FROM users
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
       [identifier]
     );
@@ -314,7 +315,7 @@ router.get('/profile', authenticate, async (req, res) => {
     const [profile, preferences] = await Promise.all([
       pool.query(
         `SELECT id, full_name, email, role, student_staff_id, contact_number,
-                to_char(created_at, 'YYYY-MM-DD') AS joined
+                organization, to_char(created_at, 'YYYY-MM-DD') AS joined
          FROM users WHERE id = $1`,
         [req.user.id]
       ),
@@ -352,7 +353,7 @@ router.patch('/profile', authenticate, async (req, res) => {
     const result = await pool.query(
       `UPDATE users SET full_name = $1, contact_number = $2
        WHERE id = $3
-       RETURNING id, full_name, email, role, student_staff_id, contact_number`,
+       RETURNING id, full_name, email, role, student_staff_id, contact_number, organization`,
       [full_name.trim(), contact_number?.trim() || null, req.user.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });

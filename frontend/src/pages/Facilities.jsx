@@ -18,6 +18,7 @@ function Facilities() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all | available | indoor
+  const [sortOrder, setSortOrder] = useState('desc');
   const { summary } = useSummary(todayString());
 
   useEffect(() => {
@@ -36,7 +37,9 @@ function Facilities() {
       if (filter === 'indoor') return INDOOR_TYPES.includes(f.type);
       return true;
     })
-    .sort((a, b) => freeNow(b) - freeNow(a)); // most free slots first
+    .sort((a, b) => sortOrder === 'desc'
+      ? freeNow(b) - freeNow(a)
+      : freeNow(a) - freeNow(b));
 
   // ---------- 3. layout ----------
   return (
@@ -53,7 +56,13 @@ function Facilities() {
           <button className={filter === 'available' ? 'tab active' : 'tab'} onClick={() => setFilter('available')}>Available Today</button>
           <button className={filter === 'indoor' ? 'tab active' : 'tab'} onClick={() => setFilter('indoor')}>Indoor Arenas</button>
         </div>
-        <div className="sort-label">Sort by: <strong>Free slots today (high to low)</strong></div>
+        <label className="sort-label">
+          <span>Sort By:</span>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort facilities by availability">
+            <option value="desc">Availability (High to Low)</option>
+            <option value="asc">Availability (Low to High)</option>
+          </select>
+        </label>
       </div>
 
       {loading && <p>Loading facilities…</p>}
