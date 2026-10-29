@@ -51,7 +51,11 @@ function authenticate(req, res, next) {
   }
 
   // Load the current user record so deleted accounts and updated roles take effect immediately.
-  pool.query('SELECT id, full_name, email, role FROM users WHERE id = $1', [session.sub])
+  pool.query(
+    `SELECT id, full_name, email, role, student_staff_id, contact_number, organization
+       FROM users WHERE id = $1`,
+    [session.sub],
+  )
     .then((result) => {
       if (result.rows.length === 0) return res.status(401).json({ error: 'Account no longer exists' });
       req.user = result.rows[0];

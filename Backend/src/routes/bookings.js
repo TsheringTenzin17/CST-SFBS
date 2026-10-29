@@ -172,17 +172,22 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(eligibility.status).json({ error: eligibility.message });
     }
 
-    // Confirmed instantly — there is no admin approval step.
+    // Students and staff get free instant confirmation. Outsiders pay
+    // offline and remain pending until an admin reviews the payment.
+    const initialStatus = req.user.role === 'outsider' ? 'pending' : 'approved';
     const inserted = await client.query(
       `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'approved') RETURNING id, status`,
-      [req.user.id, facility_id, booking_date, start, end, purpose || null]
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, status`,
+      [req.user.id, facility_id, booking_date, start, end, purpose || null, initialStatus]
     );
+    const notificationMessage = initialStatus === 'pending'
+      ? `Your booking for ${booking_date} (${start}-${end}) is pending approval after offline payment verification.`
+      : `Your booking for ${booking_date} (${start}-${end}) is confirmed.`;
     await addBookingNotification(
       client,
       req.user.id,
-      'booking_confirmed',
-      `Your booking for ${booking_date} (${start}-${end}) is confirmed.`
+      initialStatus === 'pending' ? 'booking_pending' : 'booking_confirmed',
+      notificationMessage
     );
 
     await client.query('COMMIT');
