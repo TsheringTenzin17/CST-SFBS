@@ -37,7 +37,7 @@ function UserMenu() {
   const handleLogout = () => {
     setOpen(false);
     logout();
-    navigate('/');
+    navigate(user.role === 'admin' ? '/login' : '/');
   };
 
   const name = titleCase(user.full_name ?? user.name ?? '');
@@ -83,6 +83,8 @@ function UserMenu() {
 
           <div className="user-menu-divider" />
 
+          {user.role !== 'admin' && (
+            <>
           <Link to="/settings" role="menuitem" className="user-menu-item" onClick={() => setOpen(false)}>
             <svg {...icon}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
             Profile &amp; Settings
@@ -97,6 +99,8 @@ function UserMenu() {
           </Link>
           <div className="user-menu-divider" />
 
+            </>
+          )}
           <button type="button" role="menuitem" className="user-menu-item user-menu-logout" onClick={handleLogout}>
             <svg {...icon}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
             Logout

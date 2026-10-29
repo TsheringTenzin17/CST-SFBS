@@ -323,11 +323,48 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
-// ---- PATCH /bookings/:id : admin cancels any booking ---------------------
-// Exception handling only (no-shows, rule violations, closures).
+// ---- PATCH /bookings/:id : admin approves a pending booking, or cancels any --
+// status 'approved'  -> pending outsider booking after payment check
+// status 'cancelled' -> exception handling (no-shows, rule violations, closures)
 router.patch('/:id', requireAdmin, async (req, res) => {
   const { status, reason } = req.body;
-  if (status !== 'cancelled') return res.status(400).json({ error: "Only status 'cancelled' is supported" });
+
+  // Approve a pending (outsider) booking after the offline payment is verified.
+  if (status === 'approved') {
+    const bookingId = Number(req.params.id);
+    if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+      return res.status(400).json({ error: 'Invalid booking id' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `UPDATE bookings SET status = 'approved' WHERE id = $1 AND status = 'pending'
+         RETURNING id, user_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
+                   to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
+        [bookingId]
+      );
+      if (result.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Pending booking not found (it may already be approved or cancelled)' });
+      }
+      const b = result.rows[0];
+      await addBookingNotification(
+        client, b.user_id, 'booking_confirmed',
+        `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was approved.`
+      );
+      await client.query('COMMIT');
+      return res.json({ booking: { id: b.id, status: 'approved' } });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to approve booking' });
+    } finally {
+      client.release();
+    }
+  }
+
+  if (status !== 'cancelled') return res.status(400).json({ error: "status must be 'approved' or 'cancelled'" });
   if (typeof reason !== 'string' || !reason.trim()) {
     return res.status(400).json({ error: 'A cancellation reason is required' });
   }

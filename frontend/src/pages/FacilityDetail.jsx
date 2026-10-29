@@ -169,11 +169,11 @@ function FacilityDetail() {
           <h1 className="fd-title">{facility.name}</h1>
           <img
             className="fd-img"
-            src={IMAGES[facility.type]}
+            src={facility.image_url || IMAGES[facility.type]}
             alt={`${facility.name} facility`}
             onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
           />
-          <p className="fd-desc">{DESCRIPTIONS[facility.type] || ''}</p>
+          <p className="fd-desc">{facility.description || DESCRIPTIONS[facility.type] || ''}</p>
           <div className="fd-facts">
             <span>{facility.location}</span>
             <span>Capacity {facility.capacity}</span>

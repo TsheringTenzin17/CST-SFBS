@@ -32,6 +32,7 @@ app.use('/notifications', require('./routes/notifications'));
 app.use('/support', require('./routes/support'));
 app.use('/maintenance', require('./routes/maintenance'));
 app.use('/tournaments', require('./routes/tournaments'));
+app.use('/admin/facilities', require('./routes/adminFacilities'));
 app.use('/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 4000;

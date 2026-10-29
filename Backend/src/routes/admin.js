@@ -8,6 +8,7 @@
 const express = require('express');
 const pool = require('../db');
 const { requireAdmin } = require('../auth');
+const { bhutanNow } = require('../time');
 const { sendEmail } = require('../email');
 const router = express.Router();
 
@@ -121,9 +122,26 @@ router.patch('/users/:id/role', requireAdmin, async (req, res) => {
   }
 });
 
+// Dates are Bhutan dates. "Active users" and "utilization" look at the last 30 days.
+function reportWindows() {
+  const today = bhutanNow().date;
+  const shift = (dateStr, days) => {
+    const d = new Date(`${dateStr}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const monthStart = `${today.slice(0, 8)}01`;
+  const [y, m] = today.split('-').map(Number);
+  const pad = (n) => String(n).padStart(2, '0');
+  const nextMonthStart = m === 12 ? `${y + 1}-01-01` : `${y}-${pad(m + 1)}-01`;
+  const prevMonthStart = m === 1 ? `${y - 1}-12-01` : `${y}-${pad(m - 1)}-01`;
+  return { today, monthStart, nextMonthStart, prevMonthStart, thirtyDaysAgo: shift(today, -29) };
+}
+
 router.get('/reports', requireAdmin, async (req, res) => {
   try {
-    const [totals, byFacility, byRole, users] = await Promise.all([
+    const w = reportWindows();
+    const [totals, byFacility, byRole, users, month, active, hours, activity] = await Promise.all([
       pool.query(
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status <> 'cancelled')::int AS confirmed,
@@ -138,6 +156,57 @@ router.get('/reports', requireAdmin, async (req, res) => {
          FROM bookings b JOIN users u ON u.id = b.user_id
          WHERE b.status <> 'cancelled' GROUP BY u.role ORDER BY bookings DESC`),
       pool.query('SELECT COUNT(*)::int AS n FROM users'),
+      // this month vs last month, by booking date
+      pool.query(
+        `SELECT COUNT(*) FILTER (WHERE booking_date >= $1 AND booking_date < $2)::int AS this_total,
+                COUNT(*) FILTER (WHERE booking_date >= $1 AND booking_date < $2 AND status = 'cancelled')::int AS this_cancelled,
+                COUNT(*) FILTER (WHERE booking_date >= $3 AND booking_date < $1)::int AS last_total
+         FROM bookings`,
+        [w.monthStart, w.nextMonthStart, w.prevMonthStart]),
+      // people who held at least one live booking in the last 30 days
+      pool.query(
+        `SELECT COUNT(DISTINCT user_id)::int AS n FROM bookings
+         WHERE status <> 'cancelled' AND booking_date BETWEEN $1 AND $2`,
+        [w.thirtyDaysAgo, w.today]),
+      // booked hours vs. open hours (from the standard weekly schedule rules) over the same 30 days
+      pool.query(
+        `WITH days AS (
+           SELECT d::date AS day FROM generate_series($1::date, $2::date, interval '1 day') AS d
+         ), open_h AS (
+           SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (r.end_time - r.start_time)) / 3600), 0) AS hours
+           FROM days
+           JOIN schedule_rules r ON r.day_of_week = EXTRACT(DOW FROM days.day)::int
+           JOIN facilities f ON f.id = r.facility_id AND f.is_active IS NOT FALSE
+           WHERE r.timetable IN ('all', 'standard')
+         ), booked AS (
+           SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 0) AS hours
+           FROM bookings
+           WHERE status <> 'cancelled' AND booking_date BETWEEN $1 AND $2
+         )
+         SELECT open_h.hours::float AS open_hours, booked.hours::float AS booked_hours FROM open_h, booked`,
+        [w.thirtyDaysAgo, w.today]),
+      // latest 5 events we can date: new bookings and new maintenance blocks
+      pool.query(
+        `SELECT * FROM (
+           SELECT (b.created_at AT TIME ZONE 'UTC') AS happened_at, u.full_name AS user_name, u.role AS user_role,
+                  'Booked Slot' AS action, f.group_name AS facility, b.status AS status
+           FROM bookings b
+           JOIN users u ON u.id = b.user_id
+           JOIN facilities f ON f.id = b.facility_id
+           UNION ALL
+           SELECT (m.created_at AT TIME ZONE 'UTC'), COALESCE(u.full_name, 'Admin'), COALESCE(u.role, 'admin'),
+                  'Maintenance Block', f.group_name,
+                  CASE WHEN m.end_date < $1::date THEN 'ended'
+                       WHEN m.start_date <= $1::date THEN 'active'
+                       ELSE 'upcoming' END
+           FROM maintenance_blocks m
+           JOIN facilities f ON f.id = m.facility_id
+           LEFT JOIN users u ON u.id = m.created_by
+         ) e
+         WHERE happened_at IS NOT NULL
+         ORDER BY happened_at DESC
+         LIMIT 5`,
+        [w.today]),
     ]);
 
     res.json({
@@ -145,6 +214,10 @@ router.get('/reports', requireAdmin, async (req, res) => {
       by_facility: byFacility.rows,
       by_role: byRole.rows,
       total_users: users.rows[0].n,
+      month: month.rows[0],
+      active_users: active.rows[0].n,
+      hours: hours.rows[0],
+      recent_activity: activity.rows,
     });
   } catch (err) {
     console.error(err);

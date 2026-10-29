@@ -30,3 +30,22 @@ export function getUsageRows(bookingList) {
   });
   return Object.entries(counts).sort((a, b) => b[1] - a[1]);
 }
+
+// '16:00' -> '4 PM', '09:30' -> '9:30 AM'
+export function clock(hhmm) {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return m ? `${hour}:${String(m).padStart(2, '0')} ${suffix}` : `${hour} ${suffix}`;
+}
+
+// '2026-10-22' -> '22 Oct'
+export function shortDay(dateStr) {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    .format(new Date(`${dateStr}T00:00:00Z`));
+}
+
+// 'table_tennis' -> 'Table Tennis'
+export function sportName(type = '') {
+  return String(type).split('_').filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+}

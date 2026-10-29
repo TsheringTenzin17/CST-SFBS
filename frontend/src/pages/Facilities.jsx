@@ -78,7 +78,7 @@ function Facilities() {
             <div className="card" key={f.group_name}>
               <img
                 className="card-img"
-                src={IMAGES[f.type]}
+                src={f.image_url || IMAGES[f.type]}
                 alt={f.displayName}
                 onError={(e) => { e.target.style.visibility = 'hidden'; }}
               />
@@ -90,7 +90,7 @@ function Facilities() {
                   </h3>
                   {badge.label && <span className={`badge badge-${badge.variant}`}>{badge.label}</span>}
                 </div>
-                <p className="card-desc">{DESCRIPTIONS[f.type] || ''}</p>
+                <p className="card-desc">{f.description || DESCRIPTIONS[f.type] || ''}</p>
                 <div className="card-footer-row">
                   <span className="slots-text">{slotsText(s)}</span>
                   {/* Even a fully booked facility stays clickable: other days may be free. */}
