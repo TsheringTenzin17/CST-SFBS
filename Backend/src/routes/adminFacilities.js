@@ -113,7 +113,15 @@ router.get('/', requireAdmin, async (req, res) => {
 
 const cleanText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const slug = (v) => String(v).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-const validImage = (v) => !v || /^(https?:\/\/|\/)[^\s"'<>]+$/.test(v);
+// An image is either an uploaded photo (compressed data URL) or a web address / site path.
+const MAX_DATA_URL = 700000; // characters, about 500 KB of picture
+const DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const cleanImage = (v) => (typeof v === 'string' ? v.trim() : '');
+const validImage = (v) => {
+  if (!v) return true;
+  if (v.startsWith('data:')) return v.length <= MAX_DATA_URL && DATA_URL.test(v);
+  return v.length <= 300 && /^(https?:\/\/|\/)[^\s"'<>]+$/.test(v);
+};
 
 router.post('/', requireAdmin, async (req, res) => {
   const name = cleanText(req.body.name, 50);
@@ -122,11 +130,12 @@ router.post('/', requireAdmin, async (req, res) => {
   const courtLabel = cleanText(req.body.court_label, 50) || null;
   const location = cleanText(req.body.location, 100) || 'Main Campus';
   const description = cleanText(req.body.description, 600) || null;
-  const imageUrl = cleanText(req.body.image_url, 300) || null;
+  const imageUrl = cleanImage(req.body.image_url) || null;
   const capacity = req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);
   const maxMinutes = Number(req.body.max_duration_minutes ?? 60);
   const role = req.body.role || 'everyone';
   const hours = req.body.hours || {};
+  const isActive = req.body.is_active !== false; // false = created as temporarily unavailable
 
   if (!name) return res.status(400).json({ error: 'Facility name is required' });
   if (!sport || !slug(sport)) return res.status(400).json({ error: 'Sport type is required' });
@@ -137,7 +146,7 @@ router.post('/', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Maximum booking length must be between 15 and 480 minutes' });
   }
   if (!PRIMARY_ROLES.includes(role)) return res.status(400).json({ error: 'Choose who can book this facility' });
-  if (!validImage(imageUrl)) return res.status(400).json({ error: 'Image must be a web address (https://…) or a path starting with /' });
+  if (!validImage(imageUrl)) return res.status(400).json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
 
   const windows = [
     ['weekday', hours.weekday_start, hours.weekday_end, [1, 2, 3, 4, 5]],
@@ -158,10 +167,10 @@ router.post('/', requireAdmin, async (req, res) => {
     const inserted = await client.query(
       `INSERT INTO facilities (name, type, group_name, court_label, capacity, location,
                                max_duration_minutes, description, image_url, is_active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING id, name, type, group_name, court_label, capacity, location, max_duration_minutes,
                  description, image_url, is_active`,
-      [name, slug(sport), group, courtLabel, capacity, location, maxMinutes, description, imageUrl]
+      [name, slug(sport), group, courtLabel, capacity, location, maxMinutes, description, imageUrl, isActive]
     );
     const facility = inserted.rows[0];
     for (const [label, start, end, days] of windows) {
@@ -205,8 +214,8 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   if ('description' in req.body) add('description', cleanText(req.body.description, 600) || null);
   if ('location' in req.body) add('location', cleanText(req.body.location, 100) || null);
   if ('image_url' in req.body) {
-    const image = cleanText(req.body.image_url, 300) || null;
-    if (!validImage(image)) return res.status(400).json({ error: 'Image must be a web address (https://…) or a path starting with /' });
+    const image = cleanImage(req.body.image_url) || null;
+    if (!validImage(image)) return res.status(400).json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
     add('image_url', image);
   }
   if ('capacity' in req.body) {

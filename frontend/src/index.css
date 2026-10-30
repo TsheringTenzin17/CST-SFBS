@@ -136,10 +136,10 @@ a {
   position: relative;
   width: 100%;
   height: clamp(390px, 34vw, 460px);
-  max-width: 1600px;
-  margin: 0 auto;
+  max-width: none;          /* full width: no white strips beside the photo */
+  margin: 0;
   overflow: hidden;
-  background: #f7f7f2;
+  background: #173f4b;      /* dark fallback while the photo loads */
 }
 
 .hero-slide,
@@ -215,7 +215,7 @@ a {
   overflow: hidden;
   padding: 54px max(8vw, 40px);
   background-image:
-    linear-gradient(90deg, rgba(37, 84, 99, 0.48) 0%, rgba(37, 84, 99, 0.32) 53%, rgba(37, 84, 99, 0.18) 100%),
+    linear-gradient(90deg, rgba(10, 30, 38, 0.80) 0%, rgba(10, 30, 38, 0.62) 55%, rgba(10, 30, 38, 0.45) 100%),
     url('/images/collegeCST.jpg');
   background-position: center;
   background-size: cover;
@@ -661,6 +661,12 @@ a {
 
 .hero-slide-0 .hero-location,
 .hero-slide-0 .hero-text small { color: #fff; }
+.hero-slide-0 .hero-location { border-color: rgba(255, 255, 255, 0.6); }
+.hero-slide-0 .hero-text h1 span { color: #fff; }
+.hero-slide-0 .hero-text h1 strong { color: #22d36f; }
+.hero-slide-0 .hero-text h1 span,
+.hero-slide-0 .hero-text h1 strong { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
+.hero-slide-0 .hero-text p { color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
 .hero-slide-1 .hero-location,
 .hero-slide-1 .hero-text p,
 .hero-slide-1 .hero-text small {

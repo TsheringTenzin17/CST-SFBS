@@ -8,11 +8,14 @@ import { ADMIN_NAV } from '../components/AdminSidebar';
 import AdminOverview from './AdminOverview';
 import AdminBookings from './AdminBookings';
 import AdminFacilities from './AdminFacilities';
+import AdminFacilityForm from './AdminFacilityForm';
 import AdminMaintenance from './AdminMaintenance';
 import AdminTournaments from './AdminTournaments';
 import AdminUsers from './AdminUsers';
+import AdminUserDetail from './AdminUserDetail';
 import AdminReports from './AdminReports';
 import AdminSupport from './AdminSupport';
+import AdminSettings from './AdminSettings';
 import './admin.css';
 
 // Tabs that just wrap an existing page component
@@ -60,18 +63,22 @@ function AdminDashboard() {
     loadBookings();
   }, [loadBookings]);
 
-  const simple = SIMPLE_TABS[activeTab];
+  // /admin/users/:id opens the single-account page instead of the list
+  const userDetail = pathname.match(/^\/admin\/users\/(\d+)\/?$/);
+  const simple = userDetail ? null : SIMPLE_TABS[activeTab];
 
   return (
     <div className="admin-dashboard">
-      <Header links={ADMIN_NAV} homeTo="/admin/dashboard" />
+      <Header links={ADMIN_NAV.filter((item) => !item.hidden)} homeTo="/admin/dashboard" />
 
       <main className="admin-content">
         {activeTab === 'Dashboard' ? (
           <AdminOverview bookingList={bookings} user={user} onReload={loadBookings} />
         ) : activeTab === 'Facilities Status' ? (
-          <AdminFacilities />
-        ) : ['Bookings', 'Maintenance Blocks', 'Reports'].includes(activeTab) ? null : (
+          /^\/admin\/facilities\/new\/?$/.test(pathname) ? <AdminFacilityForm /> : <AdminFacilities />
+        ) : activeTab === 'System Settings' ? (
+          <AdminSettings />
+        ) : userDetail || ['Bookings', 'Maintenance Blocks', 'Reports'].includes(activeTab) ? null : (
           <header className="admin-page-header">
             <h1>{current.label}</h1>
             <p>Welcome back{user?.full_name ? `, ${user.full_name}` : ''}. Here’s the latest on your sports facilities.</p>
@@ -85,6 +92,8 @@ function AdminDashboard() {
         {activeTab === 'Maintenance Blocks' && <AdminMaintenance />}
 
         {activeTab === 'Reports' && <AdminReports />}
+
+        {userDetail && <AdminUserDetail userId={Number(userDetail[1])} />}
 
         {simple && (
           <section className="admin-panel">

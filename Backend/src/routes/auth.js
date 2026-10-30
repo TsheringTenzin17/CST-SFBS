@@ -151,7 +151,7 @@ router.post('/login', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, full_name, email, role, password_hash, email_verified,
-              student_staff_id, contact_number, organization, gender FROM users
+              student_staff_id, contact_number, organization, gender, is_active FROM users
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
       [identifier]
     );
@@ -176,7 +176,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const { password_hash, email_verified, ...user } = row;
+    if (row.is_active === false) {
+      return res.status(403).json({ error: 'This account has been suspended. Please contact the DSA office.' });
+    }
+
+    const { password_hash, email_verified, is_active, ...user } = row;
     // Never return the stored password hash; issue a session token for subsequent requests.
     res.json({ user, token: createSessionToken(user.id) });
   } catch (err) {

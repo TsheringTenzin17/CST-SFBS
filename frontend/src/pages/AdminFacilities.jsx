@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { apiCall } from '../utils/api';
-import { clock, shortDay, sportName } from '../utils/adminHelpers';
+import { clock, shortDay } from '../utils/adminHelpers';
 import { IMAGES } from '../facilityMeta';
 
 const STATUS_LABEL = { active: 'Active', maintenance: 'Under Maintenance', closed: 'Closed' };
-
-const EMPTY_FORM = {
-  name: '', type: '', group_name: '', court_label: '', capacity: '', location: 'Main Campus',
-  max_duration_minutes: 60, image_url: '', description: '', role: 'everyone',
-  weekday_start: '16:00', weekday_end: '22:00', weekend_start: '08:00', weekend_end: '22:00',
-};
 
 function nextSlotText(slot, today) {
   if (!slot) return 'N/A';
@@ -56,12 +50,9 @@ function FacilityCard({ f, today, busy, onToggle }) {
 export default function AdminFacilities() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const location = useLocation();
+  const [message, setMessage] = useState(location.state?.message || ''); // e.g. "Squash Court was added"
   const [busyId, setBusyId] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -76,7 +67,6 @@ export default function AdminFacilities() {
 
   const facilities = data?.facilities || [];
   const arenaCount = useMemo(() => new Set(facilities.map((f) => f.group_name || f.name)).size, [facilities]);
-  const sportTypes = useMemo(() => [...new Set(facilities.map((f) => f.type).filter(Boolean))], [facilities]);
 
   async function toggle(f) {
     setBusyId(f.id);
@@ -98,30 +88,6 @@ export default function AdminFacilities() {
     }
   }
 
-  const field = (name) => (e) => setForm({ ...form, [name]: e.target.value });
-
-  async function addFacility(event) {
-    event.preventDefault();
-    setSaving(true);
-    setFormError('');
-    try {
-      const { weekday_start, weekday_end, weekend_start, weekend_end, ...rest } = form;
-      await apiCall('/admin/facilities', 'POST', {
-        ...rest,
-        max_duration_minutes: Number(form.max_duration_minutes),
-        hours: { weekday_start, weekday_end, weekend_start, weekend_end },
-      });
-      setMessage(`${form.name.trim()} was added and is now open for booking.`);
-      setForm(EMPTY_FORM);
-      setShowForm(false);
-      await load();
-    } catch (e) {
-      setFormError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <>
       <header className="admin-page-header fac-header">
@@ -132,80 +98,12 @@ export default function AdminFacilities() {
             {data ? ` ${arenaCount}` : ''} sports arenas.
           </p>
         </div>
-        <button type="button" className="adm-btn-solid fac-add-btn" aria-expanded={showForm}
-          onClick={() => { setShowForm((s) => !s); setFormError(''); }}>
-          {showForm ? 'Close' : '+ Add new sport'}
-        </button>
+        <Link to="/admin/facilities/new" className="adm-btn-solid fac-add-btn">+ Add new sport</Link>
       </header>
 
       {message && <p className="admin-support-notice" role="status">{message}</p>}
       {error && (
         <div className="admin-error" role="alert"><span>{error}</span><button type="button" onClick={load}>Try again</button></div>
-      )}
-
-      {showForm && (
-        <form className="admin-panel fac-form" onSubmit={addFacility}>
-          <div className="admin-panel-heading"><h2>Add a new sport or court</h2></div>
-          <p className="fac-hint">
-            Use this when the college gets a new sport. To add a second court of an existing sport,
-            reuse the same <b>Group name</b> (for example &ldquo;Badminton Court&rdquo;) and give it a court label.
-          </p>
-          {formError && <div className="admin-error" role="alert"><span>{formError}</span></div>}
-
-          <div className="fac-form-grid">
-            <label>Facility name *
-              <input required maxLength="50" value={form.name} onChange={field('name')} placeholder="e.g. Squash Court 1" />
-            </label>
-            <label>Sport *
-              <input required list="fac-sports" maxLength="50" value={form.type} onChange={field('type')} placeholder="e.g. Squash" />
-              <datalist id="fac-sports">{sportTypes.map((t) => <option key={t} value={sportName(t)} />)}</datalist>
-            </label>
-            <label>Group name (optional)
-              <input maxLength="50" value={form.group_name} onChange={field('group_name')} placeholder="Defaults to the facility name" />
-            </label>
-            <label>Court label (optional)
-              <input maxLength="50" value={form.court_label} onChange={field('court_label')} placeholder="e.g. 1" />
-            </label>
-            <label>Capacity (people)
-              <input type="number" min="1" value={form.capacity} onChange={field('capacity')} />
-            </label>
-            <label>Location
-              <input maxLength="100" value={form.location} onChange={field('location')} />
-            </label>
-            <label>Longest booking (minutes)
-              <input required type="number" min="15" max="480" step="15" value={form.max_duration_minutes} onChange={field('max_duration_minutes')} />
-            </label>
-            <label>Who can book
-              <select value={form.role} onChange={field('role')}>
-                <option value="everyone">Everyone (students, staff, public)</option>
-                <option value="student">Students only</option>
-              </select>
-            </label>
-            <label>Weekday opens (Mon–Fri)
-              <input required type="time" value={form.weekday_start} onChange={field('weekday_start')} />
-            </label>
-            <label>Weekday closes
-              <input required type="time" value={form.weekday_end} onChange={field('weekday_end')} />
-            </label>
-            <label>Weekend opens (Sat–Sun)
-              <input required type="time" value={form.weekend_start} onChange={field('weekend_start')} />
-            </label>
-            <label>Weekend closes
-              <input required type="time" value={form.weekend_end} onChange={field('weekend_end')} />
-            </label>
-            <label className="fac-wide">Photo address (optional)
-              <input maxLength="300" value={form.image_url} onChange={field('image_url')} placeholder="https://… or /images/squash.jpg" />
-            </label>
-            <label className="fac-wide">Description (optional)
-              <textarea maxLength="600" rows="3" value={form.description} onChange={field('description')} />
-            </label>
-          </div>
-
-          <div className="fac-form-actions">
-            <button type="submit" className="admin-primary-button" disabled={saving}>{saving ? 'Adding…' : 'Add facility'}</button>
-            <button type="button" className="admin-secondary-button" onClick={() => setShowForm(false)}>Cancel</button>
-          </div>
-        </form>
       )}
 
       {!data && !error && <p className="admin-state-message" role="status">Loading facilities…</p>}

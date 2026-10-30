@@ -8,5 +8,7 @@ export const ADMIN_NAV = [
   { to: '/admin/tournaments', key: 'Tournaments',        label: 'Tournaments' },
   { to: '/admin/users',       key: 'Users',              label: 'Registered Users' },
   { to: '/admin/reports',     key: 'Reports',            label: 'Reports & Analytics' },
-  { to: '/admin/support',     key: 'Support Requests',   label: 'System Settings' },
+  { to: '/admin/settings',    key: 'System Settings',    label: 'System Settings' },
+  // Not shown in the header (keeps it at 8 links); opened from the System Settings page.
+  { to: '/admin/support',     key: 'Support Requests',   label: 'Support Requests', hidden: true },
 ];
