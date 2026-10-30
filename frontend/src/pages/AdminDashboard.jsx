@@ -6,6 +6,7 @@ import AdminSidebar, { ADMIN_NAV } from '../components/AdminSidebar';
 import AdminOverview from './AdminOverview';
 import AdminBookings from './AdminBookings';
 import AdminMaintenance from './AdminMaintenance';
+import AdminTournaments from './AdminTournaments';
 import AdminUsers from './AdminUsers';
 import AdminReports from './AdminReports';
 import AdminSupport from './AdminSupport';
@@ -14,6 +15,7 @@ import './admin.css';
 // Tabs that just wrap an existing page component
 const SIMPLE_TABS = {
   'Maintenance Blocks': { title: 'Maintenance Blocks', Component: AdminMaintenance },
+  Tournaments: { title: 'Tournament Dates', Component: AdminTournaments },
   Users: { title: 'Registered Users', Component: AdminUsers },
   Reports: { title: 'Reports & Analytics', Component: AdminReports },
   'Support Requests': { title: 'Support Requests', Component: AdminSupport },

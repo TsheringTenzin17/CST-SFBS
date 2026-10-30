@@ -17,6 +17,7 @@ import ProfileSettings from './pages/ProfileSettings';
 import ContactConfirmation from './pages/ContactConfirmation';
 import RegistrationSuccess from './pages/RegistrationSuccess';
 import VerifyEmail from './pages/VerifyEmail';
+import ConfirmEmailChange from './pages/ConfirmEmailChange';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import FacilityDetail from './pages/FacilityDetail';
@@ -69,6 +70,7 @@ function App() {
     isLoading || user?.role === 'admin' || pathname === '/login' ||
     pathname === '/register' || pathname === '/registration-success' ||
     pathname === '/verify-email' || pathname === '/forgot-password' ||
+    pathname === '/confirm-email-change' ||
     pathname === '/reset-password' || pathname.startsWith('/admin');
 
   return (
@@ -83,6 +85,7 @@ function App() {
         <Route path="/register" element={<AuthPage><Register /></AuthPage>} />
         <Route path="/registration-success" element={<AuthPage><RegistrationSuccess /></AuthPage>} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin" element={<Navigate to="/admin/bookings" replace />} />

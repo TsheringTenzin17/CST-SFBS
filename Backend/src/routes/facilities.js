@@ -7,6 +7,7 @@
 const express = require('express');
 const pool = require('../db');
 const { bhutanNow, toMin, dayOfWeek, isValidDate } = require('../time');
+const { timetableForDate } = require('../timetable');
 const router = express.Router();
 
 // ---------- 1. list ----------
@@ -34,13 +35,14 @@ router.get('/summary', async (req, res) => {
     const date = req.query.date || now.date;
     if (!isValidDate(date)) return res.status(400).json({ error: 'date must look like 2026-10-20' });
     const dow = dayOfWeek(date);
+    const timetable = await timetableForDate(pool, date);
 
     const [facilities, rules, bookings, blocks] = await Promise.all([
       pool.query('SELECT id, name, group_name, max_duration_minutes FROM facilities WHERE is_active = true ORDER BY id'),
       pool.query(
         `SELECT DISTINCT facility_id, to_char(start_time,'HH24:MI') AS start_time,
-                to_char(end_time,'HH24:MI') AS end_time, primary_role
-         FROM schedule_rules WHERE day_of_week = $1`, [dow]),
+                to_char(end_time,'HH24:MI') AS end_time, primary_role, day_booking_cap
+         FROM schedule_rules WHERE day_of_week = $1 AND timetable IN ('all', $2)`, [dow, timetable]),
       pool.query(
         `SELECT facility_id, to_char(start_time,'HH24:MI') AS start_time,
                 to_char(end_time,'HH24:MI') AS end_time
@@ -59,14 +61,33 @@ router.get('/summary', async (req, res) => {
 
       let total = 0;
       let available = 0;
+      let cappedSlots = 0;
+      let cappedFree = 0;
+      let cap = null;
       for (const r of bookable) {
         for (let s = toMin(r.start_time); s + slotMin <= toMin(r.end_time); s += slotMin) {
           const e = s + slotMin;
-          total += 1;
           const taken = booked.some((b) => toMin(b.start_time) < e && toMin(b.end_time) > s);
           const past = date < now.date || (date === now.date && s <= now.minutes);
-          if (!taken && !past && !blockedIds.has(f.id)) available += 1;
+          const free = !taken && !past && !blockedIds.has(f.id);
+          if (r.day_booking_cap) {
+            cap = r.day_booking_cap;
+            cappedSlots += 1;
+            if (free) cappedFree += 1;
+          } else {
+            total += 1;
+            if (free) available += 1;
+          }
         }
+      }
+      // Capped rules (weekend student matches): never more than `cap` bookings a day.
+      if (cap) {
+        const cappedRules = bookable.filter((r) => r.day_booking_cap);
+        const used = booked.filter((b) => cappedRules.some(
+          (r) => toMin(r.start_time) <= toMin(b.start_time) && toMin(r.end_time) >= toMin(b.end_time)
+        )).length;
+        total += Math.min(cappedSlots, cap);
+        available += Math.max(0, Math.min(cappedFree, cap - used));
       }
       return { facility_id: f.id, name: f.name, group_name: f.group_name, total, available, blocked: blockedIds.has(f.id) };
     });
@@ -87,11 +108,13 @@ router.get('/:id/availability', async (req, res) => {
 
   try {
     const dow = dayOfWeek(date);
+    const timetable = await timetableForDate(pool, date);
     const [rules, bookings, maintenance] = await Promise.all([
       pool.query(
         `SELECT to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time,
-                primary_role, fallback_role, fallback_type, notes
-         FROM schedule_rules WHERE facility_id = $1 AND day_of_week = $2 ORDER BY start_time`, [id, dow]),
+                primary_role, fallback_role, fallback_type, notes, day_booking_cap
+         FROM schedule_rules WHERE facility_id = $1 AND day_of_week = $2
+           AND timetable IN ('all', $3) ORDER BY start_time`, [id, dow, timetable]),
       pool.query(
         `SELECT to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time, status
          FROM bookings WHERE facility_id = $1 AND booking_date = $2 AND status <> 'cancelled'
@@ -101,10 +124,19 @@ router.get('/:id/availability', async (req, res) => {
          WHERE facility_id = $1 AND $2::date BETWEEN start_date AND end_date`, [id, date]),
     ]);
 
+    // Has the daily cap (weekend student matches) been used up on this date?
+    const capped = rules.rows.filter((r) => r.day_booking_cap);
+    const cap = capped.length ? capped[0].day_booking_cap : null;
+    const usedInCap = bookings.rows.filter((b) => capped.some(
+      (r) => toMin(r.start_time) <= toMin(b.start_time) && toMin(r.end_time) >= toMin(b.end_time)
+    )).length;
+
     res.json({
       facility_id: id,
       date,
       day_of_week: dow,
+      timetable, // 'tournament' | 'standard'
+      cap_reached: cap !== null && usedInCap >= cap,
       rules: rules.rows,
       existing_bookings: bookings.rows,
       maintenance: maintenance.rows, // non-empty = facility closed that day

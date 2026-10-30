@@ -14,22 +14,47 @@ function notificationCategory(type = '') {
   return type.startsWith('booking_') ? 'bookings' : 'system';
 }
 
+// Each type gets its own colour and icon. Unknown types fall back to a neutral info style.
+const ICON_PROPS = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+const ICONS = {
+  check: <svg {...ICON_PROPS}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>,
+  star: <svg {...ICON_PROPS} fill="currentColor" strokeWidth="1.2"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z" /></svg>,
+  warning: <svg {...ICON_PROPS}><path d="M12 4l9 16H3L12 4z" /><path d="M12 10v4M12 17.2v.1" /></svg>,
+  alarm: <svg {...ICON_PROPS}><circle cx="12" cy="13" r="7" /><path d="M12 9.5V13l2.3 1.5M4.5 5.5L7 3.5M19.5 5.5L17 3.5" /></svg>,
+  clock: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
+  cross: <svg {...ICON_PROPS}><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>,
+  info: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 7.8v.1" /></svg>,
+};
+
 function notificationAppearance(type = '') {
-  if (type.includes('cancel')) return { icon: '×', className: 'cancelled' };
-  if (type.includes('maintenance') || type.includes('system')) return { icon: '!', className: 'maintenance' };
-  if (type.includes('rescheduled') || type.includes('approved')) return { icon: '★', className: 'update' };
-  return { icon: '✓', className: 'confirmed' };
+  if (type.includes('cancel')) return { icon: ICONS.cross, className: 'cancelled' };
+  if (type.includes('maintenance')) return { icon: ICONS.warning, className: 'maintenance' };
+  if (type.includes('pending')) return { icon: ICONS.clock, className: 'pending' };
+  if (type.includes('reminder')) return { icon: ICONS.alarm, className: 'reminder' };
+  if (type.includes('rescheduled') || type.includes('approved')) return { icon: ICONS.star, className: 'update' };
+  if (type.includes('confirmed')) return { icon: ICONS.check, className: 'confirmed' };
+  return { icon: ICONS.info, className: 'info' };
 }
 
 function notificationTitle(type = '') {
   const titles = {
     booking_confirmed: 'Booking Confirmed',
+    booking_pending: 'Booking Pending Approval',
     booking_cancelled: 'Booking Cancelled',
     booking_rescheduled: 'Booking Rescheduled',
-    booking_reminder: 'Booking Reminder',
+    booking_reminder: 'Upcoming Activity Reminder',
     maintenance_scheduled: 'Maintenance Scheduled',
   };
   return titles[type] || 'System Notification';
+}
+
+// Bold the facility names and dates/times inside a message (plain React text, no raw HTML).
+const HIGHLIGHT = /(Football Ground|Basketball Court|Volleyball Court(?: \((?:Male|Female)\))?|Badminton Courts?(?: [12])?|Table Tennis Table(?: [12])?|Archery Range|\d{4}-\d{2}-\d{2}(?: \(\d{2}:\d{2}-\d{2}:\d{2}\))?)/g;
+
+function highlightedMessage(message = '') {
+  return message.split(HIGHLIGHT).map((part, index) => (
+    index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+  ));
 }
 
 function timeAgo(timestamp) {
@@ -43,7 +68,8 @@ function timeAgo(timestamp) {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
 }
 
 function Notifications() {
@@ -118,7 +144,7 @@ function Notifications() {
       <div className="notifications-heading">
         <div>
           <h1 className="title">Notifications</h1>
-          <p className="subtitle">Keep track of booking updates and system notices.</p>
+          <p className="subtitle">Keep track of your facility bookings, schedule updates, and system alerts.</p>
         </div>
         <button
           className="notifications-mark-all"
@@ -165,8 +191,16 @@ function Notifications() {
               >
                 <span className="notification-icon" aria-hidden="true">{appearance.icon}</span>
                 <div className="notification-content">
-                  <h2>{notificationTitle(notification.type)}</h2>
-                  <p>{notification.message}</p>
+                  <div className="notification-top">
+                    <h2>
+                      {notificationTitle(notification.type)}
+                      {!notification.is_read && <span className="notification-dot" aria-label="Unread" />}
+                    </h2>
+                    <time className="notification-time" dateTime={notification.created_at}>
+                      {timeAgo(notification.created_at)}
+                    </time>
+                  </div>
+                  <p>{highlightedMessage(notification.message)}</p>
                   {!notification.is_read && (
                     <button
                       className="notification-mark-read"
@@ -178,9 +212,6 @@ function Notifications() {
                     </button>
                   )}
                 </div>
-                <time className="notification-time" dateTime={notification.created_at}>
-                  {timeAgo(notification.created_at)}
-                </time>
               </article>
             );
           })}
