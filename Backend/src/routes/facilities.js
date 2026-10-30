@@ -14,7 +14,8 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, type, group_name, court_label, capacity, location, max_duration_minutes
+      `SELECT id, name, type, group_name, court_label, capacity, location, max_duration_minutes,
+              description, image_url
        FROM facilities WHERE is_active = true ORDER BY id`
     );
     res.json(result.rows);

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-function Footer() {
+function Footer({ links, heading = 'Your next game' }) {
   return (
     <footer className="footer">
       <div className="footer-main">
@@ -20,11 +20,13 @@ function Footer() {
         </div>
 
         <nav className="footer-col" aria-label="Footer navigation">
-          <h4>Your next game</h4>
-          <Link to="/facilities">Browse Facilities</Link>
-          <Link to="/my-bookings">My Bookings</Link>
-          <Link to="/rules">Booking rules</Link>
-          <Link to="/help">Help &amp; contact</Link>
+          <h4>{heading}</h4>
+          {(links || [
+            { to: '/facilities', label: 'Browse Facilities' },
+            { to: '/my-bookings', label: 'My Bookings' },
+            { to: '/rules', label: 'Booking rules' },
+            { to: '/help', label: 'Help & contact' },
+          ]).map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
         </nav>
 
         <div className="footer-col footer-contact">

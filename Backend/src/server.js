@@ -21,7 +21,7 @@ app.use(cors({
     ? allowedOrigins
     : (allowedOrigins.length > 0 ? allowedOrigins : true),
 }));
-app.use(express.json());
+app.use(express.json({ limit: '2mb' })); // facility photos arrive as compressed data URLs
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -32,6 +32,8 @@ app.use('/notifications', require('./routes/notifications'));
 app.use('/support', require('./routes/support'));
 app.use('/maintenance', require('./routes/maintenance'));
 app.use('/tournaments', require('./routes/tournaments'));
+app.use('/admin/facilities', require('./routes/adminFacilities'));
+app.use('/admin/settings', require('./routes/adminSettings'));
 app.use('/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 4000;

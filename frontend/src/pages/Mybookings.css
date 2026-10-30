@@ -16,11 +16,11 @@
 
 .my-bookings-heading .title {
   margin: 0;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 52px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.005em;
+  font-family: var(--heading-font);
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0;
   color: #13303a;
 }
 
@@ -100,10 +100,10 @@
 
 .my-bookings-stat strong {
   color: #13303a;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 38px;
-  font-weight: 700;
-  line-height: 1;
+  font-family: var(--heading-font);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 /* Reservations card */
@@ -126,9 +126,9 @@
 
 .my-bookings-reservations h2 {
   margin: 0;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 30px;
-  font-weight: 700;
+  font-family: var(--heading-font);
+  font-size: 26px;
+  font-weight: 600;
   color: #13303a;
 }
 
@@ -329,7 +329,7 @@
   }
 
   .my-bookings-stat strong {
-    font-size: 32px;
+    font-size: 28px;
   }
 }
 
