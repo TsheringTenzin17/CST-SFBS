@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import Header from './components/Header';
@@ -66,6 +67,8 @@ function AuthPage({ children }) {
 function App() {
   const { pathname } = useLocation();
   const { user, isLoading } = useAuth();
+  const pageContentRef = useRef(null);
+  const animatePage = pathname !== '/login' && pathname !== '/register';
   const hideChrome =
     isLoading || user?.role === 'admin' || pathname === '/login' ||
     pathname === '/register' || pathname === '/registration-success' ||
@@ -73,11 +76,25 @@ function App() {
     pathname === '/confirm-email-change' ||
     pathname === '/reset-password' || pathname.startsWith('/admin');
 
+  useLayoutEffect(() => {
+    const pageContent = pageContentRef.current;
+    if (!pageContent) return;
+
+    pageContent.classList.remove('page-3d-transition');
+    if (!animatePage) return;
+
+    void pageContent.offsetWidth;
+    pageContent.classList.add('page-3d-transition');
+  }, [pathname, animatePage]);
+
   return (
     <div className="page">
       {!hideChrome && <Header />}
       {!hideChrome && <LiveNotice />}
-      <div className="page-content">
+      <div
+        ref={pageContentRef}
+        className={`page-content${animatePage ? ' page-3d-transition' : ''}`}
+      >
         <Routes>
         <Route path="/" element={<ClientPage><Home /></ClientPage>} />
         <Route path="/facilities" element={<ClientPage><Facilities /></ClientPage>} />

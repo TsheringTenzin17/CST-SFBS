@@ -7,10 +7,11 @@ import { apiCall } from '../utils/api';
 import './Contact.css';
 
 export const DSA_EMAIL = 'kelzangdorji.cst@rub.edu.bt';
+const SSO_EMAIL = 'purnabdrmongar.cst@rub.edu.bt';
 const STEPS = [
   { title: 'Browse Facilities', text: 'Explore our list of athletic courts, football grounds, traditional archery ranges, and indoor table tennis halls.' },
-  { title: 'Check Availability', text: 'Select a preferred date and view live time slots. See real-time availability based on student and faculty schedules.' },
-  { title: 'Book a Slot', text: 'Input your Student/Staff ID, select your role, accept university athletic regulations, and lock your slot.' },
+  { title: 'Check Availability', text: 'Select a preferred date and view live time slots. See real-time availability based on student, faculty, and commercial schedules.' },
+  { title: 'Book a Slot', text: 'The system will already have your Student/Staff ID, contact information. You will need to accept university athletic regulations, and lock your slot.' },
   { title: 'Get Confirmation', text: 'Receive a confirmation receipt and check-in guide. Present your physical ID card to safety and security on arrival.' },
 ];
 
@@ -19,6 +20,9 @@ const OFFICE_DETAILS = [
   { label: 'Email Support', value: DSA_EMAIL, href: `mailto:${DSA_EMAIL}` },
   { label: 'Contact Hotline', value: '17666628', href: 'tel:17666628' },
   { label: 'Address', value: 'Phuentsholing, Chhukha, Bhutan' },
+  { label: 'Office', value: 'Office of the Dean of Student Affairs' },
+  { label: 'Email Support', value: SSO_EMAIL, href: `mailto:${SSO_EMAIL}` },
+  { label: 'Contact Hotline', value: '17362124', href: 'tel:17362124' },
 ];
 
 function Contact() {
