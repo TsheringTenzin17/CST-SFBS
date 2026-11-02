@@ -13,7 +13,7 @@ function Header({ links, homeTo = '/' }) {
   return (
     <header className="header">
       <Link to={homeTo} className="nav-brand">
-      <img src="/images/white_logo.png" alt="CST-SFBS logo" className="nav-logo-img" />
+      <img src="/images/logo.png" alt="CST-SFBS logo" className="nav-logo-img" />
     </Link>
       <nav className={`nav${links ? ' nav-custom' : ''}`}>
         {links ? (

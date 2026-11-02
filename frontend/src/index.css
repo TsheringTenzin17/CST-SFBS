@@ -508,16 +508,14 @@ a {
 }
 
 .availability-fields label {
-  min-height: 58px;
-  padding: 8px 14px;
-  border-radius: 3px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: grid;
+  align-content: center;
+  gap: 6px;
 }
 
 .availability-fields label span {
   display: block;
-  color: #173f4b;
+  color: #b9d7df;
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -526,15 +524,36 @@ a {
 .availability-fields select,
 .availability-fields input {
   width: 100%;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
+  min-width: 0;
+  height: 44px;
+  padding: 9px 12px;
+  border: 1.5px solid #c9d6db;
+  border-radius: 10px;
+  outline: none;
+  background-color: #fff;
   color: #173f4b;
   font-family: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
+}
+
+.availability-fields select {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23255463' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.availability-fields select:focus-visible,
+.availability-fields input:focus-visible {
+  border-color: var(--blue, #255463);
+  box-shadow: 0 0 0 3px #cfe3e8;
+}
+
+.availability-fields option {
+  background: #fff;
+  color: #173f4b;
 }
 
 .availability-check {
@@ -1192,6 +1211,22 @@ html { scroll-behavior: smooth; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .page-fade { animation: pageIn 0.28s ease-out; flex: 1; }
 
+@keyframes page3dIn {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(7deg) translateY(24px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-3d-transition {
+  transform-origin: center top;
+  animation: page3dIn 0.65s cubic-bezier(.2, .8, .2, 1);
+}
+
 /* the footer stays at the bottom, even on short pages */
 .page { min-height: 100vh; display: flex; flex-direction: column; }
 
@@ -1329,7 +1364,7 @@ html { scroll-behavior: smooth; }
 /* people who switch animations off in their system settings get none */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .page-fade { animation: none; }
+  .page-fade, .page-3d-transition { animation: none; }
   * { transition: none !important; }
 }
 

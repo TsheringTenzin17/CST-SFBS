@@ -32,13 +32,15 @@ function Footer({ links, heading = 'Your next game' }) {
         <div className="footer-col footer-contact">
           <h4>Contact &amp; Info</h4>
           <p>Phuentsholing, Chhukha, Bhutan</p>
-          <a href="mailto:dsa.cst@rub.edu.bt">dsa.cst@rub.edu.bt</a>
-          <a href="tel:+9755252877">+975-5-252877</a>
+          <a href="mailto:dsa.cst@rub.edu.bt">kelzangdorji.cst@rub.edu.bt</a>
+          <a href="tel:+97517666628">+975-17666628</a>
+          <a href="mailto:sso.cst@rub.edu.bt">Purna Bdr. Mongar</a>
+          <a href="tel:+97517362124">975-17362124</a>
+
         </div>
       </div>
       <div className="footer-bottom">
         <span>© 2026 College of Science and Technology. All Rights Reserved.</span>
-        <span>Designed &amp; Maintained by CST</span>
       </div>
     </footer>
   );
