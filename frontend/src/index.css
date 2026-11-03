@@ -701,7 +701,7 @@ a {
 }
 
 .btn-green {
-  background: #16803f;
+  background: #00a651;
   color: #fff;
   padding: 11px 18px;
   border-radius: 4px;
@@ -709,8 +709,13 @@ a {
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
+.btn-green:hover {
+  background: #106f3e;
+  transform: translateY(-2px);
+}
 .btn-outline-white {
   border: 1px solid rgba(23, 63, 75, 0.55);
   color: #173f4b;
@@ -720,6 +725,12 @@ a {
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.btn-outline-white:hover {
+  background: #e4dede;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 800px) {

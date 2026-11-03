@@ -6,9 +6,18 @@
 .reschedule-back {
   display: inline-block;
   margin-bottom: 14px;
-  color: #255463;
+  color: #fff;
   font-size: 13px;
+  border-radius: 5px;
   text-decoration: none;
+  background: #255463;
+  padding: 6px 10px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.reschedule-back:hover {
+  background: #1e3f4d;
+  transform: translateY(-2px);
 }
 
 .reschedule-current,
@@ -164,6 +173,20 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
+}
+
+.reschedule-actions button.btn-secondary {
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #dc2626;
+  color: #fff;
+}
+
+.reschedule-actions button.btn-secondary:hover {
+  background: #a9302a;
 }
 
 .reschedule-alert {

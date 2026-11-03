@@ -6,10 +6,10 @@
 // so they are always real.
 export const DESCRIPTIONS = {
   football: 'Premium artificial turf pitch featuring professional LED floodlights & standard spectator stands.',
-  basketball: '1 indoor court with high quality synthetic maple flooring, and adjustable hoops.',
-  volleyball: '2 outdoor courts (one male, one female), sand-filled and equipped with high-intensity night lighting and easily adjustable net height.',
-  badminton: '2 indoor wooden courts equipped with professional non-glare tournament grade nets and lighting.',
-  table_tennis: '2 professional-grade indoor tables with rubberized non-slip mat flooring and dedicated umpire stands.',
+  basketball: 'Indoor court with high quality synthetic maple flooring, and adjustable hoops.',
+  volleyball: 'Sand-filled and equipped with high-intensity night lighting and easily adjustable net height.',
+  badminton: 'Indoor courts equipped with professional non-glare tournament grade nets and lighting.',
+  table_tennis: 'Professional-grade indoor tables with flooring tiles and dedicated umpire stands.',
   archery: 'Authentic Bhutanese traditional and Olympic-grade compound archery range reaching standard long distances.',
 };
 

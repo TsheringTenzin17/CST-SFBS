@@ -35,8 +35,7 @@ function Footer({ links, heading = 'Your next game' }) {
           <a href="mailto:dsa.cst@rub.edu.bt">kelzangdorji.cst@rub.edu.bt</a>
           <a href="tel:+97517666628">+975-17666628</a>
           <a href="mailto:sso.cst@rub.edu.bt">Purna Bdr. Mongar</a>
-          <a href="tel:+97517362124">975-17362124</a>
-
+          <a href="tel:+97517362124">+975-17362124</a>
         </div>
       </div>
       <div className="footer-bottom">
