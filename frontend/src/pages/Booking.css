@@ -367,3 +367,21 @@
 	align-items: center;
 	justify-content: center;
 }
+
+.confirm-actions .btn-secondary {
+	background: #fff;
+	border: 1px solid #e6eae7;
+	color: #14414c;
+	font-size: 15px;
+	font-weight: 600;
+	border-radius: 12px;
+	box-shadow: 0 14px 25px rgba(15, 23, 42, 0.12);
+}
+
+.confirm-actions .btn-primary {
+	background: #14414c;
+	font-size: 15px;
+	font-weight: 600;
+	border-radius: 12px;
+	box-shadow: 0 14px 25px rgba(15, 23, 42, 0.12);
+}

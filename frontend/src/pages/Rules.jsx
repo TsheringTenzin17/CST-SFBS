@@ -55,10 +55,10 @@ function Rules() {
         <section className="rule-box">
           <h2>All facilities</h2>
           <ul>
-            <li>Weekdays: open 4:00 PM – 10:00 PM. From 8:00 AM to 4:00 PM nothing can be booked. The one exception is the football ground, which also has a student slot from 6:00 AM to 8:00 AM, Tuesday to Friday.</li>
+            <li>Weekdays: open 4:00 PM – 10:00 PM. From 8:00 AM to 4:00 PM nothing can be booked. The one exception is the football ground, which also has a student slot from 6:00 AM to 8:00 AM, Tuesday to Sunday.</li>
             <li>Weekends: open all day (busiest 4:00 PM – 10:00 PM).</li>
-            <li>Bookings are confirmed instantly. No approval is needed.</li>
-            <li>Students and staff can book with a college email. Outsiders can register too.</li>
+            <li>Bookings are confirmed instantly, no approval is needed.</li>
+            <li>Students and staff can book with a college email, outsiders can register by their own email.</li>
           </ul>
         </section>
 
@@ -106,7 +106,7 @@ function Rules() {
           <h2>Archery range</h2>
           <p className="rule-note">The DSA left archery open, so these hours were proposed by the project team.</p>
           <ul>
-            <li>Monday – Friday: 4:00 PM – 6:00 PM (daylight only).</li>
+            <li>Monday – Friday: 4:00 PM – 10:00 PM.</li>
             <li>Saturday – Sunday: 8:00 AM – 10:00 PM.</li>
             <li>2-hour bookings.</li>
           </ul>

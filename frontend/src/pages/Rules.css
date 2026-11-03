@@ -3,7 +3,7 @@
 @media (max-width: 800px) { .rules-grid { grid-template-columns: 1fr; } }
 .rule-box { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px 20px; }
 .rule-box.wide { grid-column: 1 / -1; }
-.rule-box h2 { margin: 0 0 8px; font-size: 15px; color: #0b57c4; }
+.rule-box h2 { margin: 0 0 8px; font-size: 15px; color: #295361; }
 .rule-box ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.8; }
 .rule-note { font-size: 12px; color: #666; margin: 6px 0; }
 .table-scroll { overflow-x: auto; }

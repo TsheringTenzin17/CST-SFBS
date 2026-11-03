@@ -30,7 +30,6 @@ import LiveNotice from './components/LiveNotice';
 function ClientPage({ children, requiresAuth = false }) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
-  <ScrollToTop />;
 
   if (isLoading) return <main className="main" role="status">Checking your session…</main>;
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
@@ -89,6 +88,7 @@ function App() {
 
   return (
     <div className="page">
+      <ScrollToTop />
       {!hideChrome && <Header />}
       {!hideChrome && <LiveNotice />}
       <div

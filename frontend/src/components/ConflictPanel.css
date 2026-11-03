@@ -64,14 +64,14 @@
 .conflict-request-card h2,
 .conflict-options-card h2 {
   margin: 0 0 8px;
-  color: #0757bf;
+  color: #295361;
   font-size: 16px;
 }
 
 .conflict-request-card h2 {
   padding-bottom: 12px;
   border-bottom: 1px solid #edf0f2;
-  color: #333;
+  color: #295361;
 }
 
 .conflict-request-card dl {
@@ -145,11 +145,11 @@
 }
 
 .conflict-suggestion:hover {
-  border-color: #0757bf;
+  border-color: #295361;
 }
 
 .conflict-suggestion.selected {
-  border: 2px solid #0757bf;
+  border: 2px solid #295361;
   background: #f8fbff;
 }
 
@@ -159,7 +159,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 5px;
-  color: #0757bf;
+  color: #295361;
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -179,7 +179,7 @@
 }
 
 .conflict-suggestion-time {
-  color: #0757bf;
+  color: #295361;
   font-size: 12px;
   font-weight: 700;
 }
@@ -213,7 +213,7 @@
 .conflict-continue {
   padding: 10px 14px;
   border-radius: 5px;
-  background: #0757bf;
+  background: #295361;
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -222,7 +222,7 @@
 }
 
 .conflict-continue:hover {
-  background: #06489e;
+  background: #295361;
 }
 
 @media (max-width: 760px) {
