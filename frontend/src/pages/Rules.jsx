@@ -90,6 +90,17 @@ function Rules() {
           </p>
         </section>
 
+        {/* ---------- football charges ---------- */}
+        <section className="rule-box wide">
+          <h2>Football ground booking charges</h2>
+          <ul>
+            <li><strong>Students:</strong> Nu. 2,500 for one referee; Nu. 2,900 for a referee and assistant referees.</li>
+            <li><strong>Staff and outsiders, weekdays:</strong> Nu. 3,500 for one referee; Nu. 3,900 for a referee and assistant referees.</li>
+            <li><strong>Staff and outsiders, weekends:</strong> Nu. 4,000 for one referee; Nu. 4,400 for a referee and assistant referees.</li>
+            <li>Commercial football slots require offline payment at the DSA office before approval.</li>
+          </ul>
+        </section>
+
         {/* ---------- football weekends ---------- */}
         <section className="rule-box">
           <h2>Football ground: weekends</h2>

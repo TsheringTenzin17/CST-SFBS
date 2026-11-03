@@ -70,6 +70,20 @@ WHERE facility_id IN (
   SELECT id FROM facilities
   WHERE group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
 )
+AND day_of_week IN (1, 2, 3, 4, 5);
+
+INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)
+SELECT f.id, d, '16:00'::time, '22:00'::time, 'everyone', NULL, 'none',
+       'Weekday open to students, faculty/staff, and outsiders.'
+FROM facilities f, generate_series(1, 5) AS d
+WHERE f.group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+ON CONFLICT DO NOTHING;
+
+DELETE FROM schedule_rules
+WHERE facility_id IN (
+  SELECT id FROM facilities
+  WHERE group_name IN ('Basketball Court','Volleyball Court','Badminton Court','Table Tennis Hall')
+)
 AND day_of_week IN (0, 6);
 
 INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_role, fallback_type, notes)

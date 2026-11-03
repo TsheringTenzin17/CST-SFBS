@@ -14,7 +14,7 @@
 const express = require('express');
 const pool = require('../db');
 const { authenticate, requireAdmin } = require('../auth');
-const { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
+const { bhutanNow, bookingWindow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const { timetableForDate } = require('../timetable');
 const router = express.Router();
 
@@ -43,7 +43,7 @@ function isRoleEligible(userRole, ruleRole, gender) {
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
-  if (ruleRole === 'commercial') return userRole === 'outsider';
+  if (ruleRole === 'commercial') return ['student', 'outsider'].includes(userRole);
   if (['faculty', 'faculty_male', 'faculty_female'].includes(ruleRole)) return userRole === 'faculty';
   return false; // 'maintenance' and anything unknown
 }
@@ -95,6 +95,15 @@ const CONFLICT_MESSAGE = 'This slot was just booked by someone else. Please choo
 // Must be called INSIDE a transaction that already holds the facility lock.
 // `excludeBookingId` lets a reschedule ignore the booking being moved.
 async function validateSlot(client, { facilityId, date, start, end, excludeBookingId = 0 }) {
+  const window = bookingWindow();
+  if (date < window.from || date > window.to) {
+    return {
+      ok: false,
+      status: 400,
+      message: `Advance booking is limited to available dates ${window.from} through ${window.to}.`,
+    };
+  }
+
   const fac = await client.query('SELECT max_duration_minutes, is_active FROM facilities WHERE id = $1', [facilityId]);
   if (fac.rows.length === 0) return { ok: false, status: 404, message: 'Facility not found' };
   if (!fac.rows[0].is_active) return { ok: false, status: 400, message: 'This facility is not open for booking' };
@@ -205,9 +214,12 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(eligibility.status).json({ error: eligibility.message });
     }
 
-    // Students and staff get free instant confirmation. Outsiders pay
-    // offline and remain pending until an admin reviews the payment.
-    const initialStatus = req.user.role === 'outsider' ? 'pending' : 'approved';
+    // Commercial-rate slots require offline payment and approval, including
+    // when a student is allowed to book one of those slots.
+    const commercialSlot = slot.rule.primary_role === 'commercial' ||
+      slot.rule.fallback_role === 'commercial';
+    const initialStatus = req.user.role === 'outsider' ||
+      (req.user.role === 'student' && commercialSlot) ? 'pending' : 'approved';
     const inserted = await client.query(
       `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, status`,
@@ -307,6 +319,7 @@ router.get('/', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT b.id, b.status, b.purpose,
+              b.created_at,
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
               to_char(b.start_time, 'HH24:MI') AS start_time,
               to_char(b.end_time, 'HH24:MI') AS end_time,
@@ -314,7 +327,7 @@ router.get('/', requireAdmin, async (req, res) => {
        FROM bookings b
        JOIN users u ON u.id = b.user_id
        JOIN facilities f ON f.id = b.facility_id
-       ORDER BY b.booking_date DESC, b.start_time DESC`
+       ORDER BY b.created_at DESC, b.id DESC`
     );
     res.json(result.rows);
   } catch (err) {

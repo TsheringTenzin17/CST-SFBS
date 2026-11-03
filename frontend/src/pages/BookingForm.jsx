@@ -14,7 +14,13 @@ function formatTime(value) {
   return `${String(hour % 12 || 12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
 }
 
-function bookingMode(role) {
+function toMinutes(value) {
+  const [hours, minutes] = String(value || '').split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function bookingMode(role, commercialSlot = false) {
+  if (commercialSlot) return { name: 'Commercial Booking Mode', tag: 'Pay offline' };
   if (role === 'student') return { name: 'Student Booking Mode', tag: 'Free' };
   if (role === 'faculty') return { name: 'Faculty & Staff Booking Mode', tag: null };
   if (role === 'outsider') return { name: 'Commercial Booking Mode', tag: 'Pay offline' };
@@ -24,6 +30,18 @@ function bookingMode(role) {
 function sportLabel(type) {
   if (!type) return 'Facility';
   return type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+function footballFee(role, date, assistantReferees = false) {
+  if (assistantReferees) {
+    if (role === 'student') return 2900;
+    if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6) return 4400;
+    return 3900;
+  }
+
+  if (role === 'student') return 2500;
+  if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6) return 4000;
+  return 3500;
 }
 
 // Rules shown in the summary card. Football is the only facility on turf.
@@ -60,14 +78,24 @@ function BookingForm() {
 
   const [facility, setFacility] = useState(null);
   const [facilities, setFacilities] = useState([]);
+  const [availability, setAvailability] = useState(null);
   const [purpose, setPurpose] = useState('');
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState(null);
   const [conflictSlot, setConflictSlot] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [accountProfile, setAccountProfile] = useState(null);
+  const [assistantReferees, setAssistantReferees] = useState(false);
   const conflict = conflictSlot === slotKey;
   const bookingUser = accountProfile ? { ...user, ...accountProfile } : user;
+  const commercialSlot = availability?.rules?.some((rule) =>
+    toMinutes(rule.start_time) <= toMinutes(start) &&
+    toMinutes(rule.end_time) >= toMinutes(end) &&
+    (
+      rule.primary_role === 'commercial' ||
+      (rule.fallback_role === 'commercial' && rule.fallback_type === 'auto_release')
+    )
+  ) || false;
 
   useEffect(() => {
     apiCall('/facilities')
@@ -83,6 +111,13 @@ function BookingForm() {
       .then((result) => setAccountProfile(result.profile))
       .catch((requestError) => setError(requestError.message));
   }, []);
+
+  useEffect(() => {
+    if (!facilityId || !date) return;
+    apiCall(`/facilities/${facilityId}/availability?date=${date}`)
+      .then(setAvailability)
+      .catch((requestError) => setError(requestError.message));
+  }, [facilityId, date]);
 
   if (!facilityId || !date || !start || !end) {
     return (
@@ -118,6 +153,12 @@ function BookingForm() {
           facility: facility ? facility.name : `Facility ${facilityId}`,
           date, start, end,
           role: bookingUser.role,
+          status: data.booking.status,
+          commercialSlot,
+          footballFee: commercialSlot && facility?.type === 'football'
+            ? footballFee(bookingUser.role, date, assistantReferees)
+            : null,
+          refereeService: assistantReferees ? 'Referee and assistant referees' : 'One referee',
         },
       });
     } catch (requestError) {
@@ -127,6 +168,7 @@ function BookingForm() {
       } else {
         setError(requestError.message || 'Booking failed');
       }
+
     } finally {
       setSubmitting(false);
     }
@@ -188,7 +230,7 @@ function BookingForm() {
               </div>
             </div>
             {(() => {
-              const mode = bookingMode(bookingUser.role);
+              const mode = bookingMode(bookingUser.role, commercialSlot);
               return (
                 <div className="summary-group">
                   <div>
@@ -205,6 +247,13 @@ function BookingForm() {
                 {rulesFor(facility?.type).map((rule) => <li key={rule}>{rule}</li>)}
               </ul>
             </div>
+            {commercialSlot && facility?.type === 'football' && (
+              <div className="booking-payment-note">
+                <strong>Commercial slot fee: Nu. {footballFee(bookingUser.role, date, assistantReferees).toLocaleString()}</strong>
+                <br />
+                Pay this facility fee offline before the booking can be approved.
+              </div>
+            )}
           </div>
         </aside>
 
@@ -234,6 +283,18 @@ function BookingForm() {
             Purpose of Booking <span className="required">*</span>
             <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
           </label>
+          {commercialSlot && facility?.type === 'football' && (
+            <label className="form-field">
+              Referee Service <span className="required">*</span>
+              <select
+                value={assistantReferees ? 'assistants' : 'one'}
+                onChange={(event) => setAssistantReferees(event.target.value === 'assistants')}
+              >
+                <option value="one">One referee</option>
+                <option value="assistants">Referee and assistant referees</option>
+              </select>
+            </label>
+          )}
           <label className="agree-row">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} required />
             I agree to the college rules and guidelines set by the Office of the Dean of Student Affairs.

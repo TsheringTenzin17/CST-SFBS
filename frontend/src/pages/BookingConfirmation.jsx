@@ -31,16 +31,18 @@ function BookingConfirmation() {
   }
 
   const isOutsider = state.role === 'outsider';
+  const requiresApproval = state.status === 'pending' || isOutsider;
+  const isCommercialFootball = state.commercialSlot && state.facility === 'Football Ground';
 
   return (
     <main className="main">
       <div className="confirm-wrap">
         <div className="confirm-check">✓</div>
         <h1 className="confirm-title">
-          {isOutsider ? 'Booking Submitted Successfully!' : 'Booking Confirmed Successfully!'}
+          {requiresApproval ? 'Booking Submitted Successfully!' : 'Booking Confirmed Successfully!'}
         </h1>
         <p className="confirm-subtitle">
-          {isOutsider
+          {requiresApproval
             ? 'Your reservation request has been registered in the CST scheduling database.'
             : 'Your free facility reservation has been confirmed instantly.'}
         </p>
@@ -48,7 +50,7 @@ function BookingConfirmation() {
         <div className="confirm-card">
           <div className="confirm-card-heading">
             <h2>Reservation Summary</h2>
-            {isOutsider && <span className="confirm-status">Pending Approval</span>}
+            {requiresApproval && <span className="confirm-status">Pending Approval</span>}
           </div>
           <div className="confirm-row"><span>Facility</span><strong>{state.facility}</strong></div>
           <div className="confirm-row"><span>Date</span><strong>{prettyDate(state.date)}</strong></div>
@@ -58,9 +60,27 @@ function BookingConfirmation() {
           </div>
           <div className="confirm-row"><span>Booking ID</span><strong>B-{state.bookingId}</strong></div>
           <div className="confirm-row"><span>Requester Role</span><strong>{roleLabel(state.role)}</strong></div>
-          {isOutsider ? (
+          {isCommercialFootball && state.footballFee != null && (
+            <>
+              <div className="confirm-row">
+                <span>Referee Service</span>
+                <strong>{state.refereeService}</strong>
+              </div>
+              <div className="confirm-row">
+                <span>Facility Fee</span>
+                <strong>Nu. {Number(state.footballFee).toLocaleString()}</strong>
+              </div>
+              <div className="confirm-row">
+                <span>Payment Method</span>
+                <strong>Offline Payment Required</strong>
+              </div>
+            </>
+          )}
+          {requiresApproval ? (
             <div className="confirm-note">
-              Please Note: Pay the facility fee offline first, then wait for an admin to verify the payment and approve your booking.
+              {isCommercialFootball
+                ? `Please Note: Pay Nu. ${Number(state.footballFee || 0).toLocaleString()} offline at the DSA office before the booking can be approved. Your booking remains pending until an admin verifies the payment.`
+                : 'Please Note: Pay the facility fee offline first, then wait for an admin to verify the payment and approve your booking.'}
             </div>
           ) : (
             <div className="confirm-note confirm-note-free">
