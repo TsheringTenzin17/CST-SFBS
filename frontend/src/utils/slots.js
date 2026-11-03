@@ -53,7 +53,7 @@ function roleMatches(userRole, ruleRole, gender) {
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
-  if (ruleRole === 'commercial') return userRole === 'outsider';
+  if (ruleRole === 'commercial') return ['student', 'outsider'].includes(userRole);
   if (['faculty', 'faculty_male', 'faculty_female'].includes(ruleRole)) return userRole === 'faculty';
   return false;
 }
@@ -99,6 +99,9 @@ export function slotState(slot, { date, availability, user }) {
   if (availability.maintenance && availability.maintenance.length > 0) return 'maintenance';
   const startMin = toMin(slot.start);
   if (date < todayString() || (date === todayString() && startMin <= nowMinutes())) return 'past';
+  if (availability.booking_window && (date < availability.booking_window.from || date > availability.booking_window.to)) {
+    return 'unavailable';
+  }
   if (slot.rule.primary_role === 'maintenance') return 'unavailable';
   if (isTaken(slot, availability.existing_bookings)) return 'booked';
   // weekend student matches: the day closes once the daily cap is used up

@@ -69,7 +69,10 @@ export default function AdminOverview({ bookingList, user, onReload }) {
   const today = todayBhutan();
   const todayCount = bookingList.filter((b) => b.booking_date === today && b.status !== 'cancelled').length;
   const pending = bookingList.filter((b) => b.status === 'pending')
-    .sort((a, b) => (a.booking_date + a.start_time).localeCompare(b.booking_date + b.start_time));
+    .sort((a, b) => {
+      const byCreatedAt = String(b.created_at || '').localeCompare(String(a.created_at || ''));
+      return byCreatedAt || Number(b.id) - Number(a.id);
+    });
 
   const closedToday = new Set(
     blocks.filter((m) => m.start_date <= today && today <= m.end_date).map((m) => m.facility_id)
@@ -104,6 +107,15 @@ export default function AdminOverview({ bookingList, user, onReload }) {
     }
     act(rejecting.id, { status: 'cancelled', reason: rejecting.reason.trim() }, `Request R-${rejecting.id} rejected.`);
   }
+
+  useEffect(() => {
+    if (!rejecting) return undefined;
+    const onKey = (event) => {
+      if (event.key === 'Escape') setRejecting(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rejecting]);
 
   const firstName = user?.full_name || 'Admin';
 
@@ -159,7 +171,7 @@ export default function AdminOverview({ bookingList, user, onReload }) {
                         <button type="button" className="adm-approve" disabled={busyId === b.id}
                           onClick={() => act(b.id, { status: 'approved' }, `Request R-${b.id} approved.`)}>Approve</button>
                         <button type="button" className="adm-reject" disabled={busyId === b.id}
-                          onClick={() => { setError(''); setMessage(''); setRejecting({ id: b.id, reason: '' }); }}>Reject</button>
+                          onClick={() => { setError(''); setMessage(''); setRejecting({ ...b, id: b.id, reason: '' }); }}>Reject</button>
                       </div>
                     </td>
                   </tr>
@@ -170,17 +182,34 @@ export default function AdminOverview({ bookingList, user, onReload }) {
         )}
 
         {rejecting && (
-          <form className="admin-action-form" onSubmit={submitReject}>
-            <h3>Reject request R-{rejecting.id}</h3>
-            <label>Reason (sent to the requester)
-              <textarea required value={rejecting.reason}
-                onChange={(e) => setRejecting({ ...rejecting, reason: e.target.value })} />
-            </label>
-            <button className="admin-cancel-button" disabled={busyId === rejecting.id} type="submit">
-              {busyId === rejecting.id ? 'Rejecting…' : 'Confirm rejection'}
-            </button>
-            <button className="admin-secondary-button" type="button" onClick={() => setRejecting(null)}>Close</button>
-          </form>
+          <div className="bk-backdrop" onClick={() => setRejecting(null)}>
+            <div className="bk-modal" role="dialog" aria-modal="true" aria-labelledby="overview-reject-title"
+              onClick={(event) => event.stopPropagation()}>
+              <h3 id="overview-reject-title">Reject booking BK-{rejecting.id}</h3>
+              <dl className="bk-summary">
+                <div><dt>Requester</dt><dd>{rejecting.user_name || '—'}</dd></div>
+                <div><dt>Facility</dt><dd>{rejecting.facility_name || '—'}</dd></div>
+                <div><dt>Slot</dt><dd>{slotText(rejecting)}</dd></div>
+                <div><dt>Status</dt><dd>Pending</dd></div>
+              </dl>
+
+              {error && <div className="admin-error" role="alert">{error}</div>}
+
+              <form className="bk-form" onSubmit={submitReject}>
+                <h4>Reason for rejection</h4>
+                <label>Reason (sent to the requester)
+                  <textarea required value={rejecting.reason}
+                    onChange={(event) => setRejecting({ ...rejecting, reason: event.target.value })} />
+                </label>
+                <button className="admin-cancel-button" disabled={busyId === rejecting.id} type="submit">
+                  {busyId === rejecting.id ? 'Saving…' : 'Confirm rejection'}
+                </button>
+              </form>
+              <div className="bk-modal-footer">
+                <button className="admin-secondary-button" type="button" onClick={() => setRejecting(null)}>Close</button>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 

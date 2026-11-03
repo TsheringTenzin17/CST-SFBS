@@ -6,7 +6,7 @@
 // GET /facilities/:id/availability?date= rules + bookings + maintenance for one day
 const express = require('express');
 const pool = require('../db');
-const { bhutanNow, toMin, dayOfWeek, isValidDate } = require('../time');
+const { bhutanNow, bookingWindow, toMin, dayOfWeek, isValidDate } = require('../time');
 const { timetableForDate } = require('../timetable');
 const router = express.Router();
 
@@ -135,6 +135,7 @@ router.get('/:id/availability', async (req, res) => {
     res.json({
       facility_id: id,
       date,
+      booking_window: bookingWindow(),
       day_of_week: dow,
       timetable, // 'tournament' | 'standard'
       cap_reached: cap !== null && usedInCap >= cap,

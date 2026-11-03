@@ -227,7 +227,14 @@ function FacilityDetail() {
 
         <div className="fd-week-control">
           <label htmlFor="week-date">Week containing</label>
-          <input id="week-date" type="date" value={date} min={todayString()} onChange={(event) => setDate(event.target.value)} />
+          <input
+            id="week-date"
+            type="date"
+            value={date}
+            min={todayString()}
+            max={Object.values(weeklyAvailability)[0]?.booking_window?.to || undefined}
+            onChange={(event) => setDate(event.target.value)}
+          />
           <span>{formatDay(weekDates[0])} – {formatDay(weekDates[6])}</span>
         </div>
 

@@ -7,16 +7,15 @@
 // backend that needs "now" must call bhutanNow() instead.
 
 const TZ = 'Asia/Thimphu';
-const WINDOW_MODE = 'current'; // 'current' | 'next' | 'both'
 
 function bookingWindow() {
   const today = bhutanNow().date;
   const d = new Date(`${today}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // this Monday
   const add = (n) => { const x = new Date(d); x.setUTCDate(d.getUTCDate() + n); return x.toISOString().slice(0, 10); };
-  const to = WINDOW_MODE === 'both' ? add(13) : WINDOW_MODE === 'next' ? add(13) : add(6);
-  const from = WINDOW_MODE === 'next' ? add(7) : today;
-  return { from, to, nextOpens: add(7) }; // next week opens Monday 00:00 Bhutan time
+  const isSunday = bhutanNow().minutes >= 0 && new Date(`${today}T00:00:00Z`).getUTCDay() === 0;
+  const to = isSunday ? add(13) : add(6);
+  return { from: today, to, nextOpens: add(7) }; // Next week opens on Sunday at Bhutan midnight.
 }
 
 // Returns { date: 'YYYY-MM-DD', minutes: minutes since midnight } in Bhutan time.
@@ -55,4 +54,4 @@ function dayOfWeek(dateStr) {
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s)) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 const isValidTime = (s) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(String(s));
 
-module.exports = { bhutanNow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime };
+module.exports = { bhutanNow, bookingWindow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime };

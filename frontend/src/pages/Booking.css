@@ -117,6 +117,16 @@
 .rules-brief ul { margin: 12px 0 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.5; }
 .rules-brief li { position: relative; padding-left: 22px; margin-bottom: 10px; }
 .rules-brief li::before { content: '✓'; position: absolute; left: 0; color: #9bd67a; }
+.booking-payment-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #f0b95a;
+  border-radius: 8px;
+  background: rgba(240, 185, 90, 0.12);
+  color: #ffe1a3;
+  font-size: 14px;
+  line-height: 1.55;
+}
 
 /* Booking form */
 .form-card {
@@ -159,7 +169,8 @@
 }
 
 .form-field input,
-.form-field textarea {
+.form-field textarea,
+.form-field select {
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0 14px;
@@ -173,7 +184,8 @@
 	background: #fff;
 }
 .form-field input:focus,
-.form-field textarea:focus {
+.form-field textarea:focus,
+.form-field select:focus {
 	outline: none;
 	border-color: #1f6f78;
 	box-shadow: 0 0 0 3px #cfe9ea;

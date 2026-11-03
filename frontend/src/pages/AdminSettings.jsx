@@ -92,6 +92,154 @@ function PolicyTable({ rules, view }) {
   );
 }
 
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const EDITABLE_ROLES = [
+  ['maintenance', 'Maintenance / closed'], ['student', 'Students'], ['student_female', 'Female students'],
+  ['faculty', 'Faculty / Staff'], ['faculty_male', 'Male faculty'], ['faculty_female', 'Female faculty'],
+  ['commercial', 'Commercial / Outsiders'], ['any', 'Students or commercial'], ['everyone', 'All users'],
+];
+
+function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
+  const [draft, setDraft] = useState({ ...rule });
+  const update = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+
+  return (
+    <tr>
+      <td>
+        <select value={draft.day_of_week} onChange={(event) => update('day_of_week', Number(event.target.value))}>
+          {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
+        </select>
+      </td>
+      <td><input type="time" value={draft.start_time} onChange={(event) => update('start_time', event.target.value)} /></td>
+      <td><input type="time" value={draft.end_time} onChange={(event) => update('end_time', event.target.value)} /></td>
+      <td>
+        <select value={draft.primary_role} onChange={(event) => update('primary_role', event.target.value)}>
+          {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </td>
+      <td>
+        <select value={draft.timetable || 'all'} onChange={(event) => update('timetable', event.target.value)}>
+          <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
+        </select>
+      </td>
+      <td className="schedule-rule-actions">
+        <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>Save</button>
+        <button type="button" className="admin-secondary-button" disabled={saving} onClick={() => onDelete(draft)}>Delete</button>
+      </td>
+    </tr>
+  );
+}
+
+function ScheduleEditor({ table, allRules, onSaved, onError }) {
+  const [facilityId, setFacilityId] = useState(String(table.facilities[0]?.id || ''));
+  const [savingId, setSavingId] = useState(null);
+  const [newRule, setNewRule] = useState({
+    day_of_week: 1, start_time: '16:00', end_time: '18:00', primary_role: 'everyone',
+    timetable: 'all', day_booking_cap: '',
+  });
+
+  const facilityRules = allRules
+    .filter((rule) => rule.facility_id === Number(facilityId))
+    .sort((a, b) => a.day_of_week - b.day_of_week || a.start_time.localeCompare(b.start_time));
+
+  async function save(rule) {
+    setSavingId(rule.id);
+    try {
+      await apiCall(`/admin/settings/rules/${rule.id}`, 'PUT', {
+        ...rule,
+        facility_id: Number(facilityId),
+      });
+      onSaved('Schedule rule updated.');
+    } catch (requestError) {
+      onError(requestError.message);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function remove(rule) {
+    if (!window.confirm(`Delete the ${DAYS[rule.day_of_week]} schedule from ${rule.start_time} to ${rule.end_time}?`)) return;
+    setSavingId(rule.id);
+    try {
+      await apiCall(`/admin/settings/rules/${rule.id}`, 'DELETE');
+      onSaved('Schedule rule deleted.');
+    } catch (requestError) {
+      onError(requestError.message);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function add() {
+    setSavingId('new');
+    try {
+      await apiCall('/admin/settings/rules', 'POST', { ...newRule, facility_id: Number(facilityId) });
+      onSaved('Schedule rule added.');
+      setNewRule((current) => ({ ...current, start_time: '16:00', end_time: '18:00' }));
+    } catch (requestError) {
+      onError(requestError.message);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  return (
+    <div className="schedule-editor">
+      <div className="schedule-editor-head">
+        <div>
+          <h3>Edit Facility Timings</h3>
+          <p>Changes apply immediately to the booking availability and booking API.</p>
+        </div>
+        {table.facilities.length > 1 && (
+          <label>
+            Facility
+            <select value={facilityId} onChange={(event) => setFacilityId(event.target.value)}>
+              {table.facilities.map((facility) => <option key={facility.id} value={facility.id}>{facility.name}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+
+      <div className="schedule-editor-scroll">
+        <table className="schedule-editor-table">
+          <thead>
+            <tr><th>Day</th><th>Start</th><th>End</th><th>Access</th><th>Timetable</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {facilityRules.map((rule) => (
+              <ScheduleRuleRow
+                key={rule.id}
+                rule={rule}
+                saving={savingId === rule.id}
+                onSave={save}
+                onDelete={remove}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="schedule-rule-add">
+        <strong>Add timing rule</strong>
+        <div className="schedule-rule-fields">
+          <select aria-label="New rule day" value={newRule.day_of_week} onChange={(event) => setNewRule({ ...newRule, day_of_week: Number(event.target.value) })}>
+            {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
+          </select>
+          <input aria-label="New rule start" type="time" value={newRule.start_time} onChange={(event) => setNewRule({ ...newRule, start_time: event.target.value })} />
+          <input aria-label="New rule end" type="time" value={newRule.end_time} onChange={(event) => setNewRule({ ...newRule, end_time: event.target.value })} />
+          <select aria-label="New rule access" value={newRule.primary_role} onChange={(event) => setNewRule({ ...newRule, primary_role: event.target.value })}>
+            {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <select aria-label="New rule timetable" value={newRule.timetable} onChange={(event) => setNewRule({ ...newRule, timetable: event.target.value })}>
+            <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
+          </select>
+          <button type="button" className="admin-primary-button" onClick={add} disabled={savingId === 'new'}>Add Rule</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const NOTIFICATIONS = [
   ['Booking updates', 'The booker is notified when a booking is confirmed, waiting for approval, or cancelled.'],
   ['Game reminders', 'Approved bookings get a reminder 24 hours and 2 hours before they start.'],
@@ -104,6 +252,7 @@ function AdminSettings() {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState('');
   const [view, setView] = useState('standard');
+  const [scheduleMessage, setScheduleMessage] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,6 +277,11 @@ function AdminSettings() {
   const hasTournament = group ? group.tables.some((t) => hasTournamentTimetable(t.rules)) : false;
   const activeView = hasTournament ? view : 'standard';
 
+  async function scheduleSaved(message) {
+    setScheduleMessage(message);
+    await load();
+  }
+
   return (
     <>
       <header className="admin-page-header">
@@ -143,6 +297,7 @@ function AdminSettings() {
           {error} <button className="admin-secondary-button" type="button" onClick={load}>Try again</button>
         </p>
       )}
+      {scheduleMessage && <p className="admin-support-notice" role="status">{scheduleMessage}</p>}
       {loading && !data && <p className="admin-state-message" role="status">Loading system settings…</p>}
 
       {data && (
@@ -204,6 +359,12 @@ function AdminSettings() {
                     {table.rules.length === 0
                       ? <p className="admin-state-message">No booking rules are set for this facility, so nothing can be booked.</p>
                       : <PolicyTable rules={table.rules} view={activeView} />}
+                    <ScheduleEditor
+                      table={table}
+                      allRules={data.rules}
+                      onSaved={scheduleSaved}
+                      onError={(message) => setError(message)}
+                    />
                   </div>
                 ))}
               </>
