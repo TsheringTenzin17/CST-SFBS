@@ -1232,3 +1232,93 @@
 .fm-upload-link:hover { text-decoration: underline; }
 .fm-remove { background: none; border: 0; padding: 0; cursor: pointer; color: var(--bad); font: 600 13px Barlow, sans-serif; }
 .fm-remove:hover { text-decoration: underline; }
+
+@media (max-width: 760px) {
+  .admin-dashboard {
+    --pad: 16px;
+  }
+
+  .admin-dashboard .header {
+    min-height: 112px !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-inline: 12px !important;
+  }
+
+  .admin-dashboard .header .nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .admin-dashboard .header .nav::-webkit-scrollbar { display: none; }
+  .admin-dashboard .header .nav a {
+    flex: 0 0 auto;
+    padding-inline: 9px;
+    font-size: 13px;
+  }
+
+  .admin-content {
+    padding: 24px 16px 40px;
+  }
+
+  .admin-page-header h1 {
+    font-size: 36px;
+  }
+
+  .admin-stats,
+  .adm-stats,
+  .ud-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-panel {
+    padding: 18px 16px;
+    overflow-x: auto;
+  }
+
+  .admin-panel-heading {
+    align-items: flex-start;
+  }
+
+  .admin-row-actions,
+  .admin-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-row-actions > *,
+  .admin-actions > * {
+    flex: 1 1 140px;
+  }
+
+  .bk-filter-grid,
+  .rp-filter-grid,
+  .ud-grid,
+  .ud-booking-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .adm-triage,
+  .rp-log {
+    min-width: 680px;
+  }
+
+  .admin-dashboard .adm-hero {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-stats,
+  .adm-stats,
+  .ud-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-primary-button,
+  .admin-secondary-button,
+  .admin-cancel-button,
+  .adm-btn-solid,
+  .adm-btn-outline {
+    width: 100%;
+  }
+}

@@ -403,6 +403,13 @@
     gap: 0;
     padding: 0 12px !important;
   }
+  .header .user-pill {
+    min-width: 0;
+    max-width: 112px;
+    padding-inline: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .nav-brand { max-width: 150px; }
   .nav-brand .nav-logo-img { width: min(150px, 42vw); height: 68px; }
   .header .nav {
@@ -410,7 +417,16 @@
     grid-row: 2;
     width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
   }
-  .header .nav a { padding: 12px 10px 14px; }
+  .header .nav::-webkit-scrollbar { display: none; }
+  .header .nav a {
+    flex: 0 0 auto;
+    padding: 12px 10px 14px;
+    font-size: 13px;
+  }
   .header .nav a.active::after { bottom: 7px; }
+  .header .user-menu-btn-avatar { width: 36px; height: 36px; flex-basis: 36px; }
+  .header .user-menu-panel { right: 0; left: auto !important; }
 }
