@@ -759,7 +759,40 @@ a {
   .hero-celebrating, .hero-foundation { font-size: 20px; }
   .hero-tagline { font-size: 15px; }
   .hero-date { max-width: 100%; padding-inline: 12px; white-space: normal; }
-  .hero-buttons { flex-wrap: wrap; }
+  .hero-buttons {
+    right: 16px;
+    bottom: 24px;
+    left: 16px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .hero-buttons .btn-green,
+  .hero-buttons .btn-outline-white {
+    width: fit-content;
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 38px;
+    padding: 9px 14px;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-buttons {
+    right: 12px;
+    left: 12px;
+    gap: 8px;
+  }
+
+  .hero-buttons .btn-green,
+  .hero-buttons .btn-outline-white {
+    width: auto;
+    padding-inline: 10px;
+  }
 }
 
 /*
