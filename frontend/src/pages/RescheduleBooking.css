@@ -181,12 +181,12 @@
   border-radius: 5px;
   font-size: 13px;
   font-weight: 600;
-  background: #dc2626;
+  background: #b50000;
   color: #fff;
 }
 
 .reschedule-actions button.btn-secondary:hover {
-  background: #a9302a;
+  background: #7a0a04;
 }
 
 .reschedule-alert {
