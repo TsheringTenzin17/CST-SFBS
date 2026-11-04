@@ -50,12 +50,16 @@ export default function LiveNotice() {
       </div>
       <div className={`live-notice-track${paused ? ' paused' : ''}`}>
         <div className="live-notice-content">
-          {notices.map((notice, index) => (
-            <span key={notice.id || `${notice.type}-${index}`}>
-              <strong>{noticeKind(notice.type) === 'maintenance' ? 'Maintenance:' : 'Announcement:'}</strong>{' '}
-              {notice.message}
-              {index < notices.length - 1 && <i aria-hidden="true">◆</i>}
-            </span>
+          {[0, 1].map((group) => (
+            <div className="live-notice-group" key={group} aria-hidden={group === 1}>
+              {notices.map((notice, index) => (
+                <span key={notice.id || `${notice.type}-${index}`}>
+                  <strong>{noticeKind(notice.type) === 'maintenance' ? 'Maintenance:' : 'Announcement:'}</strong>{' '}
+                  {notice.message}
+                  <i aria-hidden="true">◆</i>
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>

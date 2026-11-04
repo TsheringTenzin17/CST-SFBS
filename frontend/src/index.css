@@ -388,10 +388,18 @@ a {
 }
 
 @media (max-width: 600px) {
-  .sport-category-strip { gap: 18px; min-height: 76px; padding-inline: 16px; }
+  .sport-category-strip { gap: 20px; min-height: 82px; padding: 10px 16px 12px; scrollbar-width: none; }
+  .sport-category-strip::-webkit-scrollbar { display: none; }
   .sport-category-title { padding-right: 18px; font-size: 10px; }
   .sport-category-item { font-size: 12px; }
-  .sport-category-icon { width: 42px; height: 42px; flex-basis: 42px; font-size: 21px; }
+  .sport-category-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    background: rgba(255, 255, 255, .12);
+    box-shadow: none;
+    font-size: 21px;
+  }
 }
 
 .booking-guidance {
@@ -592,7 +600,17 @@ a {
   .availability-finder { grid-template-columns: 1fr; padding: 22px 16px; }
   .availability-heading h2 br { display: none; }
   .availability-fields { grid-template-columns: 1fr; }
-  .availability-check { grid-column: auto; width: 100%; }
+  .availability-heading h2 { font-size: 30px; line-height: 1; }
+  .availability-fields { gap: 14px; }
+  .availability-fields select,
+  .availability-fields input { height: 48px; font-size: 16px; }
+  .availability-check {
+    grid-column: auto;
+    width: 100%;
+    min-height: 48px;
+    border-radius: 10px;
+    background: #00a651;
+  }
 }
 
 .hero-buttons {
@@ -748,12 +766,14 @@ a {
 }
 
 @media (max-width: 520px) {
-  .hero-carousel, .hero-slide, .hero-banner-slide { min-height: 520px; height: 520px; }
-  .hero { min-height: 520px; }
-  .hero-banner-slide img { height: 520px; min-height: 520px; object-position: center; }
-  .hero-text { left: 20px; width: calc(100% - 40px); margin-left: 0; }
-  .hero-text h1 { font-size: 44px; }
-  .hero-text p { font-size: 16px; }
+  .hero-carousel, .hero-slide, .hero-banner-slide { min-height: 470px; height: 470px; }
+  .hero { min-height: 470px; }
+  .hero-banner-slide img { height: 470px; min-height: 470px; object-position: center; }
+  .hero-text { top: 43%; left: 20px; width: calc(100% - 40px); margin-left: 0; }
+  .hero-location { margin-bottom: 14px; font-size: 10px; }
+  .hero-text h1 { margin-bottom: 14px; font-size: 42px; line-height: .86; }
+  .hero-text p { font-size: 15px; line-height: 1.45; }
+  .hero-text small { margin-top: 12px; font-size: 11px; }
   .hero-anniversary-row { grid-template-columns: 80px 78px 1fr; }
   .hero-years { font-size: 64px; }
   .hero-celebrating, .hero-foundation { font-size: 20px; }
@@ -761,7 +781,7 @@ a {
   .hero-date { max-width: 100%; padding-inline: 12px; white-space: normal; }
   .hero-buttons {
     right: 16px;
-    bottom: 24px;
+    bottom: 22px;
     left: 16px;
     flex-wrap: nowrap;
     justify-content: center;
@@ -769,7 +789,7 @@ a {
   }
   .hero-buttons .btn-green,
   .hero-buttons .btn-outline-white {
-    width: fit-content;
+    width: auto;
     flex: 0 0 auto;
     min-width: 0;
     min-height: 38px;
@@ -779,6 +799,16 @@ a {
     text-align: center;
     white-space: nowrap;
   }
+
+  .hero-arrow {
+    width: 34px;
+    height: 34px;
+    font-size: 26px;
+    line-height: 26px;
+  }
+
+  .hero-arrow-prev { left: 12px; }
+  .hero-arrow-next { right: 12px; }
 }
 
 @media (max-width: 360px) {
@@ -1444,6 +1474,63 @@ html { scroll-behavior: smooth; }
   .main {
     width: 100%;
     padding-inline: 16px !important;
+  }
+
+  .home-page .main {
+    padding-top: 28px;
+    padding-bottom: 32px;
+  }
+
+  .home-page .title {
+    font-size: 30px;
+    line-height: 1.05;
+  }
+
+  .home-page .subtitle {
+    margin-bottom: 18px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .home-page .grid {
+    gap: 14px;
+  }
+
+  .home-page .card-img {
+    height: 190px;
+    object-position: center;
+  }
+
+  .home-page .card-body {
+    padding: 16px;
+  }
+
+  .home-page .card-title {
+    font-size: 19px;
+  }
+
+  .home-page .card-desc {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .booking-guidance {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .booking-guidance strong { font-size: 15px; }
+  .booking-guidance p { line-height: 1.55; }
+
+  .booking-guidance-link {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #eaf6ef;
   }
 
   h1 {

@@ -46,7 +46,7 @@ function Home() {
   };
 
   return (
-    <>
+    <div className="home-page">
       {/* ---------- 2. hero banner ---------- */}
       <section
         className={`hero-carousel hero-slide-${heroSlide}`}
@@ -221,7 +221,7 @@ function Home() {
           <span>Phuentsholing, Bhutan</span>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
