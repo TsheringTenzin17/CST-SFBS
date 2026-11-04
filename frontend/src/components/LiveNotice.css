@@ -51,7 +51,7 @@
  position: absolute;
  top: 0;
  width: max-content;
- animation: liveNoticeScroll 18s linear infinite;
+ animation: liveNoticeScroll 15s linear infinite;
  font-size: 14px;
  font-weight: 600;
  line-height: 44px;
@@ -93,9 +93,7 @@
 
 @keyframes liveNoticeScroll {
   0% { left: 100%; transform: translateX(0); opacity: 1; }
-  92% { left: 0; transform: translateX(0); opacity: 1; }
-  99% { left: 0; transform: translateX(-100%); opacity: 1; }
-  100% { left: 0; transform: translateX(-100%); opacity: 0; }
+  100% { left: -100%; transform: translateX(0); opacity: 1; }
 }
 @keyframes liveNoticePulse { 50% { opacity: .35; } }
 
@@ -105,6 +103,7 @@
   .live-notice-label::after { content: 'LIVE'; font-size: 9px; }
   .live-notice-details { width: 28px; overflow: hidden; padding: 0; justify-content: center; color: transparent; }
   .live-notice-details::after { content: 'i'; color: #fff; }
+  .live-notice-content { animation-duration: 45s; }
 }
 
 @media (prefers-reduced-motion: reduce) {

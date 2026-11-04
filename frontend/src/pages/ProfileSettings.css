@@ -334,14 +334,40 @@
 @media (max-width: 760px) {
   .profile-settings-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .profile-settings-page.main {
+    width: 100%;
+    padding: 24px 16px 40px;
+  }
+
+  .profile-settings-page .title {
+    font-size: 36px;
+    line-height: 1.08;
+  }
+
+  .profile-settings-page .subtitle {
+    margin: 8px 0 20px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .profile-card {
+    padding: 24px 20px;
+  }
+
+  .profile-details {
+    gap: 14px;
   }
 }
 
 @media (max-width: 520px) {
-  .profile-settings-page.main {
-    padding: 26px 16px 36px;
+  .profile-settings-page .title {
+    font-size: 32px;
   }
 
+  .profile-card,
   .profile-form-card {
     padding: 20px;
   }
@@ -352,5 +378,32 @@
 
   .profile-field-wide {
     grid-column: auto;
+  }
+
+  .profile-fields input,
+  .profile-form-card select,
+  .profile-form-card textarea {
+    font-size: 16px;
+  }
+
+  .profile-preference {
+    gap: 14px;
+    padding: 18px 0;
+  }
+
+  .profile-preference-text {
+    min-width: 0;
+  }
+
+  .profile-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .profile-form-actions .btn-primary,
+  .profile-email-row .btn-secondary,
+  .profile-email-form .btn-secondary {
+    width: 100%;
+    justify-content: center;
   }
 }
