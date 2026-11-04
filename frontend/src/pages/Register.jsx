@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout, { SPORTS } from '../components/AuthLayout';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
 
 // The three ways to sign up. "role" is the value the backend stores.
