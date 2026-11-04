@@ -121,6 +121,10 @@
 
 .reschedule-slot input {
   accent-color: #15803d;
+  width: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
 }
 
 .reschedule-slot small {
@@ -209,6 +213,16 @@
 }
 
 @media (max-width: 680px) {
+  .reschedule-page.main {
+    padding: 16px 12px 28px;
+  }
+
+  .reschedule-current,
+  .reschedule-form {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
   .reschedule-current dl {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -216,9 +230,52 @@
 
   .reschedule-slot-heading {
     flex-direction: column;
+    gap: 14px;
+  }
+
+  .reschedule-date,
+  .reschedule-date input {
+    width: 100%;
+    font-size: 16px;
   }
 
   .reschedule-slots {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .reschedule-slot {
+    min-height: 64px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .reschedule-slot input {
+    width: 20px;
+    min-height: 20px;
+    flex-basis: 20px;
+  }
+
+  .reschedule-slot small {
+    font-size: 11px;
+  }
+
+  .reschedule-reason textarea {
+    min-height: 96px;
+    font-size: 16px;
+  }
+
+  .reschedule-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 10px;
+  }
+
+  .reschedule-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding-inline: 10px;
   }
 }

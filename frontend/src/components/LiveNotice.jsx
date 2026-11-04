@@ -7,7 +7,7 @@ import './LiveNotice.css';
 function noticeKind(type = '') {
   if (type.includes('maintenance')) return 'maintenance';
   if (type.includes('announcement') || type.includes('system')) return 'announcement';
-  return null;
+  return 'announcement';
 }
 
 export default function LiveNotice() {
@@ -24,7 +24,7 @@ export default function LiveNotice() {
       try {
         const notifications = await apiCall('/notifications');
         if (!active) return;
-        setNotices(notifications.filter((item) => noticeKind(item.type)).slice(0, 8));
+        setNotices(notifications.filter((item) => item && item.message).slice(0, 8));
       } catch {
         // The ticker is non-essential and must not interrupt the rest of the page.
       }

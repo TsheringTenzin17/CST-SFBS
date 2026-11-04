@@ -40,7 +40,17 @@ function ConflictPanel({ facility, courts, date, start, end, user }) {
   }, [courts, date]);
 
   if (!availabilityById) {
-    return <main className="main conflict-page" role="status">Checking alternative slots…</main>;
+    return (
+      <main className="main conflict-page" role="status">
+        <div className="conflict-loading-card">
+          <span className="conflict-loading-spinner" aria-hidden="true" />
+          <div>
+            <strong>Checking the latest availability</strong>
+            <p>Finding alternatives that are currently open…</p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   // Prefer the same time on another court, then find nearby times on this facility.
@@ -75,6 +85,7 @@ function ConflictPanel({ facility, courts, date, start, end, user }) {
           <strong>Booking Conflict Detected</strong>
           <p>The slot you selected was booked by someone else moments ago. Choose an available alternative.</p>
         </div>
+        <span className="conflict-alert-status">Slot unavailable</span>
       </div>
 
       {loadError && (
@@ -92,6 +103,7 @@ function ConflictPanel({ facility, courts, date, start, end, user }) {
             <div><dt>Reason</dt><dd>This specific time was booked while you were confirming.</dd></div>
           </dl>
           <Link to={`/facilities/${facility.id}?date=${date}`} className="conflict-back">
+            <span aria-hidden="true">←</span>
             Back to Facility Availability
           </Link>
         </section>
@@ -121,6 +133,7 @@ function ConflictPanel({ facility, courts, date, start, end, user }) {
                     <span>{prettyDate(date)}</span>
                     <span className="conflict-suggestion-time">{suggestion.start} – {suggestion.end}</span>
                     <span className="conflict-suggestion-label">{suggestion.facilityId === facility.id ? 'Alternative time' : 'Same time · another court'}</span>
+                    <span className="conflict-radio" aria-hidden="true" />
                   </button>
                 );
               })}
@@ -137,14 +150,16 @@ function ConflictPanel({ facility, courts, date, start, end, user }) {
                 ? `Selected: ${selectedFacility.name}, ${selected.start} – ${selected.end}`
                 : 'Select an alternative slot to continue.'}
             </span>
-            {selected && (
-              <Link
-                className="conflict-continue"
-                to={`/book?facility_id=${selected.facilityId}&date=${date}&start=${selected.start}&end=${selected.end}`}
-              >
-                Select Alternative &amp; Continue to Booking
-              </Link>
-            )}
+            <Link
+              className={`conflict-continue${selected ? '' : ' disabled'}`}
+              aria-disabled={!selected}
+              tabIndex={selected ? 0 : -1}
+              onClick={(event) => { if (!selected) event.preventDefault(); }}
+              to={`/book?facility_id=${selected?.facilityId || facility.id}&date=${date}&start=${selected?.start || start}&end=${selected?.end || end}`}
+            >
+              Continue with Alternative
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </section>
       </div>

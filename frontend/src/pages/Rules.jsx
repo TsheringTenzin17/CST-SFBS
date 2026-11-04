@@ -34,8 +34,8 @@ function FootballTable({ rows }) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.day}>
-              <td><strong>{row.day}</strong></td>
-              {row.bands.map((b, i) => <td key={i}>{b}</td>)}
+              <td data-label="Day"><strong>{row.day}</strong></td>
+              {row.bands.map((b, i) => <td data-label={['6 – 8 AM', '4 – 6 PM', '6 – 8 PM', '8 – 10 PM'][i]} key={i}>{b}</td>)}
             </tr>
           ))}
         </tbody>

@@ -258,7 +258,10 @@ function BookingForm() {
         </aside>
 
         <form className="form-card" onSubmit={handleSubmit}>
-          <h2>Facility Booking Request</h2>
+          <div className="form-card-heading">
+            <span>Booking details</span>
+            <h2>Facility Booking Request</h2>
+          </div>
           <p className="booking-intro">Complete your details to reserve this slot. Fields marked * are required.</p>
           {(() => {
             const identity = identityField(bookingUser.role, bookingUser);
@@ -281,7 +284,12 @@ function BookingForm() {
           </div>
           <label className="form-field">
             Purpose of Booking <span className="required">*</span>
-            <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
+            <textarea
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              placeholder="Example: Team training practice"
+              required
+            />
           </label>
           {commercialSlot && facility?.type === 'football' && (
             <label className="form-field">

@@ -145,6 +145,16 @@
 }
 .booking-intro { margin: 6px 0 28px; color: #5b6b73; font-size: 15px; }
 
+.form-card-heading > span {
+	display: block;
+	margin-bottom: 7px;
+	color: #1f6f78;
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: .09em;
+	text-transform: uppercase;
+}
+
 .form-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -396,4 +406,188 @@
 	font-weight: 600;
 	border-radius: 12px;
 	box-shadow: 0 14px 25px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 600px) {
+	.booking-layout {
+		width: 100%;
+		padding: 16px 16px 32px;
+		gap: 16px;
+	}
+
+	.booking-steps {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 7px;
+		font-size: 11px;
+	}
+
+	.booking-steps li {
+		min-height: 58px;
+		flex-direction: column;
+		justify-content: center;
+		gap: 5px;
+		padding: 7px 4px;
+		text-align: center;
+	}
+
+	.booking-steps li + li::before { display: none; }
+	.step-dot { width: 24px; height: 24px; }
+
+	.summary-card,
+	.form-card {
+		border-radius: 14px;
+	}
+
+	.summary-head,
+	.summary-body,
+	.form-card {
+		padding: 20px;
+	}
+
+	.summary-head { padding-bottom: 18px; }
+	.summary-badge { margin-bottom: 14px; }
+
+	.summary-body {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
+
+	.summary-item { min-width: 0; }
+	.summary-item .summary-value { font-size: 15px; line-height: 1.35; }
+	.summary-group,
+	.rules-brief,
+	.booking-payment-note { grid-column: 1 / -1; }
+	.summary-group-name { font-size: 14px; }
+	.rules-brief li:last-child { margin-bottom: 0; }
+
+	.summary-facility,
+	.form-card h2 {
+		font-size: 32px;
+	}
+
+	.booking-intro { margin-bottom: 22px; font-size: 14px; line-height: 1.55; }
+
+	.form-field {
+		font-size: 15px;
+	}
+
+	.form-field input,
+	.form-field textarea,
+	.form-field select {
+		min-height: 48px;
+		font-size: 16px;
+	}
+
+	.agree-row {
+		min-height: 48px;
+		align-items: center;
+		margin-top: 16px;
+		padding: 12px;
+		font-size: 15px;
+	}
+
+	.form-actions {
+		position: sticky;
+		bottom: 0;
+		z-index: 20;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+		margin: 16px -20px -20px;
+		padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+		background: #fff;
+		box-shadow: 0 -8px 20px rgba(20, 65, 76, .12);
+	}
+
+	.form-actions .btn-secondary,
+	.form-actions .btn-primary {
+		width: 100%;
+		min-width: 0;
+		height: 48px;
+		margin: 0;
+	}
+
+	.confirm-wrap {
+		padding-top: 18px;
+		padding-bottom: 24px;
+	}
+
+	.confirm-check {
+		width: 64px;
+		height: 64px;
+		font-size: 34px;
+	}
+
+	.confirm-title {
+		max-width: 340px;
+		margin: 14px auto 8px;
+		font-size: 36px;
+		line-height: 1;
+	}
+
+	.confirm-subtitle {
+		max-width: 340px;
+		margin: 10px auto 18px;
+		font-size: 15px;
+		line-height: 1.45;
+	}
+
+	.confirm-card {
+		margin: 14px 0;
+		padding: 18px;
+		border-radius: 18px;
+		box-shadow: 0 10px 24px rgba(15, 23, 42, .09);
+	}
+
+	.confirm-card-heading {
+		align-items: flex-start;
+		padding-bottom: 14px;
+	}
+
+	.confirm-card-heading h2 {
+		font-size: 27px;
+	}
+
+	.confirm-status {
+		flex: 0 0 auto;
+		padding: 6px 9px;
+		font-size: 10px;
+	}
+
+	.confirm-row {
+		align-items: start;
+		gap: 12px;
+		padding: 12px 0 4px;
+		font-size: 14px;
+	}
+
+	.confirm-row strong {
+		max-width: 58%;
+		line-height: 1.35;
+	}
+
+	.confirm-note {
+		margin-top: 14px;
+		padding: 13px;
+		font-size: 13px;
+		line-height: 1.45;
+	}
+
+	.confirm-actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+		margin-top: 18px;
+	}
+
+	.confirm-actions a {
+		width: 100%;
+		min-width: 0;
+		height: 48px;
+		padding: 0 8px;
+		text-align: center;
+		font-size: 13px;
+	}
 }

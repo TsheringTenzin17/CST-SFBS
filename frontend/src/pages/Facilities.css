@@ -1,0 +1,221 @@
+.facilities-page {
+  width: min(100%, 1120px);
+}
+
+.facilities-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 26px 28px;
+  border: 1px solid rgba(37, 84, 99, .12);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 20%, rgba(255, 255, 255, .75), transparent 26%),
+    linear-gradient(135deg, #edf5f7, #fff);
+  box-shadow: 0 14px 34px rgba(31, 59, 69, .06);
+}
+
+.facilities-heading .title {
+  margin: 3px 0 7px;
+  color: #255463;
+  font-size: 30px;
+}
+
+.facilities-heading .subtitle {
+  max-width: 620px;
+  margin: 0;
+  color: #62727a;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.facilities-eyebrow {
+  color: #b57910;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.facilities-rules-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border: 1px solid #cadde2;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .88);
+  color: #255463;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.facilities-page .facilities-filter-bar {
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(31, 59, 69, .07);
+}
+
+.facilities-page .filter-tabs { gap: 6px; }
+
+.facilities-page .tab {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+}
+
+.facilities-page .tab.active { box-shadow: 0 5px 14px rgba(37, 84, 99, .22); }
+
+.facilities-page .sort-label select {
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+.facilities-page .grid {
+  gap: 18px;
+}
+
+.facilities-page .card {
+  border-radius: 16px;
+  border-color: #e1e7e9;
+  box-shadow: 0 10px 28px rgba(31, 59, 69, .07);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.facilities-page .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 34px rgba(31, 59, 69, .12);
+}
+
+.facilities-page .card-img {
+  height: 178px;
+}
+
+.facilities-page .card-body {
+  padding: 18px;
+}
+
+.facilities-page .card-title-row {
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.facilities-page .card-title {
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.facilities-page .badge {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+}
+
+.facilities-page .card-desc {
+  min-height: 58px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.facilities-page .card-footer-row {
+  align-items: stretch;
+  padding-top: 14px;
+  border-top: 1px solid #edf0f1;
+}
+
+.facilities-page .slots-text {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.facilities-page .card-footer-row .btn-primary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding-inline: 14px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .facilities-page .facilities-filter-bar {
+    gap: 10px;
+  }
+  .facilities-page .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .facilities-page .sort-label {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .facilities-page {
+    padding-inline: 14px !important;
+  }
+
+  .facilities-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 20px 18px;
+    border-radius: 14px;
+  }
+
+  .facilities-heading .title {
+    font-size: 26px;
+  }
+
+  .facilities-heading .subtitle {
+    font-size: 14px;
+  }
+
+  .facilities-rules-link {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .facilities-page .facilities-filter-bar {
+    margin-bottom: 16px;
+    padding: 8px;
+  }
+
+  .facilities-page .tab {
+    padding-inline: 14px;
+    font-size: 12px;
+  }
+
+  .facilities-page .grid {
+    gap: 14px;
+  }
+
+  .facilities-page .card-img {
+    height: 190px;
+  }
+
+  .facilities-page .card-body {
+    padding: 16px;
+  }
+
+  .facilities-page .card-desc {
+    min-height: 0;
+  }
+
+  .facilities-page .card-footer-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .facilities-page .card-footer-row .btn-primary {
+    width: 100%;
+  }
+}
