@@ -1,7 +1,7 @@
 // =============================================================
 // frontend/src/utils/api.js  —  one place that talks to the backend
 // =============================================================
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
 // apiCall('/bookings', 'POST', { ... })  ->  parsed JSON, or throws Error(message)
 // The message is exactly what the backend sent (e.g. "This slot was just booked ..."),
