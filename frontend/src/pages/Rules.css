@@ -1,12 +1,67 @@
 /* frontend/src/pages/Rules.css  —  styles for the booking rules page */
-.rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.rules-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 800px) { .rules-grid { grid-template-columns: 1fr; } }
-.rule-box { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 16px 20px; }
+.rule-box { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 18px 20px; box-shadow: 0 8px 22px rgba(37,84,99,.06); }
 .rule-box.wide { grid-column: 1 / -1; }
-.rule-box h2 { margin: 0 0 8px; font-size: 15px; color: #295361; }
+.rule-box h2 { margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid #edf1f2; font-size: 17px; color: #295361; line-height: 1.3; }
 .rule-box ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.8; }
-.rule-note { font-size: 12px; color: #666; margin: 6px 0; }
+.rule-note { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: #f4f7f8; font-size: 12px; color: #666; line-height: 1.5; }
 .table-scroll { overflow-x: auto; }
 .rules-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .rules-table th, .rules-table td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
 .rules-table th { background: #f3f5f9; }
+
+@media (max-width: 800px) {
+  .main:has(.rules-grid) {
+    padding: 18px 12px 28px;
+  }
+
+  .rules-grid { gap: 12px; }
+
+  .rule-box {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .rule-box h2 {
+    font-size: 18px;
+  }
+
+  .rule-box ul {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .rule-box li + li { margin-top: 7px; }
+  .table-scroll { overflow: visible; }
+  .rules-table,
+  .rules-table tbody,
+  .rules-table tr,
+  .rules-table td { display: block; width: 100%; }
+  .rules-table thead { display: none; }
+  .rules-table tr {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #e2e8ea;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .rules-table td {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
+    min-height: 38px;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #edf1f2;
+    font-size: 13px;
+  }
+  .rules-table td:last-child { border-bottom: 0; }
+  .rules-table td::before {
+    content: attr(data-label);
+    color: #66717b;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .rules-table td:first-child { font-size: 15px; }
+}

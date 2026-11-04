@@ -20,7 +20,6 @@ const OFFICE_DETAILS = [
   { label: 'Email Support', value: DSA_EMAIL, href: `mailto:${DSA_EMAIL}` },
   { label: 'Contact Hotline', value: '17666628', href: 'tel:17666628' },
   { label: 'Address', value: 'Phuentsholing, Chhukha, Bhutan' },
-  { label: 'Office', value: 'Office of the Dean of Student Affairs' },
   { label: 'Email Support', value: SSO_EMAIL, href: `mailto:${SSO_EMAIL}` },
   { label: 'Contact Hotline', value: '17362124', href: 'tel:17362124' },
 ];
@@ -51,6 +50,7 @@ function Contact() {
   return (
     <main className="main contact-page">
       <section className="contact-about">
+        <span className="contact-eyebrow">Student support</span>
         <h1>About CST-SFBS</h1>
         <p>
           The College of Science and Technology Sports Facility Booking System (CST-SFBS) is a state-of-the-art

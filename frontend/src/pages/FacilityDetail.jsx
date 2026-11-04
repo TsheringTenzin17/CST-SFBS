@@ -8,7 +8,7 @@
 //   a) App.jsx has  <Route path="/facilities/:id" element={<FacilityDetail />} />
 //   b) the import is  import FacilityDetail from './pages/FacilityDetail';
 //   c) the browser console (F12) for a red error.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
@@ -99,6 +99,7 @@ function FacilityDetail() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const bookingFooterRef = useRef(null);
   const weekDates = getWeekDates(date);
   const weekStart = weekDates[0];
 
@@ -122,6 +123,27 @@ function FacilityDetail() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, weekStart]);
+
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 620px)').matches) return undefined;
+
+    const updateFooterGap = () => {
+      const footer = document.querySelector('.footer');
+      if (!footer) return;
+      const distanceToViewportBottom = window.innerHeight - footer.getBoundingClientRect().top;
+      const footerGap = Math.max(0, distanceToViewportBottom);
+      bookingFooterRef.current?.style.setProperty('--footer-gap', `${footerGap}px`);
+    };
+
+    updateFooterGap();
+    window.addEventListener('scroll', updateFooterGap, { passive: true });
+    window.addEventListener('resize', updateFooterGap);
+    return () => {
+      window.removeEventListener('scroll', updateFooterGap);
+      window.removeEventListener('resize', updateFooterGap);
+    };
+  }, []);
+
 
   // ---------- 2. loading / error screens ----------
   if (!allFacilities) {
@@ -237,6 +259,19 @@ function FacilityDetail() {
           />
           <span>{formatDay(weekDates[0])} – {formatDay(weekDates[6])}</span>
         </div>
+        <div className="fd-mobile-dates" aria-label="Choose booking date">
+          {weekDates.map((day) => (
+            <button
+              type="button"
+              key={day}
+              className={date === day ? 'active' : ''}
+              onClick={() => setDate(day)}
+            >
+              <span>{new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}</span>
+              <strong>{new Date(`${day}T12:00:00`).getDate()}</strong>
+            </button>
+          ))}
+        </div>
 
         {error && <p className="fd-error">{error}</p>}
         {loading && <p className="fd-muted" role="status">Loading this week’s availability…</p>}
@@ -266,7 +301,8 @@ function FacilityDetail() {
                       type="button"
                       role="cell"
                       key={day}
-                      className={`fd-cell ${stateClass}${isSelected ? ' fd-selected' : ''}`}
+                      data-day={formatDay(day)}
+                      className={`fd-cell ${stateClass}${isSelected ? ' fd-selected' : ''}${day === date ? '' : ' fd-mobile-day-hidden'}`}
                       disabled={state !== 'open' || loading}
                       aria-label={`${formatDay(day)}, ${formatTime(row.start)} to ${formatTime(row.end)}: ${label}`}
                       aria-pressed={isSelected}
@@ -282,7 +318,7 @@ function FacilityDetail() {
           </div>
         </div>
 
-        <div className="fd-footer">
+        <div ref={bookingFooterRef} className="fd-footer">
           <div>
             <span className="fd-muted">Selected slot</span>
             <p className="fd-selected">

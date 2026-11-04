@@ -378,6 +378,8 @@
 .header .user-menu-btn-name { margin-left: 10px; }
 .header .user-menu-chevron { color: #fff; }
 .header .user-menu-panel { top: calc(100% + 24px); }
+.mobile-menu-button { display: none; }
+.mobile-nav-icon { display: none; }
 
 @media (max-width: 900px) {
   .header {
@@ -397,11 +399,15 @@
 @media (max-width: 600px) {
   .header {
     height: auto !important;
-    min-height: 112px;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 72px 40px;
-    gap: 0;
-    padding: 0 12px !important;
+    min-height: 72px;
+    grid-template-columns: minmax(0, 1fr) auto 44px;
+    grid-template-rows: 72px auto;
+    column-gap: 10px;
+    row-gap: 0;
+    padding: 0 16px !important;
+    background:
+      radial-gradient(circle at 100% 0, rgba(91, 152, 187, .22), transparent 36%),
+      linear-gradient(135deg, #244b5a, #315f70) !important;
   }
   .header .user-pill {
     min-width: 0;
@@ -409,24 +415,106 @@
     padding-inline: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
+    grid-column: 2;
+    grid-row: 1;
   }
   .nav-brand { max-width: 150px; }
-  .nav-brand .nav-logo-img { width: min(150px, 42vw); height: 68px; }
+  .nav-brand {
+    max-width: 96px;
+    height: 52px;
+    justify-content: center;
+    overflow: hidden;
+    background: transparent;
+  }
+  .nav-brand .nav-logo-img {
+    width: min(96px, 30vw);
+    height: 48px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, .25));
+  }
+  .mobile-menu-button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    gap: 5px;
+    grid-column: 3;
+    grid-row: 1;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .mobile-menu-button span {
+    width: 17px;
+    height: 2px;
+    border-radius: 2px;
+    background: #fff;
+    transition: transform .18s ease;
+  }
+  .mobile-menu-button.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .mobile-menu-button.is-open span:nth-child(2) { opacity: 0; }
+  .mobile-menu-button.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
   .header .nav {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+    margin-bottom: 10px;
+    padding: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 14px;
+    background: rgba(5, 29, 41, .96);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .24);
+    backdrop-filter: blur(14px);
   }
-  .header .nav::-webkit-scrollbar { display: none; }
+  .header .nav.is-open { display: flex; }
   .header .nav a {
-    flex: 0 0 auto;
-    padding: 12px 10px 14px;
-    font-size: 13px;
+    min-height: 52px;
+    align-items: center;
+    margin: 0;
+    padding: 0 16px;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: 600;
   }
-  .header .nav a.active::after { bottom: 7px; }
-  .header .user-menu-btn-avatar { width: 36px; height: 36px; flex-basis: 36px; }
+  .header .nav a span { flex: 1; }
+  .header .nav .mobile-nav-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    margin-right: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .78;
+  }
+  .header .nav a.active,
+  .header .nav a:hover {
+    background: rgba(255,255,255,.09);
+  }
+  .header .nav a.active {
+    box-shadow: inset 3px 0 0 rgba(255,255,255,.92);
+  }
+  .header .nav a.active::after {
+    top: 15px;
+    right: 16px;
+    width: 3px;
+    height: 22px;
+    background: #fff;
+    border-radius: 999px;
+  }
+  .header .user-menu { grid-column: 2; grid-row: 1; margin-right: 6px; }
+  .header .user-menu-btn-avatar { width: 40px; height: 40px; flex-basis: 40px; }
+  .header .user-menu-btn-name,
+  .header .user-menu-chevron { display: none; }
   .header .user-menu-panel { right: 0; left: auto !important; }
 }

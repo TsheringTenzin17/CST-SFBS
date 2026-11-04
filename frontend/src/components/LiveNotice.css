@@ -52,6 +52,7 @@
  top: 0;
  width: max-content;
  animation: liveNoticeScroll 15s linear infinite;
+ animation-delay: -3s;
  font-size: 14px;
  font-weight: 600;
  line-height: 44px;
@@ -98,12 +99,47 @@
 @keyframes liveNoticePulse { 50% { opacity: .35; } }
 
 @media (max-width: 700px) {
-  .live-notice { grid-template-columns: auto minmax(0, 1fr) auto auto; height: 40px; padding: 0 10px; gap: 8px; }
-  .live-notice-label { min-width: auto; padding: 0 9px; font-size: 0; }
-  .live-notice-label::after { content: 'LIVE'; font-size: 9px; }
-  .live-notice-details { width: 28px; overflow: hidden; padding: 0; justify-content: center; color: transparent; }
-  .live-notice-details::after { content: 'i'; color: #fff; }
-  .live-notice-content { animation-duration: 45s; }
+  .live-notice {
+    top: 72px !important;
+    height: 52px;
+    grid-template-columns: auto minmax(0, 1fr) 36px 36px;
+    gap: 6px;
+    padding: 0 8px 0 12px;
+  }
+  .live-notice-label {
+    min-width: 48px;
+    height: 28px;
+    padding: 0;
+    justify-content: flex-start;
+    font-size: 0;
+  }
+  .live-notice-label::after { content: 'LIVE'; font-size: 11px; letter-spacing: 1px; }
+  .live-notice-track { height: 52px; }
+  .live-notice-content {
+    height: 52px;
+    font-size: 13px;
+    line-height: 52px;
+    animation-duration: 55s;
+    animation-delay: -8s;
+  }
+  .live-notice-details { display: none; }
+  .live-notice-control,
+  .live-notice-close {
+    width: 36px;
+    height: 36px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .live-notice-control {
+    font-size: 13px;
+    background: rgba(255,255,255,.08);
+  }
+  .live-notice-close {
+    font-size: 22px;
+    background: rgba(255,255,255,.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

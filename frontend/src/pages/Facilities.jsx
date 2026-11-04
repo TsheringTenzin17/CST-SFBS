@@ -9,6 +9,7 @@ import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities, slotsText } from '../utils/availability';
 import { todayString } from '../utils/slots';
 import useSummary from '../hooks/useSummary';
+import './Facilities.css';
 
 const INDOOR_TYPES = ['basketball', 'badminton', 'table_tennis'];
 
@@ -43,14 +44,22 @@ function Facilities() {
 
   // ---------- 3. layout ----------
   return (
-    <main className="main">
-      <h1 className="title">All Sports Facilities</h1>
-      <p className="subtitle">
-        Select any of the College of Science and Technology sports facilities below to read rules, check hourly slots, and book activities.{' '}
-        <Link to="/rules" className="inline-link">Read the booking rules</Link>
-      </p>
+    <main className="main facilities-page">
+      <section className="facilities-heading">
+        <div>
+          <span className="facilities-eyebrow">CST Sports</span>
+          <h1 className="title">Find your facility</h1>
+          <p className="subtitle">
+            Explore courts and fields, check today’s availability, and reserve your preferred slot.
+          </p>
+        </div>
+        <Link to="/rules" className="facilities-rules-link">
+          <span>View booking rules</span>
+          <span aria-hidden="true">→</span>
+        </Link>
+      </section>
 
-      <div className="filter-bar">
+      <div className="filter-bar facilities-filter-bar">
         <div className="filter-tabs">
           <button className={filter === 'all' ? 'tab active' : 'tab'} onClick={() => setFilter('all')}>All Facilities</button>
           <button className={filter === 'available' ? 'tab active' : 'tab'} onClick={() => setFilter('available')}>Available Today</button>
