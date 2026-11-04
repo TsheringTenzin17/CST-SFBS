@@ -1375,7 +1375,137 @@ html { scroll-behavior: smooth; }
 /* people who switch animations off in their system settings get none */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .page-fade, .page-3d-transition { animation: none; }
+  .page-fade,   .page-3d-transition { animation: none; }
+}
+
+/* Cross-page mobile layout safeguards */
+@media (max-width: 760px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body,
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  .page-content,
+  .main,
+  .page-main,
+  .admin-content {
+    min-width: 0;
+  }
+
+  .main {
+    width: 100%;
+    padding-inline: 16px !important;
+  }
+
+  h1 {
+    font-size: clamp(30px, 10vw, 42px) !important;
+    line-height: 1.08;
+  }
+
+  h2 {
+    font-size: clamp(24px, 8vw, 32px) !important;
+    line-height: 1.12;
+  }
+
+  h3 {
+    font-size: clamp(20px, 6vw, 26px) !important;
+  }
+
+  button,
+  .btn,
+  .primary-button,
+  .secondary-button,
+  .action-button,
+  a.button {
+    min-height: 44px;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    min-height: 44px;
+  }
+
+  .grid,
+  .card-grid,
+  .stats-grid,
+  .form-grid,
+  .contact-grid,
+  .rules-grid,
+  .facility-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .footer-main {
+    grid-template-columns: 1fr !important;
+    gap: 28px;
+    padding-inline: 20px;
+  }
+
+  .footer-about,
+  .footer-col {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .footer-bottom {
+    padding-inline: 20px;
+    text-align: center;
+  }
+
+  .table-wrap,
+  .table-container,
+  .admin-panel,
+  .admin-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-buttons,
+  .booking-guidance,
+  .adm-hero-actions,
+  .admin-row-actions {
+    width: 100%;
+  }
+
+  .hero-buttons > *,
+  .booking-guidance > *,
+  .adm-hero-actions > *,
+  .admin-row-actions > * {
+    width: 100%;
+  }
+
+  .footer-brand {
+    align-items: flex-start;
+  }
+
+  .footer-brand-mark {
+    flex: 0 0 42px;
+  }
   * { transition: none !important; }
 }
 
