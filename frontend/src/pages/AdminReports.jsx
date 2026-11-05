@@ -14,6 +14,22 @@ const STATUS_LABEL = {
   active: 'Active', upcoming: 'Upcoming', ended: 'Ended',
 };
 
+const PIE_COLORS = ['#245562', '#4f8fa0', '#e58e00', '#24a148', '#8d67b5', '#d66b54'];
+
+function pieGradient(rows) {
+  const total = rows.reduce((sum, row) => sum + Number(row.value || 0), 0);
+  if (!total) return '';
+  let start = 0;
+  const stops = rows.map((row, index) => {
+    const end = start + (Number(row.value) / total) * 100;
+    const color = PIE_COLORS[index % PIE_COLORS.length];
+    const stop = `${color} ${start}% ${end}%`;
+    start = end;
+    return stop;
+  });
+  return `conic-gradient(${stops.join(', ')})`;
+}
+
 const bhutanDay = (date) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(date); // YYYY-MM-DD
 
 // '2026-10-30T04:45:00Z' -> 'Today, 10:45 AM' / 'Yesterday, 04:30 PM' / '24 Oct, 11:00 AM'
@@ -69,8 +85,13 @@ function AdminReports() {
   const cancelRate = month.this_total > 0 ? ((month.this_cancelled / month.this_total) * 100).toFixed(1) : '0.0';
   const utilization = hours.open_hours > 0 ? Math.min(100, Math.round((hours.booked_hours / hours.open_hours) * 100)) : 0;
 
-  const facilityMax = Math.max(1, ...report.by_facility.map((r) => r.bookings));
   const roleTotal = report.by_role.reduce((sum, r) => sum + r.bookings, 0);
+  const facilityChart = report.by_facility.map((row) => ({ name: row.name, value: row.bookings }));
+  const roleChart = report.by_role.map((row) => ({
+    name: ROLE_LABEL[row.role] || row.role,
+    value: row.bookings,
+    role: row.role,
+  }));
 
   return (
     <div className="rp-page">
@@ -114,16 +135,22 @@ function AdminReports() {
         {report.by_facility.length === 0 ? (
           <p className="admin-state-message">No bookings yet.</p>
         ) : (
-          <div className="rp-bars">
-            {report.by_facility.map((r) => (
-              <div className="rp-bar-row" key={r.name}>
-                <span className="rp-bar-label">{r.name}</span>
-                <div className="rp-bar-track">
-                  <div className="rp-bar-fill" style={{ width: `${(r.bookings / facilityMax) * 55}%` }} />
-                </div>
-                <b className="rp-bar-value">{r.bookings}</b>
+          <div className="rp-chart">
+            <div className="rp-pie-wrap">
+              <div className="rp-pie" style={{ background: pieGradient(facilityChart) }} role="img" aria-label="Bookings by facility pie chart">
+                <div className="rp-pie-center"><strong>{facilityChart.reduce((sum, row) => sum + row.value, 0)}</strong><span>bookings</span></div>
               </div>
-            ))}
+            </div>
+            <ul className="rp-chart-legend">
+              {facilityChart.map((row, index) => (
+                <li key={row.name}>
+                  <span style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} aria-hidden="true" />
+                  <strong>{row.name}</strong>
+                  <b>{row.value}</b>
+                  <small>{Math.round((row.value / facilityChart.reduce((sum, item) => sum + item.value, 0)) * 100)}%</small>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </section>
@@ -134,15 +161,22 @@ function AdminReports() {
           <p className="admin-state-message">No bookings yet.</p>
         ) : (
           <>
-            <div className="rp-roles">
-              {report.by_role.map((r) => (
-                <div key={r.role}>
-                  <strong className={r.role === 'outsider' ? 'rp-amber' : 'rp-teal'}>
-                    {Math.round((r.bookings / roleTotal) * 100)}%
-                  </strong>
-                  <span>{ROLE_LABEL[r.role] || r.role}</span>
+            <div className="rp-chart rp-role-chart">
+              <div className="rp-pie-wrap">
+                <div className="rp-pie" style={{ background: pieGradient(roleChart) }} role="img" aria-label="Bookings by role pie chart">
+                  <div className="rp-pie-center"><strong>{roleTotal}</strong><span>bookings</span></div>
                 </div>
-              ))}
+              </div>
+              <ul className="rp-chart-legend rp-role-legend">
+                {roleChart.map((row, index) => (
+                  <li key={row.role}>
+                    <span style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} aria-hidden="true" />
+                    <strong>{row.name}</strong>
+                    <b>{row.value}</b>
+                    <small>{Math.round((row.value / roleTotal) * 100)}%</small>
+                  </li>
+                ))}
+              </ul>
             </div>
             <p className="rp-caption">{roleTotal} active reservations</p>
           </>
@@ -162,11 +196,11 @@ function AdminReports() {
               ) : (
                 report.recent_activity.map((e, i) => (
                   <tr key={`${e.happened_at}-${i}`}>
-                    <td>{activityTime(e.happened_at)}</td>
-                    <td>{e.user_name} ({ROLE_LABEL[e.user_role] || e.user_role})</td>
-                    <td>{e.action}</td>
-                    <td>{e.facility}</td>
-                    <td className="rp-status">{STATUS_LABEL[e.status] || e.status}</td>
+                    <td data-label="Time">{activityTime(e.happened_at)}</td>
+                    <td data-label="User">{e.user_name} <span>({ROLE_LABEL[e.user_role] || e.user_role})</span></td>
+                    <td data-label="Action">{e.action}</td>
+                    <td data-label="Facility">{e.facility}</td>
+                    <td data-label="Status" className="rp-status">{STATUS_LABEL[e.status] || e.status}</td>
                   </tr>
                 ))
               )}

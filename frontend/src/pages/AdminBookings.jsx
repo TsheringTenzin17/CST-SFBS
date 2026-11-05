@@ -229,17 +229,17 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                     const status = displayStatus(b);
                     return (
                       <tr key={b.id}>
-                        <td className="bk-id">BK-{b.id}</td>
-                        <td className="bk-name">{b.user_name || '—'}</td>
-                        <td className="bk-facility">{b.facility_name || '—'}</td>
-                        <td className="bk-slot">{slotLabel(b)}</td>
-                        <td>
+                        <td className="bk-id" data-label="Booking ID">BK-{b.id}</td>
+                        <td className="bk-name" data-label="Requester">{b.user_name || '—'}</td>
+                        <td className="bk-facility" data-label="Facility">{b.facility_name || '—'}</td>
+                        <td className="bk-slot" data-label="Date & time">{slotLabel(b)}</td>
+                        <td data-label="Role">
                           <span className={`bk-badge bk-role-${b.user_role}`}>{ROLE_LABEL[b.user_role] || b.user_role || '—'}</span>
                         </td>
-                        <td>
+                        <td data-label="Status">
                           <span className={`bk-badge bk-status-${status}`}>{STATUS_LABEL[status] || status}</span>
                         </td>
-                        <td>
+                        <td data-label="Actions">
                           <div className="bk-actions">
                             {status === 'pending' ? (
                               <>
@@ -323,15 +323,20 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                 <label>Reason (sent to the requester)
                   <textarea required value={modal.reason} onChange={(e) => setModal({ ...modal, reason: e.target.value })} />
                 </label>
-                <button className="admin-cancel-button" disabled={saving} type="submit">
-                  {saving ? 'Saving…' : modal.type === 'reject' ? 'Confirm rejection' : 'Confirm cancellation'}
-                </button>
+                <div className="bk-modal-actions">
+                  <button className="admin-cancel-button" disabled={saving} type="submit">
+                    {saving ? 'Saving…' : modal.type === 'reject' ? 'Confirm rejection' : 'Confirm cancellation'}
+                  </button>
+                  <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
+                </div>
               </form>
             )}
 
-            <div className="bk-modal-footer">
-              <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
-            </div>
+            {!(modal.type === 'reject' || (modal.type === 'manage' && modalStatus === 'approved')) && (
+              <div className="bk-modal-footer">
+                <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
+              </div>
+            )}
           </div>
         </div>
       )}

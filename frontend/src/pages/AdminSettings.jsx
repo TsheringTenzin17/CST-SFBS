@@ -45,10 +45,10 @@ function buildGroups(facilities, rules) {
   });
 }
 
-function Cell({ cell, commercial }) {
-  if (!cell.ranges.length) return <td className="set-closed">Closed</td>;
+function Cell({ cell, commercial, label }) {
   return (
-    <td className={commercial ? 'set-commercial' : ''}>
+    <td className={`${commercial ? 'set-commercial' : ''} ${!cell.ranges.length ? 'set-closed' : ''}`} data-label={label}>
+      {!cell.ranges.length && 'Closed'}
       {cell.ranges.map((range) => (
         <div key={`${range.start}-${range.end}-${range.note}`}>
           {clock(range.start)} – {clock(range.end)}
@@ -81,7 +81,7 @@ function PolicyTable({ rules, view }) {
                 </td>
               ) : (
                 COLUMNS.map((col) => (
-                  <Cell key={col.key} cell={row.cells[col.key]} commercial={col.key === 'commercial'} />
+                  <Cell key={col.key} cell={row.cells[col.key]} commercial={col.key === 'commercial'} label={col.label} />
                 ))
               )}
             </tr>
@@ -105,24 +105,24 @@ function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
 
   return (
     <tr>
-      <td>
+      <td data-label="Day">
         <select value={draft.day_of_week} onChange={(event) => update('day_of_week', Number(event.target.value))}>
           {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
         </select>
       </td>
-      <td><input type="time" value={draft.start_time} onChange={(event) => update('start_time', event.target.value)} /></td>
-      <td><input type="time" value={draft.end_time} onChange={(event) => update('end_time', event.target.value)} /></td>
-      <td>
+      <td data-label="Start"><input type="time" aria-label="Start time" value={draft.start_time} onChange={(event) => update('start_time', event.target.value)} /></td>
+      <td data-label="End"><input type="time" aria-label="End time" value={draft.end_time} onChange={(event) => update('end_time', event.target.value)} /></td>
+      <td data-label="Access">
         <select value={draft.primary_role} onChange={(event) => update('primary_role', event.target.value)}>
           {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </td>
-      <td>
+      <td data-label="Timetable">
         <select value={draft.timetable || 'all'} onChange={(event) => update('timetable', event.target.value)}>
           <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
         </select>
       </td>
-      <td className="schedule-rule-actions">
+      <td className="schedule-rule-actions" data-label="Actions">
         <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>Save</button>
         <button type="button" className="admin-secondary-button" disabled={saving} onClick={() => onDelete(draft)}>Delete</button>
       </td>
@@ -200,8 +200,13 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
         )}
       </div>
 
-      <div className="schedule-editor-scroll">
-        <table className="schedule-editor-table">
+      <details className="schedule-editor-details">
+        <summary>
+          <span>{facilityRules.length ? `${facilityRules.length} timing rules` : 'No timing rules yet'}</span>
+          <small>Manage start times, access and days</small>
+        </summary>
+        <div className="schedule-editor-scroll">
+          <table className="schedule-editor-table">
           <thead>
             <tr><th>Day</th><th>Start</th><th>End</th><th>Access</th><th>Timetable</th><th>Actions</th></tr>
           </thead>
@@ -216,27 +221,38 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
               />
             ))}
           </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
 
-      <div className="schedule-rule-add">
+        <div className="schedule-rule-add">
         <strong>Add timing rule</strong>
         <div className="schedule-rule-fields">
-          <select aria-label="New rule day" value={newRule.day_of_week} onChange={(event) => setNewRule({ ...newRule, day_of_week: Number(event.target.value) })}>
-            {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
-          </select>
-          <input aria-label="New rule start" type="time" value={newRule.start_time} onChange={(event) => setNewRule({ ...newRule, start_time: event.target.value })} />
-          <input aria-label="New rule end" type="time" value={newRule.end_time} onChange={(event) => setNewRule({ ...newRule, end_time: event.target.value })} />
-          <select aria-label="New rule access" value={newRule.primary_role} onChange={(event) => setNewRule({ ...newRule, primary_role: event.target.value })}>
-            {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-          <select aria-label="New rule timetable" value={newRule.timetable} onChange={(event) => setNewRule({ ...newRule, timetable: event.target.value })}>
-            <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
-          </select>
+          <label>Day
+            <select aria-label="New rule day" value={newRule.day_of_week} onChange={(event) => setNewRule({ ...newRule, day_of_week: Number(event.target.value) })}>
+              {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
+            </select>
+          </label>
+          <label>Start
+            <input aria-label="New rule start" type="time" value={newRule.start_time} onChange={(event) => setNewRule({ ...newRule, start_time: event.target.value })} />
+          </label>
+          <label>End
+            <input aria-label="New rule end" type="time" value={newRule.end_time} onChange={(event) => setNewRule({ ...newRule, end_time: event.target.value })} />
+          </label>
+          <label>Access
+            <select aria-label="New rule access" value={newRule.primary_role} onChange={(event) => setNewRule({ ...newRule, primary_role: event.target.value })}>
+              {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <label>Timetable
+            <select aria-label="New rule timetable" value={newRule.timetable} onChange={(event) => setNewRule({ ...newRule, timetable: event.target.value })}>
+              <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
+            </select>
+          </label>
           <button type="button" className="admin-primary-button" onClick={add} disabled={savingId === 'new'}>Add Rule</button>
         </div>
       </div>
-    </div>
+        </details>
+      </div>
   );
 }
 

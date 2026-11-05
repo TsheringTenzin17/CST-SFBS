@@ -5,6 +5,13 @@ import { getUsageRows } from '../utils/adminHelpers';
 
 const TZ = 'Asia/Thimphu';
 const todayBhutan = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
+const todayLabel = () => new Intl.DateTimeFormat('en-GB', {
+  timeZone: TZ,
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(new Date());
 
 const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Commercial', admin: 'Admin' };
 const ROLE_SHORT = { student: 'Stu', faculty: 'Staff', outsider: 'Comm.', admin: 'Admin' };
@@ -23,6 +30,19 @@ function slotText(b) {
 }
 
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+const PIE_COLORS = ['#245562', '#4f8fa0', '#e58e00', '#24a148', '#8d67b5', '#d66b54'];
+
+function usagePieGradient(rows) {
+  const total = rows.reduce((sum, [, count]) => sum + Number(count || 0), 0);
+  let start = 0;
+  const stops = rows.map(([, count], index) => {
+    const end = start + (Number(count || 0) / total) * 100;
+    const stop = `${PIE_COLORS[index % PIE_COLORS.length]} ${start}% ${end}%`;
+    start = end;
+    return stop;
+  });
+  return `conic-gradient(${stops.join(', ')})`;
+}
 
 function downloadCsv(bookingList) {
   const header = ['Booking ID', 'Requester', 'Role', 'Facility', 'Date', 'Start', 'End', 'Status', 'Purpose'];
@@ -81,7 +101,7 @@ export default function AdminOverview({ bookingList, user, onReload }) {
   const arenasKnown = facilities.length > 0;
 
   const usage = getUsageRows(bookingList);
-  const maxUsage = Math.max(1, ...usage.map(([, n]) => n));
+  const pieGradient = usage.length > 0 ? usagePieGradient(usage) : '';
 
   async function act(id, body, doneText) {
     setBusyId(id);
@@ -123,6 +143,10 @@ export default function AdminOverview({ bookingList, user, onReload }) {
     <>
       <section className="adm-hero" style={{ '--hero-img': 'url(/images/cst.jpg)' }}>
         <p className="adm-eyebrow">CST Campus / Phuentsholing, Bhutan</p>
+        <div className="adm-hero-topline">
+          <span className="adm-status-pill"><i aria-hidden="true" /> Systems operational</span>
+          <span className="adm-current-date">{todayLabel()}</span>
+        </div>
         <h1>System Overview &amp; Live Triage</h1>
         <p className="adm-hero-lead">
           Welcome back, {firstName}.{' '}
@@ -146,7 +170,15 @@ export default function AdminOverview({ bookingList, user, onReload }) {
       </section>
 
       <section className="admin-panel" aria-label="Reservations requiring manual approval">
-        <div className="admin-panel-heading"><h2>Reservations Requiring Manual Approval</h2></div>
+        <div className="admin-panel-heading">
+          <div>
+            <span className="adm-section-eyebrow">Action required</span>
+            <h2>Reservations Requiring Manual Approval</h2>
+          </div>
+          <span className={`adm-pending-count${pending.length === 0 ? ' is-clear' : ''}`}>
+            {pending.length} pending
+          </span>
+        </div>
 
         {message && <p className="admin-support-notice" role="status">{message}</p>}
         {error && <div className="admin-error" role="alert"><span>{error}</span></div>}
@@ -162,11 +194,11 @@ export default function AdminOverview({ bookingList, user, onReload }) {
               <tbody>
                 {pending.map((b) => (
                   <tr key={b.id}>
-                    <td className="adm-req-id">R-{b.id}</td>
-                    <td className="adm-req-name">{b.user_name} ({ROLE_SHORT[b.user_role] || b.user_role})</td>
-                    <td>{slotText(b)}</td>
-                    <td className={b.user_role === 'outsider' ? 'adm-role-comm' : 'adm-role'}>{ROLE_LABEL[b.user_role] || b.user_role}</td>
-                    <td className="adm-triage-end">
+                    <td className="adm-req-id" data-label="Request ID">R-{b.id}</td>
+                    <td className="adm-req-name" data-label="Requester">{b.user_name} ({ROLE_SHORT[b.user_role] || b.user_role})</td>
+                    <td data-label="Facility & slot">{slotText(b)}</td>
+                    <td className={b.user_role === 'outsider' ? 'adm-role-comm' : 'adm-role'} data-label="Role">{ROLE_LABEL[b.user_role] || b.user_role}</td>
+                    <td className="adm-triage-end" data-label="Actions">
                       <div className="admin-row-actions">
                         <button type="button" className="adm-approve" disabled={busyId === b.id}
                           onClick={() => act(b.id, { status: 'approved' }, `Request R-${b.id} approved.`)}>Approve</button>
@@ -215,21 +247,42 @@ export default function AdminOverview({ bookingList, user, onReload }) {
 
       <section className="admin-panel" aria-label="Facility usage overview for the last 7 days">
         <div className="admin-panel-heading">
-          <h2>Facility Usage Overview</h2>
-          <span>Last 7 days</span>
+          <div>
+            <span className="adm-section-eyebrow">Activity insight</span>
+            <h2>Facility Usage Overview</h2>
+          </div>
+          <span className="adm-period">Last 7 days</span>
         </div>
         {usage.length === 0 ? (
           <p className="admin-state-message">No facility bookings in the last 7 days.</p>
         ) : (
-          <ul className="adm-usage">
-            {usage.map(([name, count]) => (
-              <li key={name}>
-                <span className="adm-usage-name">{name}</span>
-                <span className="adm-usage-track"><span className="adm-usage-fill" style={{ width: `${(count / maxUsage) * 100}%` }} /></span>
-                <strong>{count}</strong>
-              </li>
-            ))}
-          </ul>
+          <div className="adm-usage-chart">
+            <div className="adm-usage-pie-wrap">
+              <div
+                className="adm-usage-pie"
+                style={{ background: pieGradient }}
+                role="img"
+                aria-label="Pie chart showing facility usage for the last 7 days"
+              >
+                <div className="adm-usage-pie-center">
+                  <strong>{usage.reduce((sum, [, count]) => sum + count, 0)}</strong>
+                  <span>bookings</span>
+                </div>
+              </div>
+            </div>
+            <ul className="adm-usage">
+              {usage.map(([name, count], index) => (
+                <li key={name}>
+                  <span className="adm-usage-color" style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} aria-hidden="true" />
+                  <span className="adm-usage-name">{name}</span>
+                  <span className="adm-usage-value">
+                    <strong>{count}</strong>
+                    <small>{Math.round((count / usage.reduce((sum, [, value]) => sum + value, 0)) * 100)}%</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </>

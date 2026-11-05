@@ -143,11 +143,11 @@ function AdminTournaments() {
                 <tr><td className="admin-empty-state" colSpan="5">No tournament dates set. Every date uses the standard football timetable.</td></tr>
               ) : periods.map((period) => (
                 <tr key={period.id}>
-                  <td>{period.name || '—'}</td>
-                  <td>{period.start_date}</td>
-                  <td>{period.end_date}</td>
-                  <td>{statusOf(period, today)}</td>
-                  <td><button className="admin-secondary-button" onClick={() => removePeriod(period)} type="button">Remove</button></td>
+                  <td data-label="Name">{period.name || '—'}</td>
+                  <td data-label="Start date">{period.start_date}</td>
+                  <td data-label="End date">{period.end_date}</td>
+                  <td data-label="Status">{statusOf(period, today)}</td>
+                  <td data-label="Action"><button className="admin-secondary-button" onClick={() => removePeriod(period)} type="button">Remove</button></td>
                 </tr>
               ))}
             </tbody>
