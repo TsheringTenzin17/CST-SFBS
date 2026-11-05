@@ -202,8 +202,9 @@ a {
 .hero-arrow-prev { left: 18px; }
 .hero-arrow-next { right: 18px; }
 .hero-dots { position: absolute; right: 0; bottom: 14px; left: 0; z-index: 5; display: flex; justify-content: center; gap: 8px; }
-.hero-dots button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.7); box-shadow: 0 0 0 1px rgba(23,63,75,.35); cursor: pointer; }
-.hero-dots button.active { background: #c9a044; }
+.hero-dots button { display: grid; width: 24px; height: 24px; padding: 0; place-items: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.hero-dots button::after { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.7); box-shadow: 0 0 0 1px rgba(23,63,75,.35); content: ''; }
+.hero-dots button.active::after { background: #c9a044; }
 
 .hero {
   position: relative;
@@ -781,7 +782,7 @@ a {
   .hero-date { max-width: 100%; padding-inline: 12px; white-space: normal; }
   .hero-buttons {
     right: 16px;
-    bottom: 22px;
+    bottom: 60px;
     left: 16px;
     flex-wrap: nowrap;
     justify-content: center;
@@ -809,6 +810,9 @@ a {
 
   .hero-arrow-prev { left: 12px; }
   .hero-arrow-next { right: 12px; }
+  .hero-dots { bottom: 0; gap: 0; }
+  .hero-dots button { width: 44px; height: 44px; }
+  .hero-dots button::after { width: 6px; height: 6px; }
 }
 
 @media (max-width: 360px) {

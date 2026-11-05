@@ -125,7 +125,7 @@ function AdminUserDetail({ userId }) {
         <span className={`ud-badge ${active ? 'is-active' : 'is-suspended'}`}>{active ? 'Active' : 'Suspended'}</span>
       </section>
 
-      <section className="ud-card">
+      <section className="ud-card ud-personal">
         <h2>Personal Information</h2>
         <div className="ud-grid">
           <label>Full Name
@@ -143,7 +143,7 @@ function AdminUserDetail({ userId }) {
         </div>
       </section>
 
-      <section className="ud-card">
+      <section className="ud-card ud-access">
         <h2>Role &amp; Account Status</h2>
         <label className="ud-field">User Role
           <select value={form.role} onChange={(e) => update('role', e.target.value)}>
@@ -171,7 +171,7 @@ function AdminUserDetail({ userId }) {
         </button>
       </section>
 
-      <section className="ud-card">
+      <section className="ud-card ud-history">
         <h2>Booking History Summary</h2>
         <div className="ud-stats">
           <div><span>Total bookings</span><strong>{summary.total}</strong></div>

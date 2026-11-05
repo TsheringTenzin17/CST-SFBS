@@ -24,6 +24,14 @@ function statusOf(period, today) {
   return 'Upcoming';
 }
 
+function displayDate(value) {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${value}T00:00:00`));
+}
+
 function AdminTournaments() {
   const [periods, setPeriods] = useState([]);
   const [form, setForm] = useState({ name: '', start_date: tomorrow(), end_date: tomorrow() });
@@ -102,11 +110,19 @@ function AdminTournaments() {
   }
 
   const today = localDate(new Date());
+  const runningCount = periods.filter((period) => statusOf(period, today) === 'Running now').length;
+  const upcomingCount = periods.filter((period) => statusOf(period, today) === 'Upcoming').length;
 
   return (
     <div className="admin-maintenance">
       {error && <div className="admin-error" role="alert">{error}</div>}
       {message && <div className="admin-success" role="status">{message}</div>}
+
+      <div className="tournament-summary" aria-label="Tournament date summary">
+        <article><span>Active now</span><strong>{loading ? '—' : runningCount}</strong></article>
+        <article><span>Upcoming</span><strong>{loading ? '—' : upcomingCount}</strong></article>
+        <article><span>Total periods</span><strong>{loading ? '—' : periods.length}</strong></article>
+      </div>
 
       <form className="admin-action-form admin-maintenance-form" onSubmit={addPeriod}>
         <h3>Set tournament dates</h3>
@@ -141,15 +157,19 @@ function AdminTournaments() {
             <tbody>
               {periods.length === 0 ? (
                 <tr><td className="admin-empty-state" colSpan="5">No tournament dates set. Every date uses the standard football timetable.</td></tr>
-              ) : periods.map((period) => (
-                <tr key={period.id}>
-                  <td data-label="Name">{period.name || '—'}</td>
-                  <td data-label="Start date">{period.start_date}</td>
-                  <td data-label="End date">{period.end_date}</td>
-                  <td data-label="Status">{statusOf(period, today)}</td>
-                  <td data-label="Action"><button className="admin-secondary-button" onClick={() => removePeriod(period)} type="button">Remove</button></td>
-                </tr>
-              ))}
+              ) : periods.map((period) => {
+                const status = statusOf(period, today);
+                const statusTone = status === 'Running now' ? 'running' : status === 'Upcoming' ? 'upcoming' : 'finished';
+                return (
+                  <tr key={period.id}>
+                    <td data-label="Name">{period.name || 'Tournament dates'}</td>
+                    <td data-label="Start date"><time dateTime={period.start_date}>{displayDate(period.start_date)}</time></td>
+                    <td data-label="End date"><time dateTime={period.end_date}>{displayDate(period.end_date)}</time></td>
+                    <td data-label="Status"><span className={`tournament-status tournament-status-${statusTone}`}>{status}</span></td>
+                    <td data-label="Action"><button className="admin-secondary-button" onClick={() => removePeriod(period)} type="button">Remove</button></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

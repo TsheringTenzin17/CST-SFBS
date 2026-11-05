@@ -6,6 +6,7 @@ import './LiveNotice.css';
 
 function noticeKind(type = '') {
   if (type.includes('maintenance')) return 'maintenance';
+  if (type.includes('facility')) return 'facility';
   if (type.includes('announcement') || type.includes('system')) return 'announcement';
   return 'announcement';
 }
@@ -54,7 +55,10 @@ export default function LiveNotice() {
             <div className="live-notice-group" key={group} aria-hidden={group === 1}>
               {notices.map((notice, index) => (
                 <span key={notice.id || `${notice.type}-${index}`}>
-                  <strong>{noticeKind(notice.type) === 'maintenance' ? 'Maintenance:' : 'Announcement:'}</strong>{' '}
+                  <strong>
+                    {noticeKind(notice.type) === 'maintenance' ? 'Maintenance:'
+                      : noticeKind(notice.type) === 'facility' ? 'Facility status:' : 'Announcement:'}
+                  </strong>{' '}
                   {notice.message}
                   <i aria-hidden="true">◆</i>
                 </span>

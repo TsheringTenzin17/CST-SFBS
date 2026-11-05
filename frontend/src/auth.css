@@ -290,6 +290,57 @@
   .auth-row { grid-template-columns: 1fr; }
   .auth-card-inner { padding: 24px 20px 20px; }
 }
+
+@media (max-width: 760px) {
+  .auth-net,
+  .auth-floor-wrap {
+    display: none;
+  }
+
+  .auth-aurora i {
+    filter: blur(42px);
+    opacity: .25;
+  }
+
+  .auth-aurora i:nth-child(n) { animation: none; }
+
+  .auth-logo-card,
+  .auth-logo,
+  .auth-line > span,
+  .auth-grad,
+  .auth-lead,
+  .auth-chips li,
+  .auth-side-footer {
+    animation: none;
+    transition: none;
+  }
+
+  .auth-logo-card,
+  .auth-logo,
+  .auth-line > span,
+  .auth-lead,
+  .auth-chips li,
+  .auth-side-footer {
+    opacity: 1;
+    transform: none;
+  }
+
+  .auth-card {
+    transform: none !important;
+    transform-style: flat;
+    animation: none;
+    transition: none;
+  }
+
+  .auth-card::before {
+    background: linear-gradient(135deg, var(--a-mint), var(--a-cyan));
+    animation: none;
+  }
+
+  .auth-card::after { display: none; }
+  .auth-card-inner { backdrop-filter: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-page *, .auth-page *::before, .auth-page *::after {
     animation-duration: .01s !important; animation-iteration-count: 1 !important; transition: none !important;

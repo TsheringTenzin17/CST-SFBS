@@ -19,7 +19,10 @@ function AuthLayout({
   // Floating dots + lines that react to the mouse
   useEffect(() => {
     const canvas = netRef.current;
-    if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+    if (!canvas || reducedMotion || lowPowerDevice) return;
     const ctx = canvas.getContext('2d');
     const mouse = { x: -999, y: -999 };
     let W, H, pts = [], raf;
@@ -74,7 +77,10 @@ function AuthLayout({
   // Card tilts slightly towards the mouse (desktop only)
   useEffect(() => {
     const card = cardRef.current;
-    if (!card || !window.matchMedia('(hover: hover)').matches) return;
+    const canHover = window.matchMedia('(hover: hover)').matches;
+    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+    if (!card || !canHover || lowPowerDevice) return;
     function onMove(e) {
       const r = card.getBoundingClientRect();
       const x = (e.clientX - (r.left + r.width / 2)) / window.innerWidth;

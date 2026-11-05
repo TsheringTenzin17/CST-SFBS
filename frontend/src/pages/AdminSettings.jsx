@@ -122,9 +122,9 @@ function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
           <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
         </select>
       </td>
-      <td className="schedule-rule-actions" data-label="Actions">
+      <td className="schedule-rule-actions">
         <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>Save</button>
-        <button type="button" className="admin-secondary-button" disabled={saving} onClick={() => onDelete(draft)}>Delete</button>
+        <button type="button" className="admin-secondary-button schedule-rule-delete" disabled={saving} onClick={() => onDelete(draft)}>Delete</button>
       </td>
     </tr>
   );
@@ -203,7 +203,6 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
       <details className="schedule-editor-details">
         <summary>
           <span>{facilityRules.length ? `${facilityRules.length} timing rules` : 'No timing rules yet'}</span>
-          <small>Manage start times, access and days</small>
         </summary>
         <div className="schedule-editor-scroll">
           <table className="schedule-editor-table">
@@ -324,7 +323,7 @@ function AdminSettings() {
               {groups.map((g) => (
                 <div key={g.name}>
                   <dt>{g.name}</dt>
-                  <dd>{lengthLabel(g.maxMinutes)} per booking</dd>
+                  <dd>{lengthLabel(g.maxMinutes)}</dd>
                 </div>
               ))}
             </dl>

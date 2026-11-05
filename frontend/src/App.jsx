@@ -105,7 +105,7 @@ function App() {
         <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/admin" element={<Navigate to="/admin/bookings" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/*" element={<AdminPage><AdminDashboard /></AdminPage>} />
         <Route path="/book" element={<ClientPage requiresAuth><BookingForm /></ClientPage>} />
         <Route path="/booking-confirmed" element={<ClientPage requiresAuth><BookingConfirmation /></ClientPage>} />
