@@ -65,6 +65,9 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'full_name, email and password are required' });
   }
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  if (!/^(?:16|17|77)\d{6}$/.test(String(contact_number || ''))) {
+    return res.status(400).json({ error: 'Enter an 8-digit Bhutan mobile number starting with 16, 17 or 77' });
+  }
 
   if (!['female', 'male'].includes(gender)) {
      return res.status(400).json({ error: 'Select your gender (female or male).' });
@@ -106,39 +109,98 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Organization or team name must be 120 characters or fewer' });
   }
 
+  let client;
+  let transactionStarted = false;
+  let verificationToken;
+  const passwordHash = await bcrypt.hash(password, 10);
   try {
-    if (student_staff_id) {
-      const taken = await pool.query('SELECT 1 FROM users WHERE student_staff_id = $1', [student_staff_id]);
-      if (taken.rows.length > 0) return res.status(409).json({ error: 'An account with this Student / Staff ID already exists' });
+    client = await pool.connect();
+    await client.query('BEGIN');
+    transactionStarted = true;
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`registration-email:${email}`]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`registration-phone:${contact_number}`]);
+    await client.query('DELETE FROM pending_registrations WHERE expires_at <= now() AND email <> $1', [email]);
+
+    const existingAccount = await client.query('SELECT 1 FROM users WHERE LOWER(email) = $1 LIMIT 1', [email]);
+    if (existingAccount.rows.length > 0) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(409).json({ error: 'An account with this email already exists. Sign in or request a verification link.' });
     }
-    // Store only a bcrypt hash for newly registered accounts.
-    const passwordHash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      `INSERT INTO users (full_name, email, student_staff_id, role, password_hash, contact_number, organization, gender, email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false) RETURNING id, full_name, email, role`,
-      [full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number || null, organizationName, gender]
+
+    const duplicatePhone = await client.query(
+      `SELECT 1 FROM (
+         SELECT regexp_replace(contact_number, '[^0-9]', '', 'g') AS digits FROM users
+         UNION ALL
+         SELECT regexp_replace(contact_number, '[^0-9]', '', 'g') AS digits
+         FROM pending_registrations WHERE email <> $2
+       ) existing_numbers
+       WHERE digits IN ($1, '975' || $1)
+       LIMIT 1`,
+      [contact_number, email]
     );
-    const user = result.rows[0];
-    const token = await issueToken(user.id, 'email_verification', 24);
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: 'Verify your CST-SFBS account',
-        text: `Hello ${user.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nIf you did not create this account, you can ignore this message.`,
-      });
-      res.status(201).json({ user, verification_email_sent: true });
-    } catch (emailError) {
-      console.error(emailError);
-      res.status(503).json({
-        error: 'Your account was created, but the verification email could not be sent. Configure the email service and request another verification email.',
-        account_created: true,
-        user,
-      });
+    if (duplicatePhone.rows.length > 0) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(409).json({ error: 'This phone number is already registered or awaiting verification' });
     }
+
+    if (student_staff_id) {
+      const taken = await client.query(
+        `SELECT 1 FROM users WHERE student_staff_id = $1
+         UNION ALL
+         SELECT 1 FROM pending_registrations WHERE student_staff_id = $1 AND email <> $2
+         LIMIT 1`,
+        [student_staff_id, email]
+      );
+      if (taken.rows.length > 0) {
+        await client.query('ROLLBACK');
+        transactionStarted = false;
+        return res.status(409).json({ error: 'An account with this Student / Staff ID already exists or is awaiting verification' });
+      }
+    }
+
+    verificationToken = crypto.randomBytes(32).toString('hex');
+    await client.query(
+      `INSERT INTO pending_registrations
+         (token_hash, full_name, email, student_staff_id, role, password_hash, contact_number, organization, gender, expires_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now() + interval '24 hours')
+       ON CONFLICT (email) DO UPDATE SET
+         token_hash = EXCLUDED.token_hash,
+         full_name = EXCLUDED.full_name,
+         student_staff_id = EXCLUDED.student_staff_id,
+         role = EXCLUDED.role,
+         password_hash = EXCLUDED.password_hash,
+         contact_number = EXCLUDED.contact_number,
+         organization = EXCLUDED.organization,
+         gender = EXCLUDED.gender,
+         expires_at = EXCLUDED.expires_at,
+         created_at = now()`,
+      [hashToken(verificationToken), full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number, organizationName, gender]
+    );
+    await client.query('COMMIT');
+    transactionStarted = false;
+    client.release();
+    client = null;
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email already exists' });
+    if (client && transactionStarted) await client.query('ROLLBACK');
+    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email or phone number already exists' });
     console.error(err);
-    res.status(500).json({ error: 'Registration failed' });
+    return res.status(500).json({ error: 'Registration could not be started' });
+  } finally {
+    client?.release();
+  }
+
+  try {
+    await sendEmail({
+      to: email,
+      subject: 'Verify your CST-SFBS account',
+      text: `Hello ${full_name.trim()},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', verificationToken)}\n\nYour account will only be created after you verify this email.`,
+    });
+    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: true });
+  } catch (emailError) {
+    console.error(emailError);
+    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: false });
   }
 });
 
@@ -194,6 +256,27 @@ router.post('/resend-verification', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'Email is required' });
 
   try {
+    const pendingResult = await pool.query(
+      'SELECT full_name, email FROM pending_registrations WHERE LOWER(email) = $1',
+      [email]
+    );
+    if (pendingResult.rows.length > 0) {
+      const pending = pendingResult.rows[0];
+      const token = crypto.randomBytes(32).toString('hex');
+      await pool.query(
+        `UPDATE pending_registrations
+         SET token_hash = $1, expires_at = now() + interval '24 hours', created_at = now()
+         WHERE LOWER(email) = $2`,
+        [hashToken(token), email]
+      );
+      await sendEmail({
+        to: pending.email,
+        subject: 'Verify your CST-SFBS account',
+        text: `Hello ${pending.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nYour account will only be created after you verify this email.`,
+      });
+      return res.json({ message: 'If a pending registration exists for that email, a verification link has been sent.' });
+    }
+
     const result = await pool.query(
       'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND email_verified = false',
       [email]
@@ -222,12 +305,55 @@ router.post('/verify-email', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    const tokenHash = hashToken(token);
+    const pendingResult = await client.query(
+      `SELECT full_name, email, student_staff_id, role, password_hash,
+              contact_number, organization, gender, expires_at
+       FROM pending_registrations
+       WHERE token_hash = $1 AND expires_at > now()
+       FOR UPDATE`,
+      [tokenHash]
+    );
+
+    if (pendingResult.rows.length > 0) {
+      const pending = pendingResult.rows[0];
+      const duplicate = await client.query(
+        `SELECT 1 FROM users
+         WHERE LOWER(email) = $1
+            OR ($2::varchar IS NOT NULL AND student_staff_id = $2)
+            OR regexp_replace(contact_number, '[^0-9]', '', 'g') IN ($3, '975' || $3)
+         LIMIT 1`,
+        [pending.email, pending.student_staff_id, pending.contact_number]
+      );
+      if (duplicate.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'These registration details are already in use. Please contact support.' });
+      }
+
+      const inserted = await client.query(
+        `INSERT INTO users (full_name, email, student_staff_id, role, password_hash,
+                            contact_number, organization, gender, email_verified)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)
+         RETURNING id`,
+        [pending.full_name, pending.email, pending.student_staff_id, pending.role,
+          pending.password_hash, pending.contact_number, pending.organization, pending.gender]
+      );
+      await client.query(
+        `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at, consumed_at)
+         VALUES ($1, $2, 'email_verification', $3, now())`,
+        [tokenHash, inserted.rows[0].id, pending.expires_at]
+      );
+      await client.query('DELETE FROM pending_registrations WHERE token_hash = $1', [tokenHash]);
+      await client.query('COMMIT');
+      return res.json({ message: 'Email verified. Your account is ready; you can now sign in.' });
+    }
+
     const result = await client.query(
       `UPDATE auth_tokens SET consumed_at = now()
        WHERE token_hash = $1 AND purpose = 'email_verification'
          AND consumed_at IS NULL AND expires_at > now()
        RETURNING user_id`,
-      [hashToken(token)]
+      [tokenHash]
     );
     if (result.rows.length === 0) {
       const alreadyVerified = await client.query(
@@ -235,7 +361,7 @@ router.post('/verify-email', async (req, res) => {
          JOIN users u ON u.id = t.user_id
          WHERE t.token_hash = $1 AND t.purpose = 'email_verification'
            AND t.consumed_at IS NOT NULL AND u.email_verified = true`,
-        [hashToken(token)]
+        [tokenHash]
       );
       if (alreadyVerified.rows.length > 0) {
         await client.query('COMMIT');

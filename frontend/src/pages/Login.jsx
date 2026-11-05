@@ -92,7 +92,7 @@ function Login() {
       <h1>Sign in</h1>
       <p className="auth-sub">Students, staff and outsiders use the same sign-in.</p>
 
-      {justRegistered && <div className="auth-success">Account created. Please sign in.</div>}
+      {justRegistered && <div className="auth-success">Verify your email before signing in. Your account is created after verification.</div>}
       {error && <div className="auth-error">{error}</div>}
       {info && <div className="auth-note">{info}</div>}
 

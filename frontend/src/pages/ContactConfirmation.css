@@ -1,109 +1,122 @@
 .contact-confirm-page.main {
   display: flex;
-  width: min(100%, 900px);
-  min-height: 58vh;
+  width: min(100%, 1040px);
+  min-height: 60vh;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 42px;
-  padding-bottom: 48px;
+  padding: 48px 24px 56px;
 }
 
 .contact-confirm-card {
-  width: min(100%, 560px);
-  padding: 24px;
+  width: min(100%, 760px);
+  padding: 36px 40px;
   border: 1px solid #dfe3e8;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
+  box-shadow: 0 8px 28px rgb(15 23 42 / 7%);
   text-align: center;
 }
 
 .contact-confirm-icon {
   display: grid;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 12px;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
   place-items: center;
-  border: 2px solid #22c55e;
+  border: 0;
   border-radius: 50%;
-  color: #16a34a;
-  font-size: 23px;
+  background: #e4f5ea;
+  color: #17783a;
+  font-size: 26px;
   font-weight: 700;
 }
 
 .contact-confirm-card h1 {
-  margin: 0 0 8px;
-  color: #0757bf;
-  font-size: 21px;
+  margin: 0 0 10px;
+  color: #173f4b;
+  font-size: 32px;
+  line-height: 1.15;
 }
 
 .contact-confirm-lead {
-  margin: 0 auto 18px;
+  max-width: 56ch;
+  margin: 0 auto 24px;
   color: #626b75;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .contact-ticket-details {
   display: grid;
-  gap: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   margin: 0;
-  padding: 8px 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: #f8fafc;
+  padding: 0;
   text-align: left;
 }
 
 .contact-ticket-details div {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid #e9eef4;
-  font-size: 11px;
-}
-
-.contact-ticket-details div:last-child {
-  border-bottom: 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  min-height: 82px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
 }
 
 .contact-ticket-details dt {
   color: #737b84;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .contact-ticket-details dd {
   overflow-wrap: anywhere;
   margin: 0;
+  color: #142226;
+  font-size: 15px;
   font-weight: 600;
-  text-align: right;
 }
 
 .contact-ticket-status {
-  padding: 4px 7px;
-  border-radius: 4px;
-  background: #dbeafe;
-  color: #0757bf;
-  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e4f5ea;
+  color: #17783a;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .contact-next-steps {
-  margin-top: 18px;
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-left: 3px solid #4f8fa0;
+  border-radius: 8px;
+  background: #f4f8f8;
   text-align: left;
 }
 
 .contact-next-steps h2 {
-  margin: 0 0 8px;
-  font-size: 13px;
+  margin: 0 0 10px;
+  color: #173f4b;
+  font-size: 18px;
 }
 
 .contact-next-steps p {
-  margin: 7px 0;
+  margin: 8px 0;
   color: #626b75;
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .contact-next-steps a {
@@ -113,21 +126,71 @@
 .contact-confirm-actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
-@media (max-width: 520px) {
+.contact-confirm-actions .btn-secondary,
+.contact-confirm-actions .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
   .contact-confirm-page.main {
     min-height: 0;
-    padding: 26px 16px 36px;
+    padding: 32px 20px 40px;
   }
 
   .contact-confirm-card {
-    padding: 18px;
+    padding: 28px;
   }
 
+  .contact-confirm-card h1 {
+    font-size: 28px !important;
+  }
+
+  .contact-ticket-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contact-ticket-details div:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .contact-confirm-page.main { padding: 24px 16px 36px; }
+  .contact-confirm-card { padding: 24px 18px; }
+  .contact-confirm-icon { width: 48px; height: 48px; margin-bottom: 14px; }
+  .contact-confirm-card h1 { font-size: 25px !important; }
+  .contact-confirm-lead { margin-bottom: 20px; font-size: 14px; }
+  .contact-ticket-details { grid-template-columns: 1fr; gap: 8px; }
+  .contact-ticket-details div,
+  .contact-ticket-details div:last-child {
+    grid-column: auto;
+    min-height: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 12px;
+  }
+  .contact-ticket-details dt { font-size: 11px; }
+  .contact-ticket-details dd { font-size: 13px; text-align: right; }
+  .contact-next-steps { margin-top: 20px; padding: 16px; }
+  .contact-next-steps h2 { font-size: 16px; }
+  .contact-next-steps p { font-size: 13px; }
   .contact-confirm-actions {
     flex-direction: column;
   }
+  .contact-confirm-actions .btn-secondary,
+  .contact-confirm-actions .btn-primary { width: 100%; }
 }

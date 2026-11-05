@@ -13,6 +13,19 @@ const router = express.Router();
 
 const PRIMARY_ROLES = ['everyone', 'student']; // who may book a newly added facility
 
+async function notifyFacilityStatus(queryable, facilityName, isActive) {
+  const message = isActive
+    ? `${facilityName} is open for reservations again.`
+    : `${facilityName} is closed for new reservations. Existing bookings have not been cancelled.`;
+  await queryable.query(
+    `INSERT INTO notifications (user_id, type, message)
+     SELECT id, 'facility_status', $1
+     FROM users
+     WHERE is_active IS TRUE AND role <> 'admin'`,
+    [message]
+  );
+}
+
 function addDays(dateStr, n) {
   const d = new Date(`${dateStr}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
@@ -227,30 +240,63 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   }
   if (sets.length === 0) return res.status(400).json({ error: 'Nothing to update' });
 
+  let client;
+  let transactionStarted = false;
   try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    transactionStarted = true;
+
+    const previous = await client.query(
+      'SELECT is_active FROM facilities WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (previous.rows.length === 0) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(404).json({ error: 'Facility not found' });
+    }
+
     values.push(id);
-    const result = await pool.query(
+    const result = await client.query(
       `UPDATE facilities SET ${sets.join(', ')} WHERE id = $${values.length}
        RETURNING id, name, is_active`,
       values
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Facility not found' });
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(404).json({ error: 'Facility not found' });
+    }
+
+    const facility = result.rows[0];
+    if ('is_active' in req.body && previous.rows[0].is_active !== facility.is_active) {
+      await notifyFacilityStatus(client, facility.name, facility.is_active);
+    }
 
     // Closing a facility never cancels bookings; tell the admin how many are still ahead.
     let upcoming = 0;
     if (req.body.is_active === false) {
-      const count = await pool.query(
+      const count = await client.query(
         `SELECT COUNT(*)::int AS n FROM bookings
          WHERE facility_id = $1 AND status <> 'cancelled' AND booking_date >= $2::date`,
         [id, bhutanNow().date]
       );
       upcoming = count.rows[0].n;
     }
-    res.json({ facility: result.rows[0], upcoming_bookings: upcoming });
+    await client.query('COMMIT');
+    transactionStarted = false;
+    res.json({ facility, upcoming_bookings: upcoming });
   } catch (err) {
+    if (client && transactionStarted) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+    }
     if (err.code === '23505') return res.status(409).json({ error: 'A facility with that name already exists' });
     console.error(err);
     res.status(500).json({ error: 'Failed to update facility' });
+  } finally {
+    client?.release();
   }
 });
 
