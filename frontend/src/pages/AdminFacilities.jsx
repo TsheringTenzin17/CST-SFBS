@@ -18,6 +18,15 @@ function nextSlotText(slot, today) {
 
 function FacilityCard({ f, today, busy, onToggle }) {
   const image = f.image_url || IMAGES[f.type];
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 760px)');
+    const updateMobile = () => setIsMobile(query.matches);
+    query.addEventListener('change', updateMobile);
+    return () => query.removeEventListener('change', updateMobile);
+  }, []);
+
   return (
     <article className="fac-card">
       {image ? (
@@ -38,8 +47,9 @@ function FacilityCard({ f, today, busy, onToggle }) {
           <span id={`fac-allow-${f.id}`}>Allow Reservations</span>
           <button type="button" role="switch" aria-checked={f.is_active} aria-labelledby={`fac-allow-${f.id}`}
             className={`fac-switch ${f.is_active ? 'on' : ''}`} disabled={busy}
+            style={isMobile ? { width: 64, height: 14, minWidth: 64, maxWidth: 64, flex: '0 0 64px', padding: 0 } : undefined}
             onClick={() => onToggle(f)}>
-            <span />
+            <span style={isMobile ? { top: '50%', left: 2, width: 12, height: 12 } : undefined} />
           </button>
         </div>
       </div>
