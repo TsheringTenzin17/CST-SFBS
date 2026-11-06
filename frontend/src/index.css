@@ -178,7 +178,10 @@ a {
 .hero-banner-slide::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(37, 84, 99, 0.3), rgba(37, 84, 99, 0.12));
+  background: linear-gradient(90deg,
+    rgba(10, 30, 38, 0.85) 0%,
+    rgba(10, 30, 38, 0.70) 50%,
+    rgba(10, 30, 38, 0.45) 100%);
   content: '';
   pointer-events: none;
 }
@@ -676,8 +679,6 @@ a {
 .hero-text h1 span { color: #173f4b; }
 .hero-text h1 strong { color: #00a651; }
 
-.hero-slide-1 .hero-text h1 span { color: #173f4b; }
-.hero-slide-1 .hero-text h1 strong { color: #00a651; }
 
 .hero-text p {
   max-width: 650px;
@@ -706,12 +707,14 @@ a {
 .hero-slide-0 .hero-text h1 strong { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
 .hero-slide-0 .hero-text p { color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
 .hero-slide-1 .hero-location,
-.hero-slide-1 .hero-text p,
-.hero-slide-1 .hero-text small {
-  color: #173f4b;
-}
+.hero-slide-1 .hero-text small { color: #fff; }
+.hero-slide-1 .hero-location { border-color: rgba(255, 255, 255, 0.6); }
+.hero-slide-1 .hero-text h1 span { color: #fff; }
+.hero-slide-1 .hero-text h1 strong { color: #22d36f; }
 .hero-slide-1 .hero-text h1 span,
-.hero-slide-1 .hero-text h1 strong { text-shadow: 0 2px 12px rgba(255,255,255,.7); }
+.hero-slide-1 .hero-text h1 strong { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); }
+.hero-slide-1 .hero-text p { color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
+
 .hero-buttons .btn-outline-white {
   border: 1px solid rgba(23, 63, 75, 0.35);
   background: #fff;
