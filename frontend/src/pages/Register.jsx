@@ -159,6 +159,7 @@ function Register() {
             email: data.email || data.user?.email || base.email,
             role: data.role || data.user?.role || role,
             verification_email_sent: data.verification_email_sent === true,
+            cancel_token: data.cancel_token,
           },
         });
         return;

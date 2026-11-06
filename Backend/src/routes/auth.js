@@ -112,6 +112,7 @@ router.post('/register', async (req, res) => {
   let client;
   let transactionStarted = false;
   let verificationToken;
+  let cancelToken;
   const passwordHash = await bcrypt.hash(password, 10);
   try {
     client = await pool.connect();
@@ -161,12 +162,14 @@ router.post('/register', async (req, res) => {
     }
 
     verificationToken = crypto.randomBytes(32).toString('hex');
+    cancelToken = crypto.randomBytes(32).toString('hex');
     await client.query(
       `INSERT INTO pending_registrations
-         (token_hash, full_name, email, student_staff_id, role, password_hash, contact_number, organization, gender, expires_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now() + interval '24 hours')
+         (token_hash, cancel_token_hash, full_name, email, student_staff_id, role, password_hash, contact_number, organization, gender, expires_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now() + interval '24 hours')
        ON CONFLICT (email) DO UPDATE SET
          token_hash = EXCLUDED.token_hash,
+         cancel_token_hash = EXCLUDED.cancel_token_hash,
          full_name = EXCLUDED.full_name,
          student_staff_id = EXCLUDED.student_staff_id,
          role = EXCLUDED.role,
@@ -176,7 +179,7 @@ router.post('/register', async (req, res) => {
          gender = EXCLUDED.gender,
          expires_at = EXCLUDED.expires_at,
          created_at = now()`,
-      [hashToken(verificationToken), full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number, organizationName, gender]
+      [hashToken(verificationToken), hashToken(cancelToken), full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number, organizationName, gender]
     );
     await client.query('COMMIT');
     transactionStarted = false;
@@ -197,10 +200,10 @@ router.post('/register', async (req, res) => {
       subject: 'Verify your CST-SFBS account',
       text: `Hello ${full_name.trim()},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', verificationToken)}\n\nYour account will only be created after you verify this email.`,
     });
-    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: true });
+    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: true, cancel_token: cancelToken });
   } catch (emailError) {
     console.error(emailError);
-    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: false });
+    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: false, cancel_token: cancelToken });
   }
 });
 
@@ -294,6 +297,30 @@ router.post('/resend-verification', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(503).json({ error: 'Could not send the verification email. Please try again later.' });
+  }
+});
+
+router.post('/cancel-registration', async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const cancelToken = req.body.cancel_token;
+  if (!email || typeof cancelToken !== 'string' || !/^[a-f0-9]{64}$/i.test(cancelToken)) {
+    return res.status(400).json({ error: 'Invalid pending registration' });
+  }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM pending_registrations
+       WHERE LOWER(email) = $1 AND cancel_token_hash = $2 AND expires_at > now()
+       RETURNING email`,
+      [email, hashToken(cancelToken)]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'This pending registration was not found or has expired.' });
+    }
+    res.json({ message: 'Registration cancelled. No account was created.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not cancel this registration' });
   }
 });
 
