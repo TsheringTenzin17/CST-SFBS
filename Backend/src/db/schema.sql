@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS pending_registrations (
   token_hash CHAR(64) PRIMARY KEY,
+  cancel_token_hash CHAR(64) UNIQUE,
   full_name VARCHAR(120) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
   student_staff_id VARCHAR(50),

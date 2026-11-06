@@ -6,7 +6,7 @@ export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000')
 // apiCall('/bookings', 'POST', { ... })  ->  parsed JSON, or throws Error(message)
 // The message is exactly what the backend sent (e.g. "This slot was just booked ..."),
 // so it can be shown to the user as it is.
-export async function apiCall(path, method = 'GET', body) {
+export async function apiCall(path, method = 'GET', body, options = {}) {
   let res;
   try {
     const token = localStorage.getItem('cst_token');
@@ -17,6 +17,7 @@ export async function apiCall(path, method = 'GET', body) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: options.signal,
     });
   } catch {
     throw new Error('Could not reach the server. Is the backend running?');

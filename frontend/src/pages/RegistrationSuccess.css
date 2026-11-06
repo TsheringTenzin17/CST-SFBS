@@ -96,6 +96,31 @@
   opacity: 0.7;
 }
 
+.registration-success-pending-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.registration-success-cancel {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid rgba(239, 141, 141, .45);
+  border-radius: 10px;
+  background: rgba(239, 141, 141, .08);
+  color: #f0aaaa;
+  font: 600 13px Barlow, sans-serif;
+  cursor: pointer;
+}
+
+.registration-success-cancel:hover:not(:disabled) {
+  border-color: #ef8d8d;
+  background: rgba(239, 141, 141, .18);
+}
+
+.registration-success-cancel:disabled { cursor: wait; opacity: .7; }
+
 .registration-success-actions {
   display: flex;
   align-items: center;
