@@ -93,7 +93,12 @@ function BookingForm() {
     toMinutes(rule.end_time) >= toMinutes(end) &&
     (
       rule.primary_role === 'commercial' ||
-      (rule.fallback_role === 'commercial' && rule.fallback_type === 'auto_release')
+      (
+        rule.fallback_role === 'commercial' &&
+        ['auto_release', 'day_start_release'].includes(rule.fallback_type) &&
+        // a female student booking her own reserved slot is not a commercial booking
+        !(rule.primary_role === 'student_female' && bookingUser?.role === 'student' && bookingUser?.gender === 'female')
+      )
     )
   ) || false;
 

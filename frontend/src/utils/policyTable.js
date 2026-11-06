@@ -92,9 +92,10 @@ export function buildPolicy(rules, view = 'standard') {
         if (rule.day_booking_cap) cells[col].cap = rule.day_booking_cap;
       }
       // Wednesday football: the slot opens to another group shortly before it starts
-      if (rule.fallback_role && rule.fallback_type === 'auto_release') {
+      if (rule.fallback_role && ['auto_release', 'day_start_release'].includes(rule.fallback_type)) {
+        const note = rule.fallback_type === 'day_start_release' ? 'opens 12:05 AM that day' : 'opens 1 hour before';
         for (const col of columnsFor(rule.fallback_role)) {
-          cells[col].ranges.push({ start, end, note: 'opens 1 hour before' });
+          cells[col].ranges.push({ start, end, note });
         }
       }
     }

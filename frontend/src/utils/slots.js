@@ -64,6 +64,10 @@ export function canBookSlot(userRole, rule, date, startMin, gender) {
   if (userRole === 'admin') return true;
   if (rule.primary_role === 'maintenance') return false;
   if (roleMatches(userRole, rule.primary_role, gender)) return true;
+  // Wednesday football: female students first; opens to commercial at 12:05 AM on the day.
+  if (rule.fallback_type === 'day_start_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
+    return date === todayString() && nowMinutes() >= 5;
+  }
   if (rule.fallback_type === 'auto_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
     const untilStart = startMin - nowMinutes();
     return date === todayString() && untilStart >= 0 && untilStart <= 60;
