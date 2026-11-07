@@ -389,3 +389,12 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
   .fd-book { width: 100%; min-height: 48px; border-radius: 12px; font-size: 15px; }
   .fd-book:disabled { background: #dfe5e7; color: #69777d; }
 }
+
+@media (min-width: 981px) {
+  .fd-availability-card {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}

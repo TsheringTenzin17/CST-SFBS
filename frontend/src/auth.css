@@ -450,3 +450,12 @@
   box-shadow: 0 0 0 100px #16404c inset, 0 0 0 4px rgba(143,196,208,.16);
   transition: background-color 99999s ease-in-out 0s;
 }
+
+@media (max-width: 760px) {
+  .auth-logo-card {
+    margin-left: 0;
+  }
+  .auth-logo {
+    width: min(220px, 60vw);
+  }
+}

@@ -135,8 +135,7 @@
     justify-content: flex-start;
     font-size: 0;
   }
-  .live-notice-label::after { content: 'LIVE'; font-size: 11px; letter-spacing: 1px; }
-  .live-notice-track { height: 52px; }
+  .live-notice-label::after { content: 'NOTICE'; font-size: 11px; letter-spacing: 1px; }  .live-notice-track { height: 52px; }
   .live-notice-content {
     height: 52px;
     font-size: 13px;
