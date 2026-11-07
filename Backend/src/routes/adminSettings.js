@@ -62,7 +62,7 @@ function scheduleBody(body) {
   const role = String(body.primary_role || '');
   const timetable = VALID_TIMETABLES.includes(body.timetable) ? body.timetable : 'all';
   const fallbackRole = body.fallback_role ? String(body.fallback_role) : null;
-  const fallbackType = body.fallback_type === 'auto_release' ? 'auto_release' : 'none';
+  const fallbackType = ['auto_release', 'day_start_release'].includes(body.fallback_type) ? body.fallback_type : 'none';
   if (!Number.isInteger(facilityId) || facilityId < 1) return { error: 'Choose a valid facility.' };
   if (!Number.isInteger(day) || day < 0 || day > 6) return { error: 'Choose a valid day.' };
   if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(start) || !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(end)) {

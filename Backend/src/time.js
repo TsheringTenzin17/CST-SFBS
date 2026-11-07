@@ -51,7 +51,17 @@ function dayOfWeek(dateStr) {
   return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
 }
 
+// Wednesday football rule (female students first):
+// female students have first claim until 12:00 AM (Bhutan) on the booking date.
+// From 12:05 AM that day the slot opens to commercial users / outsiders.
+const RELEASE_AFTER_MINUTES = 5; // 00:05
+function isPastDayStartRelease(bookingDate) {
+  const now = bhutanNow();
+  if (now.date > bookingDate) return true;
+  return now.date === bookingDate && now.minutes >= RELEASE_AFTER_MINUTES;
+}
+
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s)) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 const isValidTime = (s) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(String(s));
 
-module.exports = { bhutanNow, bookingWindow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime };
+module.exports = { bhutanNow, bookingWindow, isPastDayStartRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime };

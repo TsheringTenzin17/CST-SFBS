@@ -14,7 +14,7 @@
 const express = require('express');
 const pool = require('../db');
 const { authenticate, requireAdmin } = require('../auth');
-const { bhutanNow, bookingWindow, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
+const { bhutanNow, bookingWindow, isPastDayStartRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const { timetableForDate } = require('../timetable');
 const router = express.Router();
 
@@ -57,15 +57,29 @@ function isWithinAutoReleaseWindow(bookingDate, startTime) {
   return minutesUntil >= 0 && minutesUntil <= 60;
 }
 
+// Day-start release rule (Wednesday football, female students first):
+// the primary group (female students) must book before 12:00 AM on the day.
+// From 12:05 AM that day the fallback group (commercial / outsiders) may book.
+// fallback_type = 'day_start_release'. Uses BHUTAN time.
+
 // Decide whether `userRole` may book the slot covered by `rule`.
-// Returns { ok: true } or { ok: false, status, message }.
+// Returns { ok: true, viaFallback? } or { ok: false, status, message }.
+// viaFallback = true when the user got in through the fallback (commercial) group.
 function checkEligibility(userRole, rule, bookingDate, startTime, gender) {  if (userRole === 'admin') return { ok: true };
   if (rule.primary_role === 'maintenance') {
     return { ok: false, status: 403, message: 'This slot is reserved for maintenance / college team practice.' };
   }
   if (isRoleEligible(userRole, rule.primary_role, gender)) return { ok: true };
+  if (rule.fallback_role && rule.fallback_type === 'day_start_release' && isRoleEligible(userRole, rule.fallback_role, gender)) {
+    if (isPastDayStartRelease(bookingDate)) return { ok: true, viaFallback: true };
+    return {
+      ok: false,
+      status: 403,
+      message: `This slot is reserved for ${RESERVED_FOR[rule.primary_role] || 'another group'} until 12:00 AM on the day of the booking. It opens to everyone else from 12:05 AM that day.`,
+    };
+  }
   if (rule.fallback_role && rule.fallback_type === 'auto_release' && isRoleEligible(userRole, rule.fallback_role, gender)) {
-    if (isWithinAutoReleaseWindow(bookingDate, startTime)) return { ok: true };
+    if (isWithinAutoReleaseWindow(bookingDate, startTime)) return { ok: true, viaFallback: true };
     return {
       ok: false,
       status: 403,
@@ -216,8 +230,9 @@ router.post('/', authenticate, async (req, res) => {
 
     // Commercial-rate slots require offline payment and approval, including
     // when a student is allowed to book one of those slots.
+    // (A female student booking her own reserved slot is NOT a commercial booking.)
     const commercialSlot = slot.rule.primary_role === 'commercial' ||
-      slot.rule.fallback_role === 'commercial';
+      (slot.rule.fallback_role === 'commercial' && eligibility.viaFallback === true);
     const initialStatus = req.user.role === 'outsider' ||
       (req.user.role === 'student' && commercialSlot) ? 'pending' : 'approved';
     const inserted = await client.query(

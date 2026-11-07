@@ -62,8 +62,8 @@ CROSS JOIN (VALUES
   -- Wednesday (3)
   (3, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Wednesday: students'),
   (3, '16:00', '18:00', 'student',        NULL,         'none',         'tournament', NULL, 'Wednesday 4-6 PM: students (department tournament)'),
-  (3, '16:00', '18:00', 'student_female', NULL,         'none',         'standard',   NULL, 'Wednesday 4-6 PM: reserved for female students'),
-  (3, '18:00', '20:00', 'student_female', 'commercial', 'auto_release', 'tournament', NULL, 'Wednesday 6-8 PM: female students first; opens to hiring 1 hour before'),
+  (3, '16:00', '18:00', 'student_female', 'commercial', 'day_start_release', 'standard', NULL, 'Wednesday 4-6 PM: female students first (book before Wed 12:00 AM); opens to hiring 12:05 AM'),
+  (3, '18:00', '20:00', 'student_female', 'commercial', 'day_start_release', 'tournament', NULL, 'Wednesday 6-8 PM: female students first (book before Wed 12:00 AM); opens to hiring 12:05 AM'),
   (3, '18:00', '20:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Wednesday 6-8 PM: hiring'),
   (3, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Wednesday 8-10 PM: students (department tournament)'),
   (3, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Wednesday 8-10 PM: hiring'),

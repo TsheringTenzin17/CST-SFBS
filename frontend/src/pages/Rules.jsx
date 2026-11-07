@@ -11,7 +11,7 @@ import './Rules.css';
 const FOOTBALL_STANDARD = [
   { day: 'Monday', bands: ['Ground maintenance', 'Ground maintenance', 'Ground maintenance', 'Ground maintenance'] },
   { day: 'Tuesday', bands: ['Students', 'Students', 'Hiring', 'Hiring'] },
-  { day: 'Wednesday', bands: ['Students', 'Reserved for female students', 'Hiring', 'Hiring'] },
+  { day: 'Wednesday', bands: ['Students', 'Female students (hiring opens Wed 12:05 AM)', 'Hiring', 'Hiring'] },
   { day: 'Thursday', bands: ['Students', 'Students', 'Reserved for staff', 'Hiring'] },
   { day: 'Friday', bands: ['Students', 'Students', 'Hiring', 'Hiring'] },
 ];
@@ -19,7 +19,7 @@ const FOOTBALL_STANDARD = [
 const FOOTBALL_TOURNAMENT = [
   { day: 'Monday', bands: ['Ground maintenance', 'Ground maintenance', 'Ground maintenance', 'Ground maintenance'] },
   { day: 'Tuesday', bands: ['Students', 'Students', 'Hiring', 'Students'] },
-  { day: 'Wednesday', bands: ['Students', 'Students', 'Female students (hiring opens 1 hour before)', 'Students'] },
+  { day: 'Wednesday', bands: ['Students', 'Students', 'Female students (hiring opens Wed 12:05 AM)', 'Students'] },
   { day: 'Thursday', bands: ['Students', 'Students', 'Reserved for staff', 'Students'] },
   { day: 'Friday', bands: ['Students', 'Students', 'Hiring', 'Students'] },
 ];
@@ -77,7 +77,8 @@ function Rules() {
           <h2>Football ground: weekdays (no department tournament)</h2>
           <FootballTable rows={FOOTBALL_STANDARD} />
           <p className="rule-note">
-            Wednesday 4 – 6 PM is reserved for female students. Weekday bookings are 2 hours.
+            Wednesday 4 – 6 PM is for female students first: they must book before 12:00 AM on Wednesday.
+            From 12:05 AM that day any slot still free opens to hiring (commercial / outsiders). Weekday bookings are 2 hours.
           </p>
         </section>
 
@@ -85,7 +86,8 @@ function Rules() {
           <h2>Football ground: weekdays during a department tournament</h2>
           <FootballTable rows={FOOTBALL_TOURNAMENT} />
           <p className="rule-note">
-            Wednesday 6 – 8 PM is for female students first and opens to hiring automatically 1 hour before it starts.
+            Wednesday 6 – 8 PM is for female students first: they must book before 12:00 AM on Wednesday.
+            From 12:05 AM that day it opens to hiring (commercial / outsiders).
             The admin sets the tournament dates.
           </p>
         </section>
