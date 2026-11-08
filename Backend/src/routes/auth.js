@@ -533,6 +533,93 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 
+router.delete('/account', authenticate, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ error: 'Admin accounts cannot be deleted from profile settings' });
+  }
+
+  const { current_password } = req.body;
+  if (typeof current_password !== 'string' || !current_password) {
+    return res.status(400).json({ error: 'Your current password is required to delete your account' });
+  }
+
+  let client;
+  let transactionStarted = false;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    transactionStarted = true;
+
+    const result = await client.query(
+      'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    const passwordHash = result.rows[0].password_hash;
+    const passwordMatches = passwordHash.startsWith('$2')
+      ? await bcrypt.compare(current_password, passwordHash)
+      : current_password === passwordHash;
+    if (!passwordMatches) {
+      await client.query('ROLLBACK');
+      transactionStarted = false;
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const deletedEmail = `deleted-${req.user.id}-${crypto.randomBytes(8).toString('hex')}@account.invalid`;
+    const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+
+    await client.query('DELETE FROM user_notification_preferences WHERE user_id = $1', [req.user.id]);
+    await client.query('DELETE FROM notifications WHERE user_id = $1', [req.user.id]);
+    await client.query('DELETE FROM auth_tokens WHERE user_id = $1', [req.user.id]);
+    await client.query(
+      `DELETE FROM booking_reminders
+       WHERE booking_id IN (SELECT id FROM bookings WHERE user_id = $1)`,
+      [req.user.id]
+    );
+    await client.query(
+      `UPDATE bookings
+       SET status = CASE
+         WHEN booking_date >= (now() AT TIME ZONE 'Asia/Thimphu')::date
+           AND status <> 'cancelled' THEN 'cancelled'
+         ELSE status
+       END,
+       purpose = NULL
+       WHERE user_id = $1`,
+      [req.user.id]
+    );
+    await client.query(
+      `UPDATE support_requests
+       SET user_id = NULL, name = 'Deleted account', email = $2,
+           message = 'Content removed at account deletion request.'
+       WHERE user_id = $1`,
+      [req.user.id, deletedEmail]
+    );
+    await client.query(
+      `UPDATE users
+       SET full_name = 'Deleted account', email = $2, student_staff_id = NULL,
+           password_hash = $3, contact_number = NULL, organization = NULL,
+           gender = NULL, email_verified = false, is_active = false
+       WHERE id = $1`,
+      [req.user.id, deletedEmail, unusablePasswordHash]
+    );
+
+    await client.query('COMMIT');
+    transactionStarted = false;
+    res.json({ message: 'Your account has been deleted and your personal details anonymized.' });
+  } catch (error) {
+    if (client && transactionStarted) await client.query('ROLLBACK');
+    console.error(error);
+    res.status(500).json({ error: 'Could not delete your account' });
+  } finally {
+    client?.release();
+  }
+});
+
 router.patch('/profile', authenticate, async (req, res) => {
   const { full_name, contact_number, gender } = req.body;
   if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 120) {

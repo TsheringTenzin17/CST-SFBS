@@ -15,10 +15,17 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  align-items: center;
+  align-items: start;
   gap: 40px;
   padding: 36px clamp(24px, 5vw, 80px);
-  background: var(--a-bg);
+  background-color: var(--a-bg);
+  background-image:
+    linear-gradient(90deg, rgba(7, 26, 31, 0.78), rgba(7, 26, 31, 0.7)),
+    url('/images/collegeCST.jpg');
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--a-text);
   overflow-x: hidden;
 }
@@ -68,6 +75,18 @@
 
 /* ---------- LEFT SIDE ---------- */
 .auth-side { position: relative; }
+
+@media (min-width: 901px) {
+  .auth-side {
+    position: sticky;
+    top: 36px;
+    align-self: start;
+  }
+
+  .auth-main {
+    align-self: center;
+  }
+}
 
 .auth-logo-card {
   display: inline-flex; align-items: center;
@@ -161,6 +180,9 @@
 
 .auth-card h1 { font: 700 30px/1.1 "Barlow Condensed", sans-serif; margin: 0; color: var(--a-text); }
 .auth-sub { color: var(--a-muted); font-size: 13px; margin: 4px 0 20px; }
+.auth-home-link { margin: -10px 0 18px; font-size: 14px; }
+.auth-home-link a { color: var(--a-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.auth-home-link a:hover { color: var(--a-mint); }
 
 /* ---------- form ---------- */
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
@@ -186,6 +208,25 @@
   border-color: var(--a-mint); background: rgba(124,240,201,.07);
   box-shadow: 0 0 0 4px rgba(124,240,201,.12), 0 0 24px rgba(124,240,201,.16);
 }
+.auth-field.has-error input,
+.auth-field.has-error select {
+  border-color: #ff7777;
+  box-shadow: 0 0 0 2px rgba(255, 96, 96, .14);
+}
+.auth-field.has-error input:focus,
+.auth-field.has-error select:focus {
+  border-color: #ff7777;
+  box-shadow: 0 0 0 3px rgba(255, 96, 96, .2);
+}
+.auth-field-error {
+  display: block;
+  margin-top: 6px;
+  color: #ff9999;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.auth-error:focus { outline: 2px solid #ff9999; outline-offset: 3px; }
 /* stop browser autofill from turning the input white */
 .auth-field input:-webkit-autofill {
   -webkit-text-fill-color: var(--a-text);
@@ -292,7 +333,6 @@
 }
 
 @media (max-width: 760px) {
-  .auth-net,
   .auth-floor-wrap {
     display: none;
   }
@@ -458,4 +498,12 @@
   .auth-logo {
     width: min(220px, 60vw);
   }
+}
+
+.auth-field.has-error input,
+.auth-field.has-error select,
+.auth-field.has-error input:focus,
+.auth-field.has-error select:focus {
+  border-color: #ff7777 !important;
+  box-shadow: 0 0 0 2px rgba(255, 96, 96, .14) !important;
 }

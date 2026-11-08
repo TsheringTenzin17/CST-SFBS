@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { apiCall } from '../utils/api';
 import { clock } from '../utils/adminHelpers';
 import { COLUMNS, buildPolicy, hasTournamentTimetable, rulesSignature } from '../utils/policyTable';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 const lengthLabel = (minutes) => {
   const m = minutes || 120; // facilities with no limit are booked in 2-hour slots
@@ -123,8 +124,8 @@ function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
         </select>
       </td>
       <td className="schedule-rule-actions">
-        <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>Save</button>
-        <button type="button" className="admin-secondary-button schedule-rule-delete" disabled={saving} onClick={() => onDelete(draft)}>Delete</button>
+        <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>{saving ? <Spinner label="Saving rule…" /> : 'Save'}</button>
+        <button type="button" className="admin-secondary-button schedule-rule-delete" disabled={saving} onClick={() => onDelete(draft)}>{saving ? <Spinner label="Saving rule…" /> : 'Delete'}</button>
       </td>
     </tr>
   );
@@ -247,7 +248,7 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
               <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
             </select>
           </label>
-          <button type="button" className="admin-primary-button" onClick={add} disabled={savingId === 'new'}>Add Rule</button>
+          <button type="button" className="admin-primary-button" onClick={add} disabled={savingId === 'new'}>{savingId === 'new' ? <Spinner label="Adding rule…" /> : 'Add Rule'}</button>
         </div>
       </div>
         </details>
@@ -313,7 +314,7 @@ function AdminSettings() {
         </p>
       )}
       {scheduleMessage && <p className="admin-support-notice" role="status">{scheduleMessage}</p>}
-      {loading && !data && <p className="admin-state-message" role="status">Loading system settings…</p>}
+      {loading && !data && <AdminLoading label="Loading system settings" rows={4} />}
 
       {data && (
         <>

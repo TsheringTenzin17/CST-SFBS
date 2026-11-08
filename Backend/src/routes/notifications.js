@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
       `SELECT id, type, message, is_read, created_at
        FROM notifications
        WHERE user_id = $1
+         AND created_at >= now() - INTERVAL '7 days'
        ORDER BY created_at DESC, id DESC`,
       [req.user.id]
     );
@@ -38,6 +39,19 @@ router.patch('/read-all', async (req, res) => {
   }
 });
 
+router.delete('/', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'DELETE FROM notifications WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json({ deleted: result.rowCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to clear notifications' });
+  }
+});
+
 router.patch('/:id/read', async (req, res) => {
   const notificationId = Number(req.params.id);
   if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
@@ -59,6 +73,29 @@ router.patch('/:id/read', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to mark notification as read' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  const notificationId = Number(req.params.id);
+  if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
+    return res.status(400).json({ error: 'Invalid notification id' });
+  }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM notifications
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [notificationId, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    res.json({ deleted: true, id: result.rows[0].id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete notification' });
   }
 });
 

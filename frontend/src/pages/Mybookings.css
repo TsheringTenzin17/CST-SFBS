@@ -163,6 +163,7 @@
 .my-bookings-filters button:focus-visible,
 .my-bookings-reschedule:focus-visible,
 .my-bookings-cancel:focus-visible,
+.my-bookings-archive:focus-visible,
 .my-bookings-book-button:focus-visible {
   outline: 3px solid #bcd6dd;
   outline-offset: 2px;
@@ -175,6 +176,12 @@
   font-size: 15px;
   text-align: center;
 }
+
+.my-bookings-skeleton-list { display: grid; gap: 12px; }
+.my-bookings-skeleton-card { display: grid; gap: 12px; padding: 18px; border: 1px solid #e3e8eb; border-radius: 12px; background: #fff; }
+.my-bookings-skeleton-card .skeleton-line { width: 80%; height: 14px; }
+.my-bookings-skeleton-card .skeleton-title { width: 42%; height: 20px; }
+.my-bookings-skeleton-card .skeleton-line.short { width: 55%; }
 
 .my-bookings-empty a {
   color: var(--blue, #255463);
@@ -282,7 +289,8 @@
 }
 
 .my-bookings-reschedule,
-.my-bookings-cancel {
+.my-bookings-cancel,
+.my-bookings-archive {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -315,6 +323,22 @@
 }
 
 .my-bookings-cancel:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.my-bookings-archive {
+  gap: 7px;
+  margin-left: 8px;
+  background: #8b4541;
+  transition: background .15s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.my-bookings-archive:hover:not(:disabled) {
+  background: #713632;
+}
+
+.my-bookings-archive:disabled {
   opacity: 0.6;
   cursor: wait;
 }
@@ -391,6 +415,21 @@
     padding: 6px 4px;
     border: 1px solid #e3e8eb;
     border-radius: 12px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    touch-action: pan-y;
+  }
+
+  .my-bookings-table tr.swiped {
+    transform: translateX(-7px);
+    border-color: #e6c6c3;
+    box-shadow: 0 6px 16px rgba(139, 69, 65, .1);
+  }
+
+  .my-bookings-table tr.swiped .my-bookings-archive {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(139, 69, 65, .2);
   }
 
   .my-bookings-table td {
@@ -426,7 +465,29 @@
   }
 
   .my-bookings-reschedule,
-  .my-bookings-cancel {
+  .my-bookings-cancel,
+  .my-bookings-archive {
     flex: 1;
+  }
+
+  .my-bookings-archive svg { flex: 0 0 18px; }
+
+  .my-bookings-archive {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(8px);
+  }
+
+  .my-bookings-table tr:focus-within .my-bookings-archive {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-bookings-table tr,
+  .my-bookings-archive {
+    transition: none;
   }
 }

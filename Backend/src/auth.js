@@ -24,7 +24,7 @@ function createSessionToken(userId) {
 function authenticate(req, res, next) {
   // Protected requests must include the token in the Authorization header.
   const authorization = req.get('authorization') || '';
-  const match = authorization.match(/^Bearer ([\w-]+\.[\w-]+)$/);
+  const match = authorization.match(/^Bearer\s+([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/);
   if (!match) return res.status(401).json({ error: 'Authentication required' });
 
   const [payload, signature] = match[1].split('.');

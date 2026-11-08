@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { apiCall } from '../utils/api';
 import { clock, shortDay } from '../utils/adminHelpers';
 import { IMAGES } from '../facilityMeta';
+import { AdminLoading } from '../components/Loading';
 
 const STATUS_LABEL = { active: 'Active', maintenance: 'Under Maintenance', closed: 'Closed' };
 
@@ -116,13 +117,15 @@ export default function AdminFacilities() {
         <div className="admin-error" role="alert"><span>{error}</span><button type="button" onClick={load}>Try again</button></div>
       )}
 
-      {!data && !error && <p className="admin-state-message" role="status">Loading facilities…</p>}
+      {!data && !error && <AdminLoading label="Loading facilities" rows={3} />}
 
-      <section className="fac-grid" aria-label="Facilities">
-        {facilities.map((f) => (
-          <FacilityCard key={f.id} f={f} today={data.today} busy={busyId === f.id} onToggle={toggle} />
-        ))}
-      </section>
+      {data && (
+        <section className="fac-grid" aria-label="Facilities">
+          {facilities.map((f) => (
+            <FacilityCard key={f.id} f={f} today={data.today} busy={busyId === f.id} onToggle={toggle} />
+          ))}
+        </section>
+      )}
 
       {data && (
         <section className="admin-panel" aria-label="Scheduled downtime overview">

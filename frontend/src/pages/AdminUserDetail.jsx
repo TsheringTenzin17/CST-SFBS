@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiCall } from '../utils/api';
 import { clock } from '../utils/adminHelpers';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 const ROLE_OPTIONS = [
   { value: 'student', label: 'Student' },
@@ -97,7 +98,7 @@ function AdminUserDetail({ userId }) {
       </section>
     );
   }
-  if (!data || !form) return <p className="admin-state-message" role="status">Loading user…</p>;
+  if (!data || !form) return <AdminLoading label="Loading user account" rows={4} />;
 
   const { user, summary, bookings } = data;
   const active = user.is_active !== false;
@@ -112,7 +113,7 @@ function AdminUserDetail({ userId }) {
           <p>View profile activity, update permissions, and manage account access.</p>
         </div>
         <button type="button" className="ud-save" onClick={() => save()} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Changes'}
+          {saving ? <Spinner label="Saving user account…" /> : 'Save Changes'}
         </button>
       </header>
 

@@ -59,8 +59,19 @@ async function processDueReminders() {
   }
 }
 
+async function deleteExpiredNotifications() {
+  const result = await pool.query(
+    `DELETE FROM notifications
+     WHERE created_at < now() - INTERVAL '7 days'`
+  );
+  if (result.rowCount > 0) {
+    console.log(`Deleted ${result.rowCount} expired notification(s).`);
+  }
+}
+
 function startReminderScheduler() {
   let running = false;
+  let nextNotificationCleanup = 0;
   const run = async () => {
     if (running) return;
     running = true;
@@ -68,13 +79,22 @@ function startReminderScheduler() {
       await processDueReminders();
     } catch (error) {
       console.error('Booking reminder processing failed:', error);
-    } finally {
-      running = false;
     }
+
+    if (Date.now() >= nextNotificationCleanup) {
+      try {
+        await deleteExpiredNotifications();
+        nextNotificationCleanup = Date.now() + 24 * 60 * 60 * 1000;
+      } catch (error) {
+        console.error('Notification retention cleanup failed:', error);
+      }
+    }
+
+    running = false;
   };
 
   void run();
   return setInterval(run, 60 * 1000);
 }
 
-module.exports = { processDueReminders, startReminderScheduler };
+module.exports = { processDueReminders, deleteExpiredNotifications, startReminderScheduler };

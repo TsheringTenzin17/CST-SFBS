@@ -4,6 +4,7 @@
 // every other date uses the standard timetable.
 import { useCallback, useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 function localDate(date) {
   const year = date.getFullYear();
@@ -145,12 +146,12 @@ function AdminTournaments() {
           </p>
         )}
         <button className="admin-primary-button" disabled={saving || loading} type="submit">
-          {saving ? 'Saving…' : 'Add tournament dates'}
+          {saving ? <Spinner label="Saving tournament dates…" /> : 'Add tournament dates'}
         </button>
       </form>
 
       <h3>Existing tournament dates</h3>
-      {loading ? <p className="admin-state-message" role="status">Loading tournament dates…</p> : (
+      {loading ? <AdminLoading label="Loading tournament dates" rows={3} /> : (
         <div className="admin-table-scroll">
           <table className="admin-bookings-table">
             <thead><tr><th>Name</th><th>Start date</th><th>End date</th><th>Status</th><th>Action</th></tr></thead>

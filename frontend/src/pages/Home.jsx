@@ -9,18 +9,23 @@ import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities } from '../utils/availability';
 import { todayString } from '../utils/slots';
 import useSummary from '../hooks/useSummary';
+import { FacilityCardSkeleton } from '../components/Loading';
 
 function Home() {
   // ---------- 1. data ----------
   const navigate = useNavigate();
   const [facilities, setFacilities] = useState([]);
+  const [facilitiesLoading, setFacilitiesLoading] = useState(true);
   const [heroSlide, setHeroSlide] = useState(0);
   const [finderSport, setFinderSport] = useState('all');
   const [finderDate, setFinderDate] = useState(todayString());
   const { summary } = useSummary(todayString()); // real counts for today
 
   useEffect(() => {
-    apiCall('/facilities').then(setFacilities).catch(() => {});
+    apiCall('/facilities')
+      .then(setFacilities)
+      .catch(() => {})
+      .finally(() => setFacilitiesLoading(false));
   }, []);
 
   useEffect(() => {
@@ -160,7 +165,8 @@ function Home() {
           Choose a facility below to view details, time-slot allocation rules, and make your reservations.
         </p>
 
-        <div className="grid">
+        <div className="grid" aria-busy={facilitiesLoading}>
+          {facilitiesLoading && Array.from({ length: 6 }, (_, index) => <FacilityCardSkeleton key={index} />)}
           {cards.map((f) => {
             const badge = badgeFor(summary[f.group_name]);
             return (

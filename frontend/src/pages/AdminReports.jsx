@@ -6,6 +6,7 @@
 // browser's print dialog (choose "Save as PDF"); print styles hide the header and footer.
 import { useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
+import { AdminLoading } from '../components/Loading';
 
 const TZ = 'Asia/Thimphu';
 const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Outsider', admin: 'Admin' };
@@ -78,7 +79,7 @@ function AdminReports() {
   }
 
   if (error) return <div className="rp-page"><div className="admin-error" role="alert"><span>{error}</span></div></div>;
-  if (!report) return <div className="rp-page"><p className="admin-state-message" role="status">Loading report…</p></div>;
+  if (!report) return <div className="rp-page"><AdminLoading label="Loading report" rows={4} /></div>;
 
   const { month, hours } = report;
   const change = month.last_total > 0 ? Math.round(((month.this_total - month.last_total) / month.last_total) * 100) : null;

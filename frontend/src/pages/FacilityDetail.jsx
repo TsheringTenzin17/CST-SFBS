@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { Skeleton } from '../components/Loading';
 import { apiCall } from '../utils/api';
 import { ROLE_LABELS, STATE_LABELS, buildSlots, slotState, todayString, toHHMM, toMin } from '../utils/slots';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
@@ -147,7 +148,28 @@ function FacilityDetail() {
 
   // ---------- 2. loading / error screens ----------
   if (!allFacilities) {
-    return <main className="main">{error ? <p className="error">{error}</p> : <p>Loading facility…</p>}</main>;
+    if (error) return <main className="main"><p className="error">{error}</p></main>;
+    return (
+      <main className="main fd-loading-page" role="status" aria-label="Loading facility">
+        <section className="fd-card fd-loading-info">
+          <Skeleton className="skeleton-line" />
+          <Skeleton className="fd-loading-title" />
+          <Skeleton className="fd-loading-image" />
+          <Skeleton className="skeleton-line" />
+          <Skeleton className="skeleton-line short" />
+        </section>
+        <section className="fd-card fd-loading-availability">
+          <Skeleton className="fd-loading-title" />
+          <Skeleton className="skeleton-line short" />
+          {Array.from({ length: 5 }, (_, index) => (
+            <div className="fd-loading-slot-row" key={index}>
+              <Skeleton className="skeleton-line" />
+              <Skeleton className="fd-loading-slot" />
+            </div>
+          ))}
+        </section>
+      </main>
+    );
   }
   const facility = allFacilities.find((f) => f.id === Number(id));
   if (!facility) {
@@ -225,7 +247,7 @@ function FacilityDetail() {
                       <span>{rule.start_time}–{rule.end_time}</span>
                       <span>{ROLE_LABELS[rule.primary_role] || rule.primary_role}</span>
                     </div>
-                  )) : <span className="fd-muted">{dayAvailability ? 'No booking rules' : 'Loading rules…'}</span>}
+                  )) : dayAvailability ? <span className="fd-muted">No booking rules</span> : <Skeleton className="fd-loading-rule" />}
                 </div>
               </div>
             );
@@ -274,10 +296,16 @@ function FacilityDetail() {
         </div>
 
         {error && <p className="fd-error">{error}</p>}
-        {loading && <p className="fd-muted" role="status">Loading this week’s availability…</p>}
-
         <div className="fd-grid-scroll">
-          <div className="fd-grid" role="table" aria-label="Weekly facility availability">
+          <div className="fd-grid" role={loading ? 'status' : 'table'} aria-label={loading ? 'Loading weekly availability' : 'Weekly facility availability'} aria-busy={loading}>
+            {loading && Array.from({ length: 5 }, (_, index) => (
+              <div className="fd-loading-slot-row" key={index}>
+                <Skeleton className="skeleton-line fd-loading-slot-time" />
+                <Skeleton className="fd-loading-slot" />
+              </div>
+            ))}
+            {!loading && (
+            <>
             <div className="fd-row fd-header-row" role="row">
               <span className="fd-day fd-time" role="columnheader">Time</span>
               {weekDates.map((day) => <span className="fd-day" role="columnheader" key={day}>{formatDay(day)}</span>)}
@@ -315,6 +343,8 @@ function FacilityDetail() {
               </div>
             ))}
             {!loading && slotRows.length === 0 && <p className="fd-muted">No time slots are configured for this week.</p>}
+            </>
+            )}
           </div>
         </div>
 
