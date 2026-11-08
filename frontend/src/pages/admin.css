@@ -42,6 +42,13 @@
   gap: 20px;
   padding: 0 32px !important;
 }
+.admin-dashboard .nav-brand {
+  width: 180px;
+}
+.admin-dashboard .nav-brand .nav-logo-img {
+  width: 180px;
+  height: 100px;
+}
 .admin-dashboard .header .nav { flex-wrap: nowrap; gap: 0; min-width: 0; }
 .admin-dashboard .header .nav a {
   padding-inline: 10px;
@@ -52,11 +59,11 @@
 .admin-dashboard .header .user-menu-btn-name { white-space: nowrap; }
 
 @media (max-width: 1280px) {
-  .admin-dashboard .header .nav a { padding-inline: 7px; font-size: 13px; }
+  .admin-dashboard .header .nav a { padding-inline: 5px; font-size: 14px; }
   .admin-dashboard .header .nav a.active::after { right: 7px; left: 7px; }
   .admin-dashboard .header .user-menu-btn-name { display: none; }
 }
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   /* not enough room for one line: let the links wrap under the logo */
   .admin-dashboard .header {
     height: auto !important;
@@ -1320,6 +1327,284 @@
   .mt-past-toggle {
     width: 100%;
     margin-top: 16px;
+  }
+}
+
+/* Admin mobile navigation and shared accessibility refinements */
+.admin-dashboard {
+  --theme-light: #245562;
+  --good: #187a37;
+  --amber: #855300;
+}
+
+.admin-dashboard .header .nav a {
+  gap: 7px;
+}
+
+.admin-dashboard .admin-nav-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.admin-dashboard .admin-mobile-tabbar {
+  display: none;
+}
+
+.admin-loading-state {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-loading-state > .loading-indicator {
+  justify-content: flex-start;
+  min-height: 24px;
+  color: var(--theme);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-loading-rows {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-loading-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(80px, 1.6fr) 88px;
+  align-items: center;
+  gap: 18px;
+  min-height: 42px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf1f2;
+}
+
+.admin-loading-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-loading-line { height: 13px; }
+.admin-loading-line-primary { width: 72%; }
+.admin-loading-line-secondary { width: 88%; }
+.admin-loading-line-action { width: 100%; height: 34px; border-radius: 8px; }
+
+.admin-dashboard .header .nav a:focus-visible,
+.admin-dashboard .admin-mobile-tabbar a:focus-visible,
+.admin-dashboard .admin-mobile-tabbar button:focus-visible {
+  outline: 3px solid #d7bc7c;
+  outline-offset: 2px;
+}
+
+.admin-dashboard :is(
+  .adm-section-eyebrow,
+  .adm-status-pill,
+  .adm-pending-count,
+  .adm-period,
+  .adm-current-date,
+  .adm-triage th,
+  .admin-bookings-table th,
+  .admin-panel table:not(.admin-bookings-table) th,
+  .admin-role-badge,
+  .admin-status-badge,
+  .fac-badge,
+  .admin-booking-filters label,
+  .admin-action-form label,
+  .fac-form-grid label,
+  .bk-summary dt,
+  .ud-card label,
+  .ud-hint,
+  .ud-toggle-row span,
+  .ud-badge,
+  .fm-radio small,
+  .usr-count,
+  .usr-status,
+  .usr-mobile-details dt,
+  .usr-mobile-role,
+  .usr-table td::before,
+  .admin-dashboard small
+) {
+  font-size: 14px;
+}
+
+.admin-dashboard select:focus-visible,
+.admin-dashboard input:focus-visible,
+.admin-dashboard textarea:focus-visible,
+.admin-dashboard button:focus-visible,
+.admin-dashboard a:focus-visible {
+  outline: 3px solid var(--theme);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard .admin-content {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .admin-dashboard .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 72px auto;
+    column-gap: 8px;
+  }
+
+  .admin-dashboard .nav-brand {
+    width: 152px;
+    max-width: 152px;
+    height: 66px;
+    justify-content: flex-start;
+  }
+
+  .admin-dashboard .nav-brand .nav-logo-img {
+    width: 152px;
+    height: 64px;
+    max-width: none;
+  }
+
+  .admin-dashboard .header .user-menu {
+    grid-column: 2;
+    grid-row: 1;
+    margin-right: 0;
+  }
+
+  .admin-dashboard .header .nav.is-open {
+    position: fixed;
+    z-index: 125;
+    top: auto;
+    right: 12px;
+    bottom: calc(84px + var(--footer-offset, 0px) + env(safe-area-inset-bottom));
+    left: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: auto;
+    max-height: min(58vh, 430px);
+    gap: 4px;
+    margin: 0;
+    padding: 10px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 16px;
+    background: #173a44;
+    box-shadow: 0 12px 32px rgba(13, 36, 42, .28);
+  }
+
+  .admin-dashboard .header .nav.is-open a {
+    min-height: 52px;
+    gap: 10px;
+    padding: 8px 10px;
+    font-size: 14px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .admin-dashboard .header .nav.is-open a.active {
+    background: rgba(255, 255, 255, .12);
+    box-shadow: inset 3px 0 0 #d7bc7c;
+  }
+
+  .admin-dashboard .header .nav.is-open a.active::after {
+    display: none;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar {
+    position: fixed;
+    z-index: 120;
+    right: 0;
+    bottom: calc(var(--footer-offset, 0px) + env(safe-area-inset-bottom));
+    left: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 2px;
+    min-height: 70px;
+    padding: 6px 6px max(6px, env(safe-area-inset-bottom));
+    border-top: 1px solid #d8e0e1;
+    border-radius: 16px 16px 0 0;
+    background: rgba(251, 250, 246, .98);
+    box-shadow: 0 -7px 24px rgba(27, 45, 43, .12);
+    backdrop-filter: blur(14px);
+  }
+
+  .admin-dashboard .admin-mobile-tabbar a,
+  .admin-dashboard .admin-mobile-tabbar button {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 56px;
+    gap: 4px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #43565b;
+    font: 600 13px/1.1 Barlow, system-ui, sans-serif;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar .admin-nav-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+    stroke-width: 1.7;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar a.active,
+  .admin-dashboard .admin-mobile-tabbar button.active {
+    background: #e5edef;
+    color: #173a44;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar a.active .admin-nav-icon,
+  .admin-dashboard .admin-mobile-tabbar button.active .admin-nav-icon {
+    color: #855300;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar.is-footer-past {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar a:active .admin-nav-icon,
+  .admin-dashboard .admin-mobile-tabbar button:active .admin-nav-icon {
+    transform: scale(.92);
+  }
+
+  .admin-dashboard :is(
+    .adm-triage th,
+    .admin-bookings-table th,
+    .admin-panel table:not(.admin-bookings-table) th,
+    .admin-dashboard small
+  ) {
+    font-size: 14px;
+  }
+
+  .admin-dashboard input,
+  .admin-dashboard select,
+  .admin-dashboard textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard .admin-mobile-tabbar a:active .admin-nav-icon,
+  .admin-dashboard .admin-mobile-tabbar button:active .admin-nav-icon {
+    transform: none;
   }
 }
 
@@ -4569,5 +4854,74 @@
   .admin-dashboard .usr-table td.usr-actions .usr-suspend-btn,
   .admin-dashboard .usr-table td.usr-actions .usr-activate-btn {
     border: 0;
+  }
+}
+
+/* Keep frequently read admin labels comfortably legible across screen sizes. */
+.admin-dashboard :is(
+  .adm-section-eyebrow,
+  .adm-status-pill,
+  .adm-pending-count,
+  .adm-period,
+  .adm-current-date,
+  .adm-triage th,
+  .adm-triage td::before,
+  .admin-bookings-table th,
+  .admin-panel table:not(.admin-bookings-table) th,
+  .admin-role-badge,
+  .admin-status-badge,
+  .fac-badge,
+  .admin-booking-filters label,
+  .admin-action-form label,
+  .fac-form-grid label,
+  .bk-summary dt,
+  .ud-card label,
+  .ud-hint,
+  .ud-toggle-row span,
+  .ud-badge,
+  .fm-radio small,
+  .adm-usage-value small,
+  .tournament-summary span,
+  .usr-count,
+  .usr-status,
+  .usr-mobile-person > div span,
+  .usr-mobile-details dt,
+  .usr-mobile-role,
+  .usr-table td::before,
+  small
+) {
+  font-size: 14px !important;
+}
+
+.admin-dashboard .usr-mobile-person > div span,
+.admin-dashboard .usr-mobile-details dt,
+.admin-dashboard .usr-mobile-role,
+.admin-dashboard .usr-table td::before {
+  color: #53666b;
+}
+
+.admin-dashboard .adm-triage td::before,
+.admin-dashboard .usr-table td::before {
+  font-size: 14px !important;
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard .admin-content {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .admin-dashboard .admin-mobile-tabbar a,
+  .admin-dashboard .admin-mobile-tabbar button {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard .header .nav a,
+  .admin-dashboard .admin-mobile-tabbar a,
+  .admin-dashboard .admin-mobile-tabbar button,
+  .admin-dashboard .admin-mobile-tabbar .admin-nav-icon {
+    transition: none;
+    animation: none;
   }
 }

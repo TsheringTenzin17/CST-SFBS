@@ -16,6 +16,7 @@ import AdminUserDetail from './AdminUserDetail';
 import AdminReports from './AdminReports';
 import AdminSupport from './AdminSupport';
 import AdminSettings from './AdminSettings';
+import { AdminLoading } from '../components/Loading';
 import './admin.css';
 
 // Tabs that just wrap an existing page component
@@ -72,7 +73,9 @@ function AdminDashboard() {
       <Header links={ADMIN_NAV.filter((item) => !item.hidden)} homeTo="/admin/dashboard" />
 
       <main className="admin-content">
-        {activeTab === 'Dashboard' ? (
+        {activeTab === 'Dashboard' && loading ? (
+          <AdminLoading label="Loading dashboard" rows={5} />
+        ) : activeTab === 'Dashboard' ? (
           <AdminOverview bookingList={bookings} user={user} onReload={loadBookings} />
         ) : activeTab === 'Facilities Status' ? (
           /^\/admin\/facilities\/new\/?$/.test(pathname) ? <AdminFacilityForm /> : <AdminFacilities />

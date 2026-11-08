@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
 import { clock, shortDay } from '../utils/adminHelpers';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 const PAGE_SIZE = 6;
 const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Commercial', admin: 'Admin' };
@@ -207,7 +208,7 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
         {actionError && !modal && <div className="admin-error" role="alert">{actionError}</div>}
 
         {loading ? (
-          <p className="admin-state-message" role="status">Loading bookings…</p>
+          <AdminLoading label="Loading bookings" rows={5} />
         ) : (
           <div className="admin-table-scroll">
             <table className="bk-table">
@@ -313,7 +314,7 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                   <label>Start time<input required type="time" value={modal.reschedule.start_time} onChange={setReschedule('start_time')} /></label>
                   <label>End time<input required type="time" value={modal.reschedule.end_time} onChange={setReschedule('end_time')} /></label>
                 </div>
-                <button className="admin-primary-button" disabled={saving} type="submit">{saving ? 'Saving…' : 'Save reschedule'}</button>
+                <button className="admin-primary-button" disabled={saving} type="submit">{saving ? <Spinner label="Saving reschedule…" /> : 'Save reschedule'}</button>
               </form>
             )}
 
@@ -325,7 +326,7 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                 </label>
                 <div className="bk-modal-actions">
                   <button className="admin-cancel-button" disabled={saving} type="submit">
-                    {saving ? 'Saving…' : modal.type === 'reject' ? 'Confirm rejection' : 'Confirm cancellation'}
+                    {saving ? <Spinner label={modal.type === 'reject' ? 'Rejecting booking…' : 'Cancelling booking…'} /> : modal.type === 'reject' ? 'Confirm rejection' : 'Confirm cancellation'}
                   </button>
                   <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
                 </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 const STATUSES = [
   ['pending_review', 'Pending review'],
@@ -104,7 +105,7 @@ function AdminSupport() {
       {error && <p className="admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-support-notice" role="status">{notice}</p>}
 
-      {loading ? <p className="admin-state-message" role="status">Loading support requests…</p>
+      {loading ? <AdminLoading label="Loading support requests" rows={4} />
         : visible.length === 0 ? <p className="admin-state-message">{list.length ? 'No tickets in this view.' : 'No support requests yet.'}</p>
           : (
             <div className="sup-list">
@@ -142,7 +143,7 @@ function AdminSupport() {
                         onClick={() => sendResolutionEmail(request)}
                         type="button"
                       >
-                        {emailingId === request.id ? 'Sending…' : 'Email resolution update'}
+                        {emailingId === request.id ? <Spinner label="Sending resolution email…" /> : 'Email resolution update'}
                       </button>
                     )}
                   </footer>

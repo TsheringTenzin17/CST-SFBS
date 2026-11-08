@@ -6,6 +6,7 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiCall } from '../utils/api';
+import { Spinner } from '../components/Loading';
 
 const SPORTS = ['Football', 'Basketball', 'Volleyball', 'Badminton', 'Table Tennis', 'Archery'];
 
@@ -102,7 +103,7 @@ export default function AdminFacilityForm() {
           <h1>Add / Edit Facility</h1>
           <p>Register a new sports venue or update its operational details.</p>
         </div>
-        <button type="submit" className="ud-save" disabled={saving}>{saving ? 'Saving…' : 'Save Facility'}</button>
+        <button type="submit" className="ud-save" disabled={saving}>{saving ? <Spinner label="Saving facility…" /> : 'Save Facility'}</button>
       </header>
 
       {error && <div className="error" role="alert">{error}</div>}

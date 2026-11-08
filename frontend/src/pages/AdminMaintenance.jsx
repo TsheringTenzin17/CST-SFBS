@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
+import { AdminLoading, Spinner } from '../components/Loading';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -170,7 +171,7 @@ function AdminMaintenance() {
               <textarea value={form.reason} maxLength={500} onChange={setField('reason')} placeholder="Optional maintenance details" />
             </label>
             <button className="mt-submit" disabled={saving || loading || !facilities.length} type="submit">
-              {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Block Facility'}
+              {saving ? <Spinner label="Saving maintenance block…" /> : editingId ? 'Save Changes' : 'Block Facility'}
             </button>
             {editingId && (
               <button className="mt-cancel-edit" onClick={stopEdit} type="button">Cancel editing</button>
@@ -182,7 +183,7 @@ function AdminMaintenance() {
           <h2 id="mt-list-title">Active &amp; Upcoming Maintenance Blocks</h2>
 
           {loading ? (
-            <p className="admin-state-message" role="status">Loading maintenance blocks…</p>
+            <AdminLoading label="Loading maintenance blocks" rows={4} />
           ) : visible.length === 0 ? (
             <p className="admin-empty-state">No active or upcoming maintenance blocks.</p>
           ) : (

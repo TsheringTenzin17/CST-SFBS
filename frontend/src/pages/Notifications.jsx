@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiCall } from '../utils/api';
+import { Skeleton } from '../components/Loading';
 import './Notifications.css';
 
 const FILTERS = [
@@ -78,7 +79,10 @@ function Notifications() {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [markingId, setMarkingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [swipedId, setSwipedId] = useState(null);
   const [error, setError] = useState(null);
+  const touchStartX = useRef(null);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -139,21 +143,63 @@ function Notifications() {
     }
   }
 
+  async function deleteNotification(notification) {
+    if (!window.confirm('Delete this notification? This cannot be undone.')) return;
+
+    setError(null);
+    setDeletingId(notification.id);
+    try {
+      await apiCall(`/notifications/${notification.id}`, 'DELETE');
+      setNotifications((current) => current.filter((item) => item.id !== notification.id));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function clearAllNotifications() {
+    if (notifications.length === 0 || !window.confirm('Clear all notifications? This cannot be undone.')) return;
+
+    setError(null);
+    setDeletingId('all');
+    try {
+      await apiCall('/notifications', 'DELETE');
+      setNotifications([]);
+      setSwipedId(null);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <main className="main notifications-page">
       <div className="notifications-heading">
         <div>
           <h1 className="title">Notifications</h1>
-          <p className="subtitle">Keep track of your facility bookings, schedule updates, and system alerts.</p>
+          <p className="subtitle">Keep track of bookings, schedule updates, and alerts. Notifications are automatically removed after 7 days; swipe a notification left to reveal its delete action.</p>
         </div>
-        <button
-          className="notifications-mark-all"
-          type="button"
-          onClick={markAllAsRead}
-          disabled={unreadCount === 0 || markingAll}
-        >
-          {markingAll ? 'Marking…' : 'Mark All as Read'}
-        </button>
+        <div className="notifications-heading-actions">
+          <button
+            className="notifications-mark-all"
+            type="button"
+            onClick={markAllAsRead}
+            disabled={unreadCount === 0 || markingAll}
+          >
+            {markingAll ? 'Marking…' : 'Mark All as Read'}
+          </button>
+          <button
+            className="notifications-clear-all"
+            type="button"
+            onClick={clearAllNotifications}
+            disabled={notifications.length === 0 || deletingId === 'all'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
+            {deletingId === 'all' ? 'Clearing…' : 'Clear all'}
+          </button>
+        </div>
       </div>
 
       {error && <p className="notifications-error" role="alert">{error}</p>}
@@ -176,7 +222,20 @@ function Notifications() {
         </nav>
 
         <section className="notifications-list" aria-label="Your notifications" aria-live="polite">
-          {loading && <p className="notifications-empty" role="status">Loading notifications…</p>}
+          {loading && (
+            <div className="notifications-skeleton-list" role="status" aria-label="Loading notifications">
+              {Array.from({ length: 4 }, (_, index) => (
+                <article className="notification-card notifications-skeleton-card" key={index} aria-hidden="true">
+                  <Skeleton className="notifications-skeleton-icon" />
+                  <div className="notification-content">
+                    <Skeleton className="skeleton-line notifications-skeleton-title" />
+                    <Skeleton className="skeleton-line notifications-skeleton-copy" />
+                    <Skeleton className="skeleton-line notifications-skeleton-copy short" />
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
           {!loading && visibleNotifications.length === 0 && (
             <p className="notifications-empty">
               {filter === 'unread' ? 'You have no unread notifications.' : 'There are no notifications in this category yet.'}
@@ -186,8 +245,16 @@ function Notifications() {
             const appearance = notificationAppearance(notification.type);
             return (
               <article
-                className={`notification-card ${appearance.className}${notification.is_read ? ' read' : ' unread'}`}
+                className={`notification-card ${appearance.className}${notification.is_read ? ' read' : ' unread'}${swipedId === notification.id ? ' swiped' : ''}`}
                 key={notification.id}
+                onTouchStart={(event) => { touchStartX.current = event.changedTouches[0].clientX; }}
+                onTouchEnd={(event) => {
+                  if (touchStartX.current === null) return;
+                  const deltaX = event.changedTouches[0].clientX - touchStartX.current;
+                  if (deltaX < -40) setSwipedId(notification.id);
+                  if (deltaX > 40) setSwipedId(null);
+                  touchStartX.current = null;
+                }}
               >
                 <span className="notification-icon" aria-hidden="true">{appearance.icon}</span>
                 <div className="notification-content">
@@ -196,9 +263,26 @@ function Notifications() {
                       {notificationTitle(notification.type)}
                       {!notification.is_read && <span className="notification-dot" aria-label="Unread" />}
                     </h2>
-                    <time className="notification-time" dateTime={notification.created_at}>
-                      {timeAgo(notification.created_at)}
-                    </time>
+                    <div className="notification-meta">
+                      <time className="notification-time" dateTime={notification.created_at}>
+                        {timeAgo(notification.created_at)}
+                      </time>
+                      <button
+                        className="notification-delete"
+                        type="button"
+                        onClick={() => deleteNotification(notification)}
+                        disabled={deletingId === notification.id}
+                        aria-label={`Delete ${notificationTitle(notification.type).toLowerCase()} notification`}
+                        title="Delete notification"
+                      >
+                        {deletingId === notification.id ? 'Deleting…' : (
+                          <>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
+                            <span>Delete</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <p>{highlightedMessage(notification.message)}</p>
                   {!notification.is_read && (

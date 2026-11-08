@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { prettyDate } from '../utils/format';
 import { apiCall } from '../utils/api';
+import { Spinner } from '../components/Loading';
 import ConflictPanel from '../components/ConflictPanel';
 import './Booking.css';
 
@@ -315,7 +316,7 @@ function BookingForm() {
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
             <button type="submit" className="btn-primary" disabled={submitting || !agree}>
-              {submitting ? 'Booking…' : 'Confirm Booking'}
+              {submitting ? <Spinner label="Booking…" /> : 'Confirm Booking'}
             </button>
           </div>
         </form>

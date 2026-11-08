@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
 import './ProfileSettings.css';
@@ -20,7 +20,8 @@ const ROLE_LABELS = { student: 'Student', faculty: 'Faculty / Staff', outsider: 
 const GENDER_LABELS = { female: 'Female', male: 'Male' };
 
 function ProfileSettings() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -31,6 +32,10 @@ function ProfileSettings() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [message, setMessage] = useState(null);
   const [passwordMessage, setPasswordMessage] = useState(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState(null);
 
   // Email change (outsiders only)
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -143,6 +148,22 @@ function ProfileSettings() {
       setPasswordMessage({ type: 'error', text: error.message });
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function deleteAccount(event) {
+    event.preventDefault();
+    if (!confirmDelete) return;
+    setDeleteMessage(null);
+    setDeletingAccount(true);
+    try {
+      await apiCall('/auth/account', 'DELETE', { current_password: deletePassword });
+      logout();
+      navigate('/', { replace: true });
+    } catch (error) {
+      setDeleteMessage({ type: 'error', text: error.message });
+    } finally {
+      setDeletingAccount(false);
     }
   }
 
@@ -361,6 +382,47 @@ function ProfileSettings() {
                 </button>
               </div>
             </form>
+
+            {profile.role !== 'admin' && (
+              <form className="profile-form-card profile-delete-card" onSubmit={deleteAccount}>
+                <h2>Delete Account</h2>
+                <p>
+                  This permanently disables sign-in and removes your personal profile details.
+                  Upcoming bookings are cancelled and past booking records are retained with identifying
+                  details removed. Notification preferences, notifications, and support-request details
+                  are deleted or anonymized.
+                </p>
+                {deleteMessage && (
+                  <p className={`profile-message ${deleteMessage.type}`} role={deleteMessage.type === 'error' ? 'alert' : 'status'}>
+                    {deleteMessage.text}
+                  </p>
+                )}
+                <label className="profile-delete-password">
+                  Confirm with your current password
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={deletePassword}
+                    onChange={(event) => setDeletePassword(event.target.value)}
+                    required
+                  />
+                </label>
+                <label className="profile-delete-confirm">
+                  <input
+                    type="checkbox"
+                    checked={confirmDelete}
+                    onChange={(event) => setConfirmDelete(event.target.checked)}
+                    required
+                  />
+                  <span>I understand this action cannot be undone.</span>
+                </label>
+                <div className="profile-form-actions">
+                  <button className="profile-delete-button" type="submit" disabled={deletingAccount}>
+                    {deletingAccount ? 'Deleting…' : 'Delete my account'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

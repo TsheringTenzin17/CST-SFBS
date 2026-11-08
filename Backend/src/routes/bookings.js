@@ -276,13 +276,49 @@ router.get('/user/:userId', authenticate, async (req, res) => {
               f.name AS facility_name
        FROM bookings b JOIN facilities f ON f.id = b.facility_id
        WHERE b.user_id = $1
+         AND (b.status <> 'approved' OR b.booking_date >= $2::date - 7)
+         AND NOT EXISTS (
+           SELECT 1 FROM user_booking_archives a
+           WHERE a.user_id = b.user_id AND a.booking_id = b.id
+         )
        ORDER BY b.booking_date DESC, b.start_time DESC`,
-      [userId]
+      [userId, bhutanNow().date]
     );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch your bookings' });
+  }
+});
+
+// ---- DELETE /bookings/:id/archive : hide an old completed booking from the owner's history
+router.delete('/:id/archive', authenticate, async (req, res) => {
+  const bookingId = Number(req.params.id);
+  if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'Invalid booking id' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO user_booking_archives (user_id, booking_id)
+       SELECT b.user_id, b.id
+       FROM bookings b
+       WHERE b.id = $1
+         AND b.user_id = $2
+         AND b.status = 'approved'
+         AND b.booking_date < $3::date
+       ON CONFLICT (user_id, booking_id)
+       DO UPDATE SET archived_at = user_booking_archives.archived_at
+       RETURNING booking_id`,
+      [bookingId, req.user.id, bhutanNow().date]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Only your completed bookings can be removed from history' });
+    }
+    res.json({ bookingId: result.rows[0].booking_id, archived: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove completed booking from history' });
   }
 });
 

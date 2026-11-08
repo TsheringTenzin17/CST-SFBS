@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
 import { todayString } from '../utils/slots';
+import { Skeleton } from '../components/Loading';
 import './Mybookings.css';
 
 const PORTAL_TITLES = { student: 'Student Booking Portal', faculty: 'Faculty Booking Portal' };
 
 function bookingStatus(booking, today) {
   if (booking.status === 'cancelled') return 'Cancelled';
-  if (booking.booking_date < today) return 'Completed';
-  if (booking.status === 'approved') return 'Confirmed';
+  if (booking.status === 'approved') return booking.booking_date < today ? 'Completed' : 'Confirmed';
   if (booking.status === 'pending') return 'Pending approval';
   return booking.status;
 }
@@ -38,8 +38,11 @@ function MyBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelingId, setCancelingId] = useState(null);
+  const [archivingId, setArchivingId] = useState(null);
+  const [swipedId, setSwipedId] = useState(null);
   const [message, setMessage] = useState(null);
   const [filter, setFilter] = useState('all');
+  const touchStartX = useRef(null);
 
   const loadBookings = useCallback(async () => {
     if (!user) return;
@@ -86,6 +89,22 @@ function MyBookings() {
     }
   }
 
+  async function handleArchive(booking) {
+    if (!window.confirm(`Remove completed booking B-${booking.id} from your history? The official booking record will be kept.`)) return;
+
+    setArchivingId(booking.id);
+    setMessage(null);
+    try {
+      await apiCall(`/bookings/${booking.id}/archive`, 'DELETE');
+      setBookings((current) => current.filter((item) => item.id !== booking.id));
+      setMessage({ type: 'success', text: `Booking B-${booking.id} was removed from your history. The official record is unchanged.` });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setArchivingId(null);
+    }
+  }
+
   const today = todayString();
   const isUpcoming = (booking) => booking.status !== 'cancelled' && booking.booking_date >= today;
   const upcomingCount = bookings.filter(isUpcoming).length;
@@ -101,7 +120,7 @@ function MyBookings() {
       <div className="my-bookings-heading">
         <div>
           <h1 className="title">{PORTAL_TITLES[user?.role] || 'Booking Portal'}</h1>
-          <p className="subtitle">View schedules, cancellations, and your reservation history.</p>
+          <p className="subtitle">View schedules, cancellations, and your reservation history. Completed bookings leave this list after 7 days; swipe left to remove one sooner. Official records are retained.</p>
         </div>
         <Link className="my-bookings-book-button" to="/facilities">+ Book New Session</Link>
       </div>
@@ -145,10 +164,20 @@ function MyBookings() {
           </div>
         </div>
 
-        {loading && <p className="my-bookings-empty">Loading your bookings…</p>}
+        {loading && (
+          <div className="my-bookings-skeleton-list" role="status" aria-label="Loading bookings">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div className="my-bookings-skeleton-card" key={index}>
+                <Skeleton className="skeleton-line skeleton-title" />
+                <Skeleton className="skeleton-line" />
+                <Skeleton className="skeleton-line short" />
+              </div>
+            ))}
+          </div>
+        )}
         {!loading && bookings.length === 0 && (
           <p className="my-bookings-empty">
-            No bookings yet. <Link to="/facilities">Browse facilities to book a session.</Link>
+            No bookings to display. <Link to="/facilities">Browse facilities to book a session.</Link>
           </p>
         )}
         {!loading && bookings.length > 0 && visibleBookings.length === 0 && (
@@ -170,10 +199,24 @@ function MyBookings() {
                 {visibleBookings.map((booking) => {
                   const status = bookingStatus(booking, today);
                   const canCancel = status === 'Confirmed';
+                  const canArchive = status === 'Completed';
                   const statusClass = status.toLowerCase().replaceAll(' ', '-');
 
                   return (
-                    <tr key={booking.id}>
+                    <tr
+                      key={booking.id}
+                      className={swipedId === booking.id ? 'swiped' : ''}
+                      onTouchStart={(event) => {
+                        if (canArchive) touchStartX.current = event.changedTouches[0].clientX;
+                      }}
+                      onTouchEnd={(event) => {
+                        if (touchStartX.current === null) return;
+                        const deltaX = event.changedTouches[0].clientX - touchStartX.current;
+                        if (deltaX < -40) setSwipedId(booking.id);
+                        if (deltaX > 40) setSwipedId(null);
+                        touchStartX.current = null;
+                      }}
+                    >
                       <td className="my-bookings-id" data-label="Booking ID">B-{booking.id}</td>
                       <td className="my-bookings-facility" data-label="Facility">{booking.facility_name}</td>
                       <td data-label="Date & Time">
@@ -195,6 +238,22 @@ function MyBookings() {
                             disabled={cancelingId === booking.id}
                           >
                             {cancelingId === booking.id ? 'Cancelling…' : 'Cancel'}
+                          </button>
+                        )}
+                        {canArchive && (
+                          <button
+                            className="my-bookings-archive"
+                            type="button"
+                            onClick={() => handleArchive(booking)}
+                            disabled={archivingId === booking.id}
+                            aria-label={`Remove completed booking B-${booking.id} from history`}
+                          >
+                            {archivingId === booking.id ? 'Removing…' : (
+                              <>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
+                                <span>Remove from history</span>
+                              </>
+                            )}
                           </button>
                         )}
                       </td>

@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
+import { FacilityCardSkeletons } from '../components/Loading';
 import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities, slotsText } from '../utils/availability';
 import { todayString } from '../utils/slots';
@@ -74,10 +75,10 @@ function Facilities() {
         </label>
       </div>
 
-      {loading && <p>Loading facilities…</p>}
       {error && <p className="error">{error}</p>}
       {!loading && !error && visible.length === 0 && <p>No facilities match this filter.</p>}
 
+      {loading ? <FacilityCardSkeletons /> : (
       <div className="grid">
         {visible.map((f) => {
           const s = summary[f.group_name];
@@ -112,6 +113,7 @@ function Facilities() {
           );
         })}
       </div>
+      )}
     </main>
   );
 }

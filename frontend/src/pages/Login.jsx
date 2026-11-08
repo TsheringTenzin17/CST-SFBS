@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import AuthLayout, { SPORTS } from '../components/AuthLayout';
 import { apiCall } from '../utils/api';
+import { Spinner } from '../components/Loading';
 
 function EyeIcon({ off }) {
   return (
@@ -91,6 +92,7 @@ function Login() {
       >
       <h1>Sign in</h1>
       <p className="auth-sub">Students, staff and outsiders use the same sign-in.</p>
+      <p className="auth-home-link"><Link to="/">← Return to home</Link></p>
 
       {justRegistered && <div className="auth-success">Verify your email before signing in. Your account is created after verification.</div>}
       {error && <div className="auth-error">{error}</div>}
@@ -136,7 +138,7 @@ function Login() {
 
         <button className="auth-submit" type="submit" disabled={loading}>
           <span className="auth-submit-label">
-            {loading ? 'Signing in…' : (
+            {loading ? <Spinner label="Signing in…" /> : (
               <>
                 Access Booking System
                 <svg className="auth-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -207,6 +207,67 @@
   background: #eef4f6;
 }
 
+.profile-delete-card {
+  border-color: #e7c7c7;
+}
+
+.profile-delete-card > p:not(.profile-message) {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.profile-delete-password {
+  display: grid;
+  max-width: 420px;
+  gap: 6px;
+  color: #1f2d33;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-delete-password input {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1.5px solid #c9d6db;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.profile-delete-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.profile-delete-confirm input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: #a12626;
+  flex: none;
+}
+
+.profile-delete-button {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid #a12626;
+  border-radius: 10px;
+  background: #a12626;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-delete-button:hover:not(:disabled) { background: #861d1d; }
+.profile-delete-button:disabled { opacity: 0.65; cursor: not-allowed; }
+.profile-delete-button:focus-visible { outline: 3px solid #a12626; outline-offset: 3px; }
+
 /* Notification toggles */
 .profile-preferences {
   display: grid;

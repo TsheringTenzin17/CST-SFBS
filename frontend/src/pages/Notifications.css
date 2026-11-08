@@ -14,6 +14,53 @@
   margin-bottom: 28px;
 }
 
+.notifications-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.notifications-clear-all {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid #d6e0e3;
+  border-radius: 10px;
+  background: #fff;
+  color: #8b4541;
+  font: 600 15px Barlow, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.notifications-clear-all svg,
+.notification-delete svg,
+.my-bookings-archive svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notifications-clear-all:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #e6c6c3;
+  background: #fff6f5;
+}
+
+.notifications-clear-all:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
 .notifications-heading .title {
   margin: 0;
   font-family: 'Barlow Condensed', sans-serif;
@@ -59,7 +106,8 @@
 
 .notifications-mark-all:focus-visible,
 .notifications-filters button:focus-visible,
-.notification-mark-read:focus-visible {
+.notification-mark-read:focus-visible,
+.notification-delete:focus-visible {
   outline: 3px solid #bcd6dd;
   outline-offset: 2px;
 }
@@ -140,6 +188,13 @@
   gap: 14px;
   min-width: 0;
 }
+
+.notifications-skeleton-list { display: grid; gap: 14px; }
+.notifications-skeleton-icon { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; }
+.notifications-skeleton-card .notification-content { display: grid; align-content: start; gap: 12px; padding-top: 5px; }
+.notifications-skeleton-title { width: 45%; height: 18px; }
+.notifications-skeleton-copy { width: 92%; height: 13px; }
+.notifications-skeleton-copy.short { width: 65%; }
 
 .notifications-empty {
   margin: 0;
@@ -244,6 +299,45 @@
   white-space: nowrap;
 }
 
+.notification-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-delete {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b4541;
+  font: 600 13px Barlow, sans-serif;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.notification-delete svg {
+  width: 16px;
+  height: 16px;
+}
+
+.notification-delete:hover:not(:disabled) {
+  border-color: #e6c6c3;
+  background: #fff6f5;
+  color: #a9302a;
+  transform: translateY(-1px);
+}
+
+.notification-delete:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .notification-content p {
   margin: 6px 0 0;
   color: #3b4a52;
@@ -306,6 +400,12 @@
     flex-direction: column;
   }
 
+  .notifications-heading-actions {
+    width: 100%;
+  }
+
+  .notifications-heading-actions > * { flex: 1; }
+
   .notifications-heading .title {
     font-size: 44px;
   }
@@ -315,12 +415,67 @@
   }
 
   .notification-card {
+    overflow: hidden;
     padding: 14px;
     gap: 12px;
+    touch-action: pan-y;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .notification-card.swiped {
+    transform: translateX(-8px);
+    border-color: #e6c6c3;
+    box-shadow: 0 8px 20px rgba(139, 69, 65, .12);
+  }
+
+  .notification-card.swiped .notification-delete {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    background: #fff0ef;
+    animation: notification-action-pop .24s ease-out;
+  }
+
+  .notification-delete {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(8px);
+  }
+
+  .notification-card:focus-within .notification-delete {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+
+  .notification-delete:active,
+  .notifications-clear-all:active {
+    transform: scale(.96);
   }
 
   .notification-top {
     flex-direction: column;
     gap: 2px;
+  }
+
+  @keyframes notification-action-pop {
+    0% { transform: scale(.88); }
+    70% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .notifications-clear-all,
+    .notification-delete,
+    .notification-card {
+      transition: none;
+    }
+
+    .notification-card.swiped .notification-delete { animation: none; }
+  }
+
+  .notification-meta {
+    width: 100%;
+    justify-content: space-between;
   }
 }

@@ -20,17 +20,17 @@ function AuthLayout({
   useEffect(() => {
     const canvas = netRef.current;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
-      window.matchMedia('(pointer: coarse)').matches;
-    if (!canvas || reducedMotion || lowPowerDevice) return;
+    if (!canvas || reducedMotion) return;
     const ctx = canvas.getContext('2d');
     const mouse = { x: -999, y: -999 };
     let W, H, pts = [], raf;
+    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
 
     function size() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      const count = Math.min(70, Math.floor(W / 20));
+      const count = lowPowerDevice ? Math.min(32, Math.floor(W / 34)) : Math.min(70, Math.floor(W / 20));
       pts = Array.from({ length: count }, () => ({
         x: Math.random() * W, y: Math.random() * H,
         vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,

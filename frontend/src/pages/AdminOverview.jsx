@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiCall } from '../utils/api';
 import { getUsageRows } from '../utils/adminHelpers';
+import { Spinner } from '../components/Loading';
 
 const TZ = 'Asia/Thimphu';
 const todayBhutan = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
@@ -234,7 +235,7 @@ export default function AdminOverview({ bookingList, user, onReload }) {
                     onChange={(event) => setRejecting({ ...rejecting, reason: event.target.value })} />
                 </label>
                 <button className="admin-cancel-button" disabled={busyId === rejecting.id} type="submit">
-                  {busyId === rejecting.id ? 'Saving…' : 'Confirm rejection'}
+                  {busyId === rejecting.id ? <Spinner label="Saving booking decision…" /> : 'Confirm rejection'}
                 </button>
               </form>
               <div className="bk-modal-footer">

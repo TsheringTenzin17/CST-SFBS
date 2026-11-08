@@ -78,6 +78,13 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at TIMESTAMP DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS user_booking_archives (
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  booking_id INT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  archived_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, booking_id)
+);
+
 CREATE TABLE IF NOT EXISTS notifications (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id),
