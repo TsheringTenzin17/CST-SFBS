@@ -115,7 +115,8 @@ function FacilityDetail() {
     setLoading(true);
     setError(null);
     setSelected(null);
-    const dates = getWeekDates(weekStart);
+    setWeeklyAvailability({});
+    const dates = [...new Set([...getWeekDates(weekStart), todayString()])];
     Promise.all(dates.map((day) =>
       apiCall(`/facilities/${id}/availability?date=${day}`).then((data) => [day, data]),
     ))
@@ -188,6 +189,18 @@ function FacilityDetail() {
     day,
     weeklyAvailability[day] ? buildDaySlots(weeklyAvailability[day].rules, slotMinutes, day) : [],
   ]));
+  const availableCountsByDate = Object.fromEntries(weekDates.map((day) => {
+    const dayAvailability = weeklyAvailability[day];
+    const count = dayAvailability
+      ? slotsByDate[day].filter((slot) => slot.rule && slotState(slot, {
+        date: day,
+        availability: dayAvailability,
+        user,
+      }) === 'open').length
+      : null;
+    return [day, count];
+  }));
+  const selectedDateAvailableCount = availableCountsByDate[date] ?? null;
   const slotRows = [...new Map(
     Object.values(slotsByDate).flat().map((slot) => [`${slot.start}-${slot.end}`, { start: slot.start, end: slot.end }]),
   ).values()].sort((a, b) => toMin(a.start) - toMin(b.start));
@@ -206,11 +219,20 @@ function FacilityDetail() {
       <aside className="fd-left">
         <section className="fd-card fd-info-card">
           <Link to="/facilities" className="fd-back-link">All facilities</Link>
-          <div className="fd-category">
-            <span className="fd-category-icon" aria-hidden="true">{categoryIcon(facility.type)}</span>
-            <span>{facilityCategory(facility.type)}</span>
+          <div className="fd-category-row">
+            <div className="fd-category">
+              <span className="fd-category-icon" aria-hidden="true">{categoryIcon(facility.type)}</span>
+              <span>{facilityCategory(facility.type)}</span>
+            </div>
+            <div className="fd-today-slots" aria-live="polite">
+              <span>{date === todayString() ? 'Today' : 'Selected date'} · {formatDay(date)}</span>
+              <strong>{selectedDateAvailableCount === null ? '—' : selectedDateAvailableCount}</strong>
+              <small>available slots</small>
+            </div>
           </div>
-          <h1 className="fd-title">{facility.name}</h1>
+          <div className="fd-title-row">
+            <h1 className="fd-title">{facility.name}</h1>
+          </div>
           <img
             className="fd-img"
             src={facility.image_url || IMAGES[facility.type]}
@@ -287,10 +309,12 @@ function FacilityDetail() {
               type="button"
               key={day}
               className={date === day ? 'active' : ''}
+              aria-label={`${formatDay(day)}: ${availableCountsByDate[day] === null ? 'availability loading' : `${availableCountsByDate[day]} available slots`}`}
               onClick={() => setDate(day)}
             >
               <span>{new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}</span>
               <strong>{new Date(`${day}T12:00:00`).getDate()}</strong>
+              <small>{availableCountsByDate[day] === null ? '…' : `${availableCountsByDate[day]} open`}</small>
             </button>
           ))}
         </div>
@@ -308,7 +332,12 @@ function FacilityDetail() {
             <>
             <div className="fd-row fd-header-row" role="row">
               <span className="fd-day fd-time" role="columnheader">Time</span>
-              {weekDates.map((day) => <span className="fd-day" role="columnheader" key={day}>{formatDay(day)}</span>)}
+              {weekDates.map((day) => (
+                <span className="fd-day fd-day-with-count" role="columnheader" key={day}>
+                  <span>{formatDay(day)}</span>
+                  <small>{availableCountsByDate[day] === null ? '…' : `${availableCountsByDate[day]} open`}</small>
+                </span>
+              ))}
             </div>
             {slotRows.map((row) => (
               <div className="fd-row" role="row" key={`${row.start}-${row.end}`}>

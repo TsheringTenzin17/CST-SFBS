@@ -32,7 +32,7 @@ function BookingConfirmation() {
 
   const isOutsider = state.role === 'outsider';
   const requiresApproval = state.status === 'pending' || isOutsider;
-  const isCommercialFootball = state.commercialSlot && state.facility === 'Football Ground';
+  const isPaidFootballBooking = (state.commercialSlot || isOutsider) && state.facility === 'Football Ground';
 
   return (
     <main className="main">
@@ -60,7 +60,7 @@ function BookingConfirmation() {
           </div>
           <div className="confirm-row"><span>Booking ID</span><strong>B-{state.bookingId}</strong></div>
           <div className="confirm-row"><span>Requester Role</span><strong>{roleLabel(state.role)}</strong></div>
-          {isCommercialFootball && state.footballFee != null && (
+          {isPaidFootballBooking && state.footballFee != null && (
             <>
               <div className="confirm-row">
                 <span>Referee Service</span>
@@ -77,10 +77,15 @@ function BookingConfirmation() {
             </>
           )}
           {requiresApproval ? (
-            <div className="confirm-note">
-              {isCommercialFootball
-                ? `Please Note: Pay Nu. ${Number(state.footballFee || 0).toLocaleString()} offline at the DSA office before the booking can be approved. Your booking remains pending until an admin verifies the payment.`
-                : 'Please Note: Pay the facility fee offline first, then wait for an admin to verify the payment and approve your booking.'}
+            <div className="confirm-note confirm-note-payment" role="alert">
+              <strong className="confirm-payment-heading">Payment required before booking confirmation</strong>
+              <p>
+                {isPaidFootballBooking
+                  ? `Pay Nu. ${Number(state.footballFee || 0).toLocaleString()} at the DSA office before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.`
+                  : isOutsider
+                    ? 'Outsider bookings require payment. Confirm the facility fee with the DSA office, then pay before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.'
+                    : 'Pay the facility fee at the DSA office before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.'}
+              </p>
             </div>
           ) : (
             <div className="confirm-note confirm-note-free">

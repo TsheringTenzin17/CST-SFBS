@@ -47,7 +47,7 @@ router.get('/summary', async (req, res) => {
       pool.query(
         `SELECT facility_id, to_char(start_time,'HH24:MI') AS start_time,
                 to_char(end_time,'HH24:MI') AS end_time
-         FROM bookings WHERE booking_date = $1 AND status <> 'cancelled'`, [date]),
+         FROM bookings WHERE booking_date = $1 AND status NOT IN ('cancelled', 'expired')`, [date]),
       pool.query(
         `SELECT facility_id FROM maintenance_blocks
          WHERE $1::date BETWEEN start_date AND end_date`, [date]),
@@ -118,7 +118,8 @@ router.get('/:id/availability', async (req, res) => {
            AND timetable IN ('all', $3) ORDER BY start_time`, [id, dow, timetable]),
       pool.query(
         `SELECT to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time, status
-         FROM bookings WHERE facility_id = $1 AND booking_date = $2 AND status <> 'cancelled'
+         FROM bookings WHERE facility_id = $1 AND booking_date = $2
+           AND status NOT IN ('cancelled', 'expired')
          ORDER BY start_time`, [id, date]),
       pool.query(
         `SELECT reason FROM maintenance_blocks

@@ -34,6 +34,14 @@ async function sendWithGmail({ to, subject, text }) {
   });
 }
 
+function isEmailConfigured() {
+  return Boolean(
+    (process.env.BREVO_API_KEY && process.env.BREVO_SENDER) ||
+    (process.env.RESEND_API_KEY && process.env.RESEND_FROM) ||
+    (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)
+  );
+}
+
 async function postJson(url, headers, body, providerName) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
@@ -94,4 +102,4 @@ async function sendEmail({ to, subject, text }) {
   );
 }
 
-module.exports = { sendEmail };
+module.exports = { isEmailConfigured, sendEmail };

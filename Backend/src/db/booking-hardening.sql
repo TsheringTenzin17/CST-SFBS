@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS maintenance_blocks (
   CHECK (end_date >= start_date)
 );
 
--- 3. The Wednesday faculty slot now opens by itself (no admin click).
+-- 3. Legacy manual-release rules now open automatically (no admin click).
 UPDATE schedule_rules SET fallback_type = 'auto_release'
 WHERE fallback_type = 'manual_release';
 

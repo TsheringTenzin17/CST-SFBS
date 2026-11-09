@@ -11,16 +11,16 @@ import './Rules.css';
 const FOOTBALL_STANDARD = [
   { day: 'Monday', bands: ['Ground maintenance', 'Ground maintenance', 'Ground maintenance', 'Ground maintenance'] },
   { day: 'Tuesday', bands: ['Students', 'Students', 'Hiring', 'Hiring'] },
-  { day: 'Wednesday', bands: ['Students', 'Female students (hiring opens Wed 12:05 AM)', 'Hiring', 'Hiring'] },
-  { day: 'Thursday', bands: ['Students', 'Students', 'Reserved for staff', 'Hiring'] },
+  { day: 'Wednesday', bands: ['Students', 'Female students (free; commercial after Wed 12:05 AM)', 'Hiring', 'Hiring'] },
+  { day: 'Thursday', bands: ['Students', 'Students', 'Faculty free until Wed 8 PM; then commercial (paid)', 'Hiring'] },
   { day: 'Friday', bands: ['Students', 'Students', 'Hiring', 'Hiring'] },
 ];
 
 const FOOTBALL_TOURNAMENT = [
   { day: 'Monday', bands: ['Ground maintenance', 'Ground maintenance', 'Ground maintenance', 'Ground maintenance'] },
   { day: 'Tuesday', bands: ['Students', 'Students', 'Hiring', 'Students'] },
-  { day: 'Wednesday', bands: ['Students', 'Students', 'Female students (hiring opens Wed 12:05 AM)', 'Students'] },
-  { day: 'Thursday', bands: ['Students', 'Students', 'Reserved for staff', 'Students'] },
+  { day: 'Wednesday', bands: ['Students', 'Students', 'Female students (free; commercial after Wed 12:05 AM)', 'Students'] },
+  { day: 'Thursday', bands: ['Students', 'Students', 'Faculty free until Wed 8 PM; then commercial (paid)', 'Students'] },
   { day: 'Friday', bands: ['Students', 'Students', 'Hiring', 'Students'] },
 ];
 
@@ -57,7 +57,7 @@ function Rules() {
           <ul>
             <li>Weekdays: open 4:00 PM – 10:00 PM. From 8:00 AM to 4:00 PM nothing can be booked. The one exception is the football ground, which also has a student slot from 6:00 AM to 8:00 AM, Tuesday to Sunday.</li>
             <li>Weekends: open all day (busiest 4:00 PM – 10:00 PM).</li>
-            <li>Bookings are confirmed instantly, no approval is needed.</li>
+            <li>Free bookings are confirmed instantly. Commercial football slots require offline payment at the DSA office and admin approval.</li>
             <li>Students and staff can book with a college email, outsiders can register by their own email.</li>
           </ul>
         </section>
@@ -77,8 +77,8 @@ function Rules() {
           <h2>Football ground: weekdays (no department tournament)</h2>
           <FootballTable rows={FOOTBALL_STANDARD} />
           <p className="rule-note">
-            Wednesday 4 – 6 PM is for female students first: they must book before 12:00 AM on Wednesday.
-            From 12:05 AM that day any slot still free opens to hiring (commercial / outsiders). Weekday bookings are 2 hours.
+            The Wednesday 4 – 6 PM female-student slot is free for female students. From 12:05 AM on Wednesday,
+            an unbooked slot also opens for commercial bookings, which require payment. Weekday bookings are 2 hours.
           </p>
         </section>
 
@@ -86,20 +86,17 @@ function Rules() {
           <h2>Football ground: weekdays during a department tournament</h2>
           <FootballTable rows={FOOTBALL_TOURNAMENT} />
           <p className="rule-note">
-            Wednesday 6 – 8 PM is for female students first: they must book before 12:00 AM on Wednesday.
-            From 12:05 AM that day it opens to hiring (commercial / outsiders).
+            The Wednesday 6 – 8 PM female-student slot is free for female students. From 12:05 AM on Wednesday,
+            an unbooked slot also opens for commercial bookings, which require payment.
             The admin sets the tournament dates.
           </p>
         </section>
 
-        {/* ---------- football charges ---------- */}
-        <section className="rule-box wide">
-          <h2>Football ground booking charges</h2>
+        <section className="rule-box">
+          <h2>Thursday faculty slot</h2>
           <ul>
-            <li><strong>Students:</strong> Nu. 2,500 for one referee; Nu. 2,900 for a referee and assistant referees.</li>
-            <li><strong>Staff and outsiders, weekdays:</strong> Nu. 3,500 for one referee; Nu. 3,900 for a referee and assistant referees.</li>
-            <li><strong>Staff and outsiders, weekends:</strong> Nu. 4,000 for one referee; Nu. 4,400 for a referee and assistant referees.</li>
-            <li>Commercial football slots require offline payment at the DSA office before approval.</li>
+            <li>The 6:00 PM – 8:00 PM football slot is free for faculty/staff until Wednesday at 8:00 PM.</li>
+            <li>If it is still unbooked at Wednesday 8:00 PM, it opens as a commercial slot. Students, faculty/staff, and outsiders can book it with the applicable commercial fee and DSA payment approval.</li>
           </ul>
         </section>
 

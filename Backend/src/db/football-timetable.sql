@@ -70,7 +70,7 @@ CROSS JOIN (VALUES
   -- Thursday (4)
   (4, '06:00', '08:00', 'student',        NULL,         'none',         'all',        NULL, 'Thursday: students'),
   (4, '16:00', '18:00', 'student',        NULL,         'none',         'all',        NULL, 'Thursday: students'),
-  (4, '18:00', '20:00', 'faculty',        NULL,         'none',         'all',        NULL, 'Thursday 6-8 PM: reserved for staff'),
+  (4, '18:00', '20:00', 'faculty',        'commercial', 'weekly_release', 'all',        NULL, 'Thursday 6-8 PM: free for faculty until Wednesday 8 PM, then commercial'),
   (4, '20:00', '22:00', 'student',        NULL,         'none',         'tournament', NULL, 'Thursday 8-10 PM: students (department tournament)'),
   (4, '20:00', '22:00', 'commercial',     NULL,         'none',         'standard',   NULL, 'Thursday 8-10 PM: hiring'),
   -- Friday (5)

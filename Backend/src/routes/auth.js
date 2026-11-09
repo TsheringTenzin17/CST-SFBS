@@ -585,7 +585,7 @@ router.delete('/account', authenticate, async (req, res) => {
       `UPDATE bookings
        SET status = CASE
          WHEN booking_date >= (now() AT TIME ZONE 'Asia/Thimphu')::date
-           AND status <> 'cancelled' THEN 'cancelled'
+           AND status NOT IN ('cancelled', 'expired') THEN 'cancelled'
          ELSE status
        END,
        purpose = NULL

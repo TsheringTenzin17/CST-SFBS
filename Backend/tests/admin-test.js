@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const { api, post, createUser, testCredentials, facilityId, dateOnWeekday, addMaintenanceBlock, check, finish } = require('./helpers');
 const pool = require('../src/db');
-const { processDueReminders } = require('../src/reminders');
+const { expirePastPendingBookings, processDueReminders } = require('../src/reminders');
 
 async function main() {
   const admin = await createUser('admin');
@@ -393,6 +393,33 @@ async function main() {
   check('an admin can change a role', r.status === 200 && r.body.user.role === 'faculty', `got ${r.status}`);
   r = await api('PATCH', `/admin/users/${admin}/role`, { admin_user_id: admin, role: 'student' });
   check('an admin cannot remove their own admin role', r.status === 400, `got ${r.status}`);
+
+  console.log('Expired pending bookings');
+  const staleBooking = await pool.query(
+    `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
+     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '10:00', '11:00', 'Expiry test', 'pending')
+     RETURNING id`,
+    [student, basketball]
+  );
+  await expirePastPendingBookings();
+  const expiredBooking = await pool.query('SELECT status FROM bookings WHERE id = $1', [staleBooking.rows[0].id]);
+  check('past pending bookings are marked expired and retained', expiredBooking.rows[0]?.status === 'expired');
+
+  const lateApprovalBooking = await pool.query(
+    `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
+     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '10:00', '11:00', 'Late approval test', 'pending')
+     RETURNING id`,
+    [student, basketball]
+  );
+  r = await api('PATCH', `/bookings/${lateApprovalBooking.rows[0].id}`, {
+    admin_user_id: admin, status: 'approved',
+  });
+  const lateApprovalStatus = await pool.query('SELECT status FROM bookings WHERE id = $1', [lateApprovalBooking.rows[0].id]);
+  check(
+    'an admin cannot approve a pending booking after its reservation time',
+    r.status === 410 && lateApprovalStatus.rows[0]?.status === 'expired',
+    `got ${r.status} ${JSON.stringify(r.body)}`
+  );
 
   console.log('Scheduled booking reminders');
   await pool.query(

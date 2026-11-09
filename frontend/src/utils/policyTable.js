@@ -40,7 +40,7 @@ function columnsFor(role) {
     case 'faculty_female':
       return ['staff'];
     case 'commercial':
-      return ['commercial'];
+      return ['students', 'staff', 'commercial'];
     case 'any':
       return ['students', 'commercial'];
     case 'everyone':
@@ -51,6 +51,7 @@ function columnsFor(role) {
 }
 
 const ROLE_NOTE = {
+  commercial: 'commercial fee applies to all roles',
   student_female: 'female students only',
   faculty_male: 'male staff only',
   faculty_female: 'female staff only',
@@ -92,8 +93,12 @@ export function buildPolicy(rules, view = 'standard') {
         if (rule.day_booking_cap) cells[col].cap = rule.day_booking_cap;
       }
       // Wednesday football: the slot opens to another group shortly before it starts
-      if (rule.fallback_role && ['auto_release', 'day_start_release'].includes(rule.fallback_type)) {
-        const note = rule.fallback_type === 'day_start_release' ? 'opens 12:05 AM that day' : 'opens 1 hour before';
+      if (rule.fallback_role && ['auto_release', 'day_start_release', 'weekly_release'].includes(rule.fallback_type)) {
+        const note = rule.fallback_type === 'day_start_release'
+          ? 'opens 12:05 AM that day (paid)'
+          : rule.fallback_type === 'weekly_release'
+            ? 'opens Wednesday 8:00 PM (paid)'
+            : 'opens 1 hour before (paid)';
         for (const col of columnsFor(rule.fallback_role)) {
           cells[col].ranges.push({ start, end, note });
         }

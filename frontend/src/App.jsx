@@ -23,6 +23,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import FacilityDetail from './pages/FacilityDetail';
 import Rules from './pages/Rules';
+import FeeStructure from './pages/FeeStructure';
 import Contact from './pages/Contact';
 import ScrollToTop from './components/ScrollToTop';
 import LiveNotice from './components/LiveNotice';
@@ -151,6 +152,7 @@ function App() {
         <Route path="/settings" element={<ClientPage requiresAuth><ProfileSettings /></ClientPage>} />
         <Route path="/facilities/:id" element={<ClientPage><FacilityDetail /></ClientPage>} />
         <Route path="/rules" element={<ClientPage><Rules /></ClientPage>} />
+        <Route path="/fees" element={<ClientPage><FeeStructure /></ClientPage>} />
         <Route path="/help" element={<ClientPage><Contact /></ClientPage>} />
         <Route path="/help/confirmation" element={<ClientPage><ContactConfirmation /></ClientPage>} />
       </Routes>

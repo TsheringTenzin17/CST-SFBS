@@ -15,7 +15,7 @@ export const ROLE_LABELS = {
   student_female: 'Female students',
   faculty_male: 'Male faculty',
   faculty_female: 'Female faculty',
-  commercial: 'Commercial / outsiders',
+  commercial: 'Commercial (paid, all roles)',
   maintenance: 'Maintenance / college team',
   any: 'Students or commercial (first to book)',
   everyone: 'Students, faculty/staff, and outsiders',
@@ -40,12 +40,36 @@ export const toHHMM = (min) =>
   `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 
 // Today as 'YYYY-MM-DD' in the browser's own (Bhutan) time.
-export const todayString = () => new Date().toLocaleDateString('en-CA');
+const bhutanDateTimeParts = () => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Thimphu',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+}).formatToParts(new Date());
+
+export const todayString = () => {
+  const parts = bhutanDateTimeParts();
+  const get = (type) => parts.find((part) => part.type === type).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+};
 
 const nowMinutes = () => {
-  const n = new Date();
-  return n.getHours() * 60 + n.getMinutes();
+  const parts = bhutanDateTimeParts();
+  const get = (type) => parts.find((part) => part.type === type).value;
+  return (Number(get('hour')) % 24) * 60 + Number(get('minute'));
 };
+
+function isPastWeeklyRelease(date) {
+  const bookingDate = new Date(`${date}T00:00:00Z`);
+  if (bookingDate.getUTCDay() !== 4) return false;
+  bookingDate.setUTCDate(bookingDate.getUTCDate() - 1);
+  const releaseDate = bookingDate.toISOString().slice(0, 10);
+  const today = todayString();
+  return today > releaseDate || (today === releaseDate && nowMinutes() >= 20 * 60);
+}
 
 // ---------- 3. who can book ----------
 function roleMatches(userRole, ruleRole, gender) {
@@ -53,23 +77,42 @@ function roleMatches(userRole, ruleRole, gender) {
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
-  if (ruleRole === 'commercial') return ['student', 'outsider'].includes(userRole);
+  if (ruleRole === 'commercial') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (['faculty', 'faculty_male', 'faculty_female'].includes(ruleRole)) return userRole === 'faculty';
   return false;
 }
 
-// Same decision the backend makes, including the "opens to commercial
-// 1 hour before start" rule for the Wednesday faculty slot.
+// Same decision the backend makes for role-specific and timed-release rules.
 export function canBookSlot(userRole, rule, date, startMin, gender) {
   if (userRole === 'admin') return true;
   if (rule.primary_role === 'maintenance') return false;
-  if (roleMatches(userRole, rule.primary_role, gender)) return true;
+  const weeklyReleasePassed = rule.fallback_type === 'weekly_release' && isPastWeeklyRelease(date);
+  if (!weeklyReleasePassed && roleMatches(userRole, rule.primary_role, gender)) return true;
+  if (rule.fallback_type === 'weekly_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
+    return weeklyReleasePassed;
+  }
   // Wednesday football: female students first; opens to commercial at 12:05 AM on the day.
   if (rule.fallback_type === 'day_start_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
     return date === todayString() && nowMinutes() >= 5;
   }
   if (rule.fallback_type === 'auto_release' && rule.fallback_role && roleMatches(userRole, rule.fallback_role, gender)) {
     const untilStart = startMin - nowMinutes();
+    return date === todayString() && untilStart >= 0 && untilStart <= 60;
+  }
+  return false;
+}
+
+export function isCommercialBooking(rule, date, user) {
+  if (rule.primary_role === 'commercial') return true;
+  if (rule.fallback_role !== 'commercial') return false;
+  if (rule.fallback_type === 'weekly_release') return isPastWeeklyRelease(date);
+  if (roleMatches(user?.role, rule.primary_role, user?.gender)) return false;
+  if (rule.fallback_type === 'day_start_release') {
+    const today = todayString();
+    return today >= date && (today > date || nowMinutes() >= 5);
+  }
+  if (rule.fallback_type === 'auto_release') {
+    const untilStart = toMin(rule.start_time) - nowMinutes();
     return date === todayString() && untilStart >= 0 && untilStart <= 60;
   }
   return false;

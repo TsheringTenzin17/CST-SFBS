@@ -14,7 +14,7 @@
 const express = require('express');
 const pool = require('../db');
 const { authenticate, requireAdmin } = require('../auth');
-const { bhutanNow, bookingWindow, isPastDayStartRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
+const { bhutanNow, bookingWindow, isPastDayStartRelease, isPastWeeklyRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const { timetableForDate } = require('../timetable');
 const { sendEmail } = require('../email');
 const router = express.Router();
@@ -79,13 +79,13 @@ function isRoleEligible(userRole, ruleRole, gender) {
   if (ruleRole === 'everyone') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (ruleRole === 'any') return userRole === 'student' || userRole === 'outsider';
   if (ruleRole === 'student') return userRole === 'student';
-  if (ruleRole === 'commercial') return ['student', 'outsider'].includes(userRole);
+  if (ruleRole === 'commercial') return ['student', 'faculty', 'outsider'].includes(userRole);
   if (['faculty', 'faculty_male', 'faculty_female'].includes(ruleRole)) return userRole === 'faculty';
   return false; // 'maintenance' and anything unknown
 }
 
-// Auto-release rule (Wed 6-8pm football): faculty have first claim, and the
-// slot opens to commercial users 1 hour before it starts. Uses BHUTAN time.
+// Auto-release rules open a fallback group 1 hour before the slot starts.
+// Uses Bhutan time.
 function isWithinAutoReleaseWindow(bookingDate, startTime) {
   const now = bhutanNow();
   if (bookingDate !== now.date) return false;
@@ -101,11 +101,21 @@ function isWithinAutoReleaseWindow(bookingDate, startTime) {
 // Decide whether `userRole` may book the slot covered by `rule`.
 // Returns { ok: true, viaFallback? } or { ok: false, status, message }.
 // viaFallback = true when the user got in through the fallback (commercial) group.
-function checkEligibility(userRole, rule, bookingDate, startTime, gender) {  if (userRole === 'admin') return { ok: true };
+function checkEligibility(userRole, rule, bookingDate, startTime, gender) {
+  if (userRole === 'admin') return { ok: true };
   if (rule.primary_role === 'maintenance') {
     return { ok: false, status: 403, message: 'This slot is reserved for maintenance / college team practice.' };
   }
-  if (isRoleEligible(userRole, rule.primary_role, gender)) return { ok: true };
+  const weeklyReleasePassed = rule.fallback_type === 'weekly_release' && isPastWeeklyRelease(bookingDate);
+  if (!weeklyReleasePassed && isRoleEligible(userRole, rule.primary_role, gender)) return { ok: true };
+  if (rule.fallback_role && rule.fallback_type === 'weekly_release' && isRoleEligible(userRole, rule.fallback_role, gender)) {
+    if (weeklyReleasePassed) return { ok: true, viaFallback: true };
+    return {
+      ok: false,
+      status: 403,
+      message: `This slot is reserved for ${RESERVED_FOR[rule.primary_role] || 'another group'} until Wednesday at 8:00 PM Bhutan time.`,
+    };
+  }
   if (rule.fallback_role && rule.fallback_type === 'day_start_release' && isRoleEligible(userRole, rule.fallback_role, gender)) {
     if (isPastDayStartRelease(bookingDate)) return { ok: true, viaFallback: true };
     return {
@@ -190,7 +200,7 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
 
   const overlap = await client.query(
     `SELECT 1 FROM bookings
-     WHERE facility_id = $1 AND booking_date = $2 AND status <> 'cancelled'
+     WHERE facility_id = $1 AND booking_date = $2 AND status NOT IN ('cancelled', 'expired')
        AND id <> $5 AND start_time < $4::time AND end_time > $3::time LIMIT 1`,
     [facilityId, date, start, end, excludeBookingId]
   );
@@ -202,7 +212,8 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
   if (rule.day_booking_cap) {
     const used = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings b
-       WHERE b.facility_id = $1 AND b.booking_date = $2 AND b.status <> 'cancelled' AND b.id <> $3
+       WHERE b.facility_id = $1 AND b.booking_date = $2
+         AND b.status NOT IN ('cancelled', 'expired') AND b.id <> $3
          AND EXISTS (
            SELECT 1 FROM schedule_rules r
            WHERE r.facility_id = b.facility_id AND r.day_of_week = $4
@@ -267,10 +278,8 @@ router.post('/', authenticate, async (req, res) => {
     // Commercial-rate slots require offline payment and approval, including
     // when a student is allowed to book one of those slots.
     // (A female student booking her own reserved slot is NOT a commercial booking.)
-    const commercialSlot = slot.rule.primary_role === 'commercial' ||
-      (slot.rule.fallback_role === 'commercial' && eligibility.viaFallback === true);
-    const initialStatus = req.user.role === 'outsider' ||
-      (req.user.role === 'student' && commercialSlot) ? 'pending' : 'approved';
+    const commercialSlot = slot.rule.primary_role === 'commercial' || eligibility.viaFallback === true;
+    const initialStatus = req.user.role === 'outsider' || commercialSlot ? 'pending' : 'approved';
     const inserted = await client.query(
       `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, status`,
@@ -456,11 +465,21 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       await client.query('BEGIN');
       const result = await client.query(
         `UPDATE bookings SET status = 'approved' WHERE id = $1 AND status = 'pending'
+           AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') > now()
          RETURNING id, user_id, facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                    to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
         [bookingId]
       );
       if (result.rows.length === 0) {
+        const expired = await client.query(
+          `UPDATE bookings SET status = 'expired' WHERE id = $1 AND status = 'pending'
+             AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`,
+          [bookingId]
+        );
+        if (expired.rowCount > 0) {
+          await client.query('COMMIT');
+          return res.status(410).json({ error: 'This pending booking has expired because its reservation time has passed' });
+        }
         await client.query('ROLLBACK');
         return res.status(404).json({ error: 'Pending booking not found (it may already be approved or cancelled)' });
       }
@@ -628,7 +647,8 @@ router.patch('/:id/reschedule', requireAdmin, async (req, res) => {
     await client.query('BEGIN');
 
     const existing = await client.query(
-      `SELECT id, user_id, facility_id FROM bookings WHERE id = $1 AND status <> 'cancelled' FOR UPDATE`,
+      `SELECT id, user_id, facility_id FROM bookings
+       WHERE id = $1 AND status NOT IN ('cancelled', 'expired') FOR UPDATE`,
       [req.params.id]
     );
     if (existing.rows.length === 0) {

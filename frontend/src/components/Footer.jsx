@@ -25,6 +25,7 @@ function Footer({ links, heading = 'Your next game' }) {
             { to: '/facilities', label: 'Browse Facilities' },
             { to: '/my-bookings', label: 'My Bookings' },
             { to: '/rules', label: 'Booking rules' },
+            { to: '/fees', label: 'Fee structure' },
             { to: '/help', label: 'Help & contact' },
           ]).map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
         </nav>
