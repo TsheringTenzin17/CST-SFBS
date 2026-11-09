@@ -16,6 +16,7 @@ const pool = require('../db');
 const { authenticate, requireAdmin } = require('../auth');
 const { bhutanNow, bookingWindow, isPastDayStartRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime } = require('../time');
 const { timetableForDate } = require('../timetable');
+const { sendEmail } = require('../email');
 const router = express.Router();
 
 async function addBookingNotification(queryable, userId, type, message) {
@@ -29,6 +30,41 @@ async function addBookingNotification(queryable, userId, type, message) {
     'INSERT INTO notifications (user_id, type, message) VALUES ($1, $2, $3)',
     [userId, type, message]
   );
+}
+
+async function sendBookingUpdateEmail(userId, facilityId, {
+  subject,
+  statusMessage,
+  bookingDate,
+  startTime,
+  endTime,
+  reason,
+}) {
+  try {
+    const result = await pool.query(
+      `SELECT u.full_name, u.email, f.name AS facility_name,
+              COALESCE(p.booking_updates, true) AS booking_updates
+       FROM users u
+       JOIN facilities f ON f.id = $2
+       LEFT JOIN user_notification_preferences p ON p.user_id = u.id
+       WHERE u.id = $1`,
+      [userId, facilityId]
+    );
+    if (result.rows.length === 0) {
+      throw new Error('Booking email recipient or facility was not found.');
+    }
+
+    const recipient = result.rows[0];
+    if (!recipient.booking_updates) return;
+
+    await sendEmail({
+      to: recipient.email,
+      subject,
+      text: `Hello ${recipient.full_name},\n\n${statusMessage}\n\nFacility: ${recipient.facility_name}\nDate: ${bookingDate}\nTime: ${startTime}-${endTime}${reason ? `\nReason: ${reason}` : ''}\n\nCST-SFBS`,
+    });
+  } catch (error) {
+    console.error(`Could not send booking update email for user ${userId}:`, error);
+  }
 }
 
 // ---------------------------------------------------------------
@@ -251,6 +287,15 @@ router.post('/', authenticate, async (req, res) => {
     );
 
     await client.query('COMMIT');
+    if (initialStatus === 'approved') {
+      await sendBookingUpdateEmail(req.user.id, facility_id, {
+        subject: 'Booking confirmed - CST-SFBS',
+        statusMessage: 'Your booking is confirmed.',
+        bookingDate: booking_date,
+        startTime: start,
+        endTime: end,
+      });
+    }
     res.status(201).json({ booking: inserted.rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -335,7 +380,7 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
     const result = await client.query(
       `UPDATE bookings SET status = 'cancelled'
        WHERE id = $1 AND user_id = $2 AND status = 'approved'
-       RETURNING id, user_id, status,
+       RETURNING id, user_id, facility_id, status,
                  to_char(booking_date, 'YYYY-MM-DD') AS booking_date,
                  to_char(start_time, 'HH24:MI') AS start_time,
                  to_char(end_time, 'HH24:MI') AS end_time`,
@@ -355,6 +400,13 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
     );
 
     await client.query('COMMIT');
+    await sendBookingUpdateEmail(booking.user_id, booking.facility_id, {
+      subject: 'Booking cancelled - CST-SFBS',
+      statusMessage: 'Your booking was cancelled.',
+      bookingDate: booking.booking_date,
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+    });
     res.json({ booking: { id: booking.id, status: booking.status } });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -404,7 +456,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       await client.query('BEGIN');
       const result = await client.query(
         `UPDATE bookings SET status = 'approved' WHERE id = $1 AND status = 'pending'
-         RETURNING id, user_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
+         RETURNING id, user_id, facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                    to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
         [bookingId]
       );
@@ -418,6 +470,13 @@ router.patch('/:id', requireAdmin, async (req, res) => {
         `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was approved.`
       );
       await client.query('COMMIT');
+      await sendBookingUpdateEmail(b.user_id, b.facility_id, {
+        subject: 'Booking approved - CST-SFBS',
+        statusMessage: 'Your booking has been approved.',
+        bookingDate: b.booking_date,
+        startTime: b.start_time,
+        endTime: b.end_time,
+      });
       return res.json({ booking: { id: b.id, status: 'approved' } });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -437,7 +496,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     await client.query('BEGIN');
     const result = await client.query(
       `UPDATE bookings SET status = 'cancelled' WHERE id = $1 AND status <> 'cancelled'
-       RETURNING id, user_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
+       RETURNING id, user_id, facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                  to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
       [req.params.id]
     );
@@ -454,6 +513,14 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       `Your booking for ${b.booking_date} (${b.start_time}-${b.end_time}) was cancelled by an admin. Reason: ${reason.trim()}`
     );
     await client.query('COMMIT');
+    await sendBookingUpdateEmail(b.user_id, b.facility_id, {
+      subject: 'Booking cancelled - CST-SFBS',
+      statusMessage: 'Your booking was cancelled by an admin.',
+      bookingDate: b.booking_date,
+      startTime: b.start_time,
+      endTime: b.end_time,
+      reason: reason.trim(),
+    });
     res.json({ booking: { id: b.id, status: 'cancelled' } });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -523,6 +590,14 @@ router.patch('/:id/reschedule-request', authenticate, async (req, res) => {
       `Your booking was rescheduled to ${booking_date} (${start}-${end}). Reason: ${reason.trim()}`
     );
     await client.query('COMMIT');
+    await sendBookingUpdateEmail(booking.user_id, booking.facility_id, {
+      subject: 'Booking rescheduled - CST-SFBS',
+      statusMessage: 'Your booking was rescheduled.',
+      bookingDate: booking_date,
+      startTime: start,
+      endTime: end,
+      reason: reason.trim(),
+    });
     res.json({ booking: { id: booking.id, booking_date, start_time: start, end_time: end } });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -587,6 +662,13 @@ router.patch('/:id/reschedule', requireAdmin, async (req, res) => {
       `Your booking was moved by an admin to ${booking_date} (${start}-${end}).`
     );
     await client.query('COMMIT');
+    await sendBookingUpdateEmail(booking.user_id, booking.facility_id, {
+      subject: 'Booking rescheduled - CST-SFBS',
+      statusMessage: 'Your booking was moved by an admin.',
+      bookingDate: booking_date,
+      startTime: start,
+      endTime: end,
+    });
     res.json({ booking: { id: booking.id, booking_date, start_time: start, end_time: end } });
   } catch (err) {
     await client.query('ROLLBACK');
