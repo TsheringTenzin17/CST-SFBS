@@ -61,7 +61,27 @@ function isPastDayStartRelease(bookingDate) {
   return now.date === bookingDate && now.minutes >= RELEASE_AFTER_MINUTES;
 }
 
+function isPastWeeklyRelease(bookingDate, now = bhutanNow()) {
+  if (dayOfWeek(bookingDate) !== 4) return false;
+
+  const releaseDate = new Date(`${bookingDate}T00:00:00Z`);
+  releaseDate.setUTCDate(releaseDate.getUTCDate() - 1);
+  const releaseDateString = releaseDate.toISOString().slice(0, 10);
+  return now.date > releaseDateString ||
+    (now.date === releaseDateString && now.minutes >= 20 * 60);
+}
+
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s)) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 const isValidTime = (s) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(String(s));
 
-module.exports = { bhutanNow, bookingWindow, isPastDayStartRelease, toMin, hhmm, dayOfWeek, isValidDate, isValidTime };
+module.exports = {
+  bhutanNow,
+  bookingWindow,
+  isPastDayStartRelease,
+  isPastWeeklyRelease,
+  toMin,
+  hhmm,
+  dayOfWeek,
+  isValidDate,
+  isValidTime,
+};

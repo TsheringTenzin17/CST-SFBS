@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { prettyDate } from '../utils/format';
 import { apiCall } from '../utils/api';
+import { isCommercialBooking, toMin } from '../utils/slots';
 import { Spinner } from '../components/Loading';
 import ConflictPanel from '../components/ConflictPanel';
 import './Booking.css';
@@ -13,11 +14,6 @@ function formatTime(value) {
   if (!value) return '';
   const [hour, minute] = value.split(':').map(Number);
   return `${String(hour % 12 || 12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
-}
-
-function toMinutes(value) {
-  const [hours, minutes] = String(value || '').split(':').map(Number);
-  return hours * 60 + minutes;
 }
 
 function bookingMode(role, commercialSlot = false) {
@@ -89,19 +85,18 @@ function BookingForm() {
   const [assistantReferees, setAssistantReferees] = useState(false);
   const conflict = conflictSlot === slotKey;
   const bookingUser = accountProfile ? { ...user, ...accountProfile } : user;
-  const commercialSlot = availability?.rules?.some((rule) =>
-    toMinutes(rule.start_time) <= toMinutes(start) &&
-    toMinutes(rule.end_time) >= toMinutes(end) &&
-    (
-      rule.primary_role === 'commercial' ||
-      (
-        rule.fallback_role === 'commercial' &&
-        ['auto_release', 'day_start_release'].includes(rule.fallback_type) &&
-        // a female student booking her own reserved slot is not a commercial booking
-        !(rule.primary_role === 'student_female' && bookingUser?.role === 'student' && bookingUser?.gender === 'female')
-      )
-    )
-  ) || false;
+  const selectedRule = availability?.rules?.find((rule) =>
+    toMin(rule.start_time) <= toMin(start) &&
+    toMin(rule.end_time) >= toMin(end)
+  );
+  const bookingDetailsLoading = !facility || !availability || !accountProfile;
+  const commercialSlot = selectedRule
+    ? isCommercialBooking(selectedRule, date, bookingUser)
+    : false;
+  const requiresPayment = bookingUser?.role === 'outsider' || commercialSlot;
+  const footballFeeAmount = requiresPayment && facility?.type === 'football'
+    ? footballFee(bookingUser.role, date, assistantReferees)
+    : null;
 
   useEffect(() => {
     apiCall('/facilities')
@@ -161,9 +156,7 @@ function BookingForm() {
           role: bookingUser.role,
           status: data.booking.status,
           commercialSlot,
-          footballFee: commercialSlot && facility?.type === 'football'
-            ? footballFee(bookingUser.role, date, assistantReferees)
-            : null,
+          footballFee: footballFeeAmount,
           refereeService: assistantReferees ? 'Referee and assistant referees' : 'One referee',
         },
       });
@@ -253,9 +246,9 @@ function BookingForm() {
                 {rulesFor(facility?.type).map((rule) => <li key={rule}>{rule}</li>)}
               </ul>
             </div>
-            {commercialSlot && facility?.type === 'football' && (
+            {requiresPayment && facility?.type === 'football' && (
               <div className="booking-payment-note">
-                <strong>Commercial slot fee: Nu. {footballFee(bookingUser.role, date, assistantReferees).toLocaleString()}</strong>
+                <strong>Football booking fee: Nu. {footballFeeAmount.toLocaleString()}</strong>
                 <br />
                 Pay this facility fee offline before the booking can be approved.
               </div>
@@ -263,7 +256,7 @@ function BookingForm() {
           </div>
         </aside>
 
-        <form className="form-card" onSubmit={handleSubmit}>
+        <form className="form-card" onSubmit={handleSubmit} aria-busy={submitting || bookingDetailsLoading}>
           <div className="form-card-heading">
             <span>Booking details</span>
             <h2>Facility Booking Request</h2>
@@ -297,7 +290,7 @@ function BookingForm() {
               required
             />
           </label>
-          {commercialSlot && facility?.type === 'football' && (
+          {requiresPayment && facility?.type === 'football' && (
             <label className="form-field">
               Referee Service <span className="required">*</span>
               <select
@@ -313,10 +306,34 @@ function BookingForm() {
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} required />
             I agree to the college rules and guidelines set by the Office of the Dean of Student Affairs.
           </label>
+          <div className={`booking-fee-summary${requiresPayment ? ' is-paid' : ''}`} aria-live="polite">
+            {bookingDetailsLoading ? (
+              <Spinner label="Loading booking fee…" />
+            ) : footballFeeAmount !== null ? (
+              <>
+                <span>{bookingUser.role === 'outsider' ? 'Outsider football fee — pay at the DSA office' : 'Fee to pay at the DSA office'}</span>
+                <strong>Nu. {footballFeeAmount.toLocaleString()}</strong>
+                <small>{assistantReferees ? 'Referee and assistant referees' : 'One referee'} · offline payment required before approval</small>
+              </>
+            ) : requiresPayment ? (
+              <>
+                <span>{bookingUser.role === 'outsider' ? 'Outsider facility fee — payment required' : 'Commercial facility fee'}</span>
+                <strong>Confirm amount with the DSA office</strong>
+                <small>Ask the DSA office to confirm the amount. Pay offline before your booking can be approved.</small>
+              </>
+            ) : (
+              <>
+                <span>Fee to pay</span>
+                <strong>No fee — free booking</strong>
+              </>
+            )}
+          </div>
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
-            <button type="submit" className="btn-primary" disabled={submitting || !agree}>
-              {submitting ? <Spinner label="Booking…" /> : 'Confirm Booking'}
+            <button type="submit" className="btn-primary" disabled={submitting || bookingDetailsLoading || !agree}>
+              {submitting
+                ? <Spinner label="Confirming…" />
+                : bookingDetailsLoading ? <Spinner label="Loading booking details…" /> : 'Confirm Booking'}
             </button>
           </div>
         </form>

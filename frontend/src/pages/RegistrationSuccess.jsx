@@ -72,7 +72,7 @@ function RegistrationSuccess() {
   return (
     <AuthLayout tagline="Nurturing sporting excellence, teamwork and healthy campus life.">
       <div className="registration-success">
-        <div className="registration-success-icon" aria-hidden="true">{cancelled ? '×' : '✓'}</div>
+        <div className={`registration-success-icon${cancelled ? ' is-cancelled' : ''}`} aria-hidden="true">{cancelled ? '×' : '✓'}</div>
         <h1>{cancelled ? 'Registration cancelled' : 'Verify your email'}</h1>
         <p className="registration-success-description">
           {cancelled

@@ -5,7 +5,7 @@ import { AdminLoading, Spinner } from '../components/Loading';
 
 const PAGE_SIZE = 6;
 const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Commercial', admin: 'Admin' };
-const STATUS_LABEL = { approved: 'Approved', pending: 'Pending', cancelled: 'Cancelled', completed: 'Completed' };
+const STATUS_LABEL = { approved: 'Approved', pending: 'Pending', cancelled: 'Cancelled', expired: 'Expired', completed: 'Completed' };
 
 // All booking times are Bhutan time (UTC+6), whatever the admin's browser timezone is.
 const BT_OFFSET_MS = 6 * 60 * 60 * 1000;
@@ -16,7 +16,6 @@ function addDays(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
-// The database only stores pending / approved / cancelled.
 // "Completed" is an approved booking whose end time has already passed.
 function displayStatus(b) {
   const finished = b.status === 'approved' && new Date(`${b.booking_date}T${b.end_time}:00+06:00`) < new Date();
@@ -190,6 +189,7 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
               <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="expired">Expired</option>
             </select>
           </label>
           <div className="bk-field">
@@ -209,6 +209,8 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
 
         {loading ? (
           <AdminLoading label="Loading bookings" rows={5} />
+        ) : status === 'expired' ? (
+          <span aria-label="Expired booking">—</span>
         ) : (
           <div className="admin-table-scroll">
             <table className="bk-table">

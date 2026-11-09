@@ -176,6 +176,14 @@ function Header({ links, homeTo = '/' }) {
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.2 20V9.1L12 4.5l7.8 4.6V20M4.2 20h15.6M8 20v-6.1c0-.5.4-.9.9-.9h6.2c.5 0 .9.4.9.9V20M8 9.4h.1M12 9.4h.1M16 9.4h.1" /></svg>
               <span>Facilities</span>
             </Link>
+            <Link to="/rules" className={isActive('/rules')} aria-current={isActive('/rules') ? 'page' : undefined}>
+              <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.8h8l4 4V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2Z" /><path d="M14.5 4v4.5H19M8.5 12h7m-7 3.5h7" /></svg>
+              <span>Booking Rules</span>
+            </Link>
+            <Link to="/fees" className={isActive('/fees')} aria-current={isActive('/fees') ? 'page' : undefined}>
+              <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5c-.7-.7-1.7-1-3-1-1.6 0-2.7.8-2.7 2s1 1.8 2.7 2.3 2.7 1.1 2.7 2.4-1.2 2.2-3 2.2c-1.2 0-2.4-.4-3.2-1.2M12 5.5v13" /></svg>
+              <span>Fee Structure</span>
+            </Link>
             <Link to="/my-bookings" className={isActive('/my-bookings')}>
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 5.8h13.6c.8 0 1.4.6 1.4 1.4v11.2c0 .8-.6 1.4-1.4 1.4H5.2c-.8 0-1.4-.6-1.4-1.4V7.2c0-.8.6-1.4 1.4-1.4ZM7.7 3.8v4M16.3 3.8v4M4 10.1h16M7.3 13.8l1.2 1.2 2-2.1M13.5 14h3.2M13.5 17h3.2" /></svg>
               <span>My Bookings</span>

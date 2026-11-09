@@ -4,6 +4,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { isEmailConfigured } = require('./email');
 
 const app = express();
 
@@ -40,6 +41,9 @@ const PORT = process.env.PORT || 4000;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`CST-SFBS backend running on port ${PORT}`);
+    if (!isEmailConfigured()) {
+      console.warn('Email notifications are disabled: configure a supported email provider in the backend environment.');
+    }
     require('./reminders').startReminderScheduler();
   });
 }

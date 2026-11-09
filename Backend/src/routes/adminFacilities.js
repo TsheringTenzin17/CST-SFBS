@@ -84,7 +84,7 @@ router.get('/', requireAdmin, async (req, res) => {
       pool.query(
         `SELECT facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                 to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time
-         FROM bookings WHERE status <> 'cancelled' AND booking_date BETWEEN $1 AND $2`, [today, horizon]),
+         FROM bookings WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2`, [today, horizon]),
       pool.query(
         `SELECT m.id, m.facility_id, f.name AS facility_name, m.reason,
                 to_char(m.start_date,'YYYY-MM-DD') AS start_date, to_char(m.end_date,'YYYY-MM-DD') AS end_date
@@ -279,7 +279,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     if (req.body.is_active === false) {
       const count = await client.query(
         `SELECT COUNT(*)::int AS n FROM bookings
-         WHERE facility_id = $1 AND status <> 'cancelled' AND booking_date >= $2::date`,
+         WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date >= $2::date`,
         [id, bhutanNow().date]
       );
       upcoming = count.rows[0].n;

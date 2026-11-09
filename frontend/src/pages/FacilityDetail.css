@@ -131,10 +131,16 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
 .fd-availability-card { min-width: 0; padding: 20px; }
 .fd-back-link { display: inline-block; margin-bottom: 14px; color: #255463; font-size: 13px; text-decoration: none; }
 .fd-back-link:hover { text-decoration: underline; }
-.fd-category { width: fit-content; height: 48px; display: flex; align-items: center; margin-bottom: 10px; overflow: hidden; border-radius: 24px; background: #255463; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; box-shadow: 0 5px 12px rgba(37, 84, 99, .18); }
+.fd-category-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.fd-category { width: fit-content; height: 48px; display: flex; align-items: center; margin: 0; overflow: hidden; border-radius: 24px; background: #255463; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; box-shadow: 0 5px 12px rgba(37, 84, 99, .18); }
 .fd-category-icon { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px; border-radius: 50%; background: #fff; color: #263238; font-family: sans-serif; font-size: 19px; border: 9px solid #255463; }
 .fd-category > span:last-child { padding: 0 20px 0 8px; }
-.fd-title { color: #263238; margin: 12px 0 18px; font-family: 'Barlow Condensed', sans-serif; font-size: 46px; font-weight: 700; line-height: .95; }
+.fd-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 12px 0 18px; }
+.fd-title-row .fd-title { flex: 1 1 auto; min-width: 0; color: #263238; margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 46px; font-weight: 700; line-height: .95; }
+.fd-today-slots { display: grid; flex: 0 0 auto; justify-items: end; gap: 3px; padding: 9px 12px; border: 1px solid #cfe2e6; border-radius: 10px; background: #f2f8f9; color: #255463; text-align: right; }
+.fd-today-slots span { font-size: 10px; font-weight: 700; line-height: 1.2; }
+.fd-today-slots strong { font-size: 22px; line-height: 1; }
+.fd-today-slots small { font-size: 10px; line-height: 1.2; }
 .fd-img { width: 100%; height: 220px; display: block; margin-bottom: 16px; object-fit: cover; border-radius: 18px; background: #e5e7eb; }
 .fd-subtitle { margin: 0 0 14px; font-size: 17px; }
 .fd-desc { font-size: 14px; color: #374151; line-height: 1.55; margin: 0 0 16px; }
@@ -175,6 +181,8 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
 .fd-row { display: grid; grid-template-columns: 112px repeat(7, minmax(0, 1fr)); gap: 8px; align-items: center; }
 .fd-header-row { min-height: 30px; }
 .fd-day { font-size: 13px; font-weight: 600; text-align: center; color: #263238; }
+.fd-day-with-count { display: grid; justify-items: center; gap: 2px; }
+.fd-day-with-count small { color: #5b6470; font-size: 10px; font-weight: 500; }
 .fd-time { font-size: 13px; font-weight: 400; color: #4b5563; white-space: nowrap; }
 .fd-cell { height: 48px; min-width: 0; padding: 4px; border-radius: 6px; border: 1px solid; font: inherit; font-size: 13px; font-weight: 700; line-height: 1.2; }
 .fd-available { background: #ecfdf5; border-color: #22c55e; color: #166534; cursor: pointer; }
@@ -209,11 +217,15 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
   }
   .fd-info-card { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 14px; }
   .fd-info-card .fd-back-link { grid-column: 1 / -1; margin-bottom: 12px; }
-  .fd-info-card .fd-category {
+  .fd-info-card .fd-category-row {
     grid-column: 1 / -1;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .fd-info-card .fd-category {
     width: fit-content;
     min-height: 34px;
-    margin-bottom: 16px;
     padding-right: 14px;
     border-radius: 999px;
     font-size: 11px;
@@ -229,13 +241,18 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
     padding-right: 12px;
     padding-left: 5px;
   }
-  .fd-info-card .fd-title {
+  .fd-info-card .fd-title-row {
     grid-column: 1 / -1;
     margin: 0 0 14px;
+  }
+  .fd-info-card .fd-title {
     font-size: 30px;
     line-height: 1.08;
     overflow-wrap: anywhere;
   }
+  .fd-info-card .fd-today-slots { padding: 8px 10px; }
+  .fd-info-card .fd-today-slots span { max-width: 96px; }
+  .fd-info-card .fd-today-slots strong { font-size: 20px; }
   .fd-info-card .fd-img {
     grid-column: 1 / -1;
     width: 100%;
@@ -328,7 +345,7 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
   .fd-mobile-dates::-webkit-scrollbar { display: none; }
   .fd-mobile-dates button {
     flex: 0 0 56px;
-    min-height: 68px;
+    min-height: 78px;
     padding: 7px 4px;
     border: 1px solid #dbe3e5;
     border-radius: 14px;
@@ -337,9 +354,11 @@ p.fd-selected { font-weight: 600; margin: 6px 0 0; font-size: 17px; background: 
     scroll-snap-align: start;
   }
   .fd-mobile-dates button span,
-  .fd-mobile-dates button strong { display: block; }
+  .fd-mobile-dates button strong,
+  .fd-mobile-dates button small { display: block; }
   .fd-mobile-dates button span { font-size: 12px; }
   .fd-mobile-dates button strong { margin-top: 5px; font-size: 18px; }
+  .fd-mobile-dates button small { margin-top: 4px; font-size: 9px; white-space: nowrap; }
   .fd-mobile-dates button.active { border-color: #255463; background: #255463; color: #fff; }
   .fd-mobile-dates button.active { box-shadow: 0 7px 16px rgba(37,84,99,.22); }
   .fd-grid-scroll { overflow: visible; }

@@ -1,0 +1,91 @@
+.fee-page {
+  display: grid;
+  gap: 16px;
+}
+
+.fee-page .title,
+.fee-page .subtitle {
+  margin-bottom: 0;
+}
+
+.fee-card {
+  padding: 20px;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(37, 84, 99, .06);
+}
+
+.fee-card h2 {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf1f2;
+  color: #295361;
+  font-size: 19px;
+}
+
+.fee-card p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.fee-card .fee-intro {
+  margin-bottom: 12px;
+}
+
+.fee-table-scroll {
+  overflow-x: auto;
+}
+
+.fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.fee-table th,
+.fee-table td {
+  padding: 12px;
+  border-bottom: 1px solid #edf1f2;
+}
+
+.fee-table thead th {
+  background: #f3f5f9;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fee-table tbody th {
+  font-weight: 700;
+}
+
+.fee-table tbody tr:last-child th,
+.fee-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.fee-card .fee-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f7f8;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .fee-page {
+    padding: 18px 12px 28px;
+  }
+
+  .fee-card {
+    padding: 16px;
+  }
+
+  .fee-table {
+    min-width: 620px;
+  }
+}

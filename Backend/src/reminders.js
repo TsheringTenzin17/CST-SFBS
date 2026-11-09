@@ -1,5 +1,18 @@
 const pool = require('./db');
 
+async function expirePastPendingBookings() {
+  const result = await pool.query(
+    `UPDATE bookings
+     SET status = 'expired'
+     WHERE status = 'pending'
+       AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`
+  );
+  if (result.rowCount > 0) {
+    console.log(`Marked ${result.rowCount} past pending booking(s) as expired.`);
+  }
+  return result.rowCount;
+}
+
 async function processDueReminders() {
   const client = await pool.connect();
   try {
@@ -76,6 +89,12 @@ function startReminderScheduler() {
     if (running) return;
     running = true;
     try {
+      await expirePastPendingBookings();
+    } catch (error) {
+      console.error('Pending booking expiration failed:', error);
+    }
+
+    try {
       await processDueReminders();
     } catch (error) {
       console.error('Booking reminder processing failed:', error);
@@ -97,4 +116,9 @@ function startReminderScheduler() {
   return setInterval(run, 60 * 1000);
 }
 
-module.exports = { processDueReminders, deleteExpiredNotifications, startReminderScheduler };
+module.exports = {
+  expirePastPendingBookings,
+  processDueReminders,
+  deleteExpiredNotifications,
+  startReminderScheduler,
+};

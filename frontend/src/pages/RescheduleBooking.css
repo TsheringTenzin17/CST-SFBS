@@ -180,13 +180,16 @@
 }
 
 .reschedule-actions button.btn-secondary {
+  min-height: 38px;
   min-width: 100px;
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-size: 13px;
-  font-weight: 600;
-  background: #dc2626;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
   color: #fff;
+  font: 600 14px Barlow, sans-serif;
+  background: #cf3f38;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .reschedule-actions button.btn-secondary:hover {

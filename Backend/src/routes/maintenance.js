@@ -55,7 +55,7 @@ router.post('/', requireAdmin, async (req, res) => {
     // Count affected reservations and notify each affected account once, respecting saved preferences.
     const affected = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings
-       WHERE facility_id = $1 AND status <> 'cancelled' AND booking_date BETWEEN $2 AND $3`,
+       WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $2 AND $3`,
       [facility_id, start_date, end_date]
     );
     const recipients = await client.query(
@@ -64,7 +64,7 @@ router.post('/', requireAdmin, async (req, res) => {
        JOIN facilities f ON f.id = b.facility_id
        LEFT JOIN user_notification_preferences p ON p.user_id = b.user_id
        WHERE b.facility_id = $1
-         AND b.status <> 'cancelled'
+         AND b.status NOT IN ('cancelled', 'expired')
          AND b.booking_date BETWEEN $2 AND $3
          AND COALESCE(p.maintenance_alerts, true) = true
        GROUP BY b.user_id, f.name`,
@@ -133,7 +133,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     // Same notification rules as creating a block, for the new facility and dates.
     const affected = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings
-       WHERE facility_id = $1 AND status <> 'cancelled' AND booking_date BETWEEN $2 AND $3`,
+       WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $2 AND $3`,
       [facility_id, start_date, end_date]
     );
     const recipients = await client.query(
@@ -142,7 +142,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
        JOIN facilities f ON f.id = b.facility_id
        LEFT JOIN user_notification_preferences p ON p.user_id = b.user_id
        WHERE b.facility_id = $1
-         AND b.status <> 'cancelled'
+         AND b.status NOT IN ('cancelled', 'expired')
          AND b.booking_date BETWEEN $2 AND $3
          AND COALESCE(p.maintenance_alerts, true) = true
        GROUP BY b.user_id, f.name`,

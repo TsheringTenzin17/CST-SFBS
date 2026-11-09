@@ -139,8 +139,8 @@
 .admin-primary-button:hover { background: var(--theme-dark); }
 .admin-secondary-button { background: var(--theme-soft); color: var(--theme); }
 .admin-secondary-button:hover { background: var(--theme); color: #fff; }
-.admin-cancel-button { background: var(--bad-bg); color: var(--bad); }
-.admin-cancel-button:hover { background: var(--bad); color: #fff; }
+.admin-cancel-button { background: #cf3f38; color: #fff; }
+.admin-cancel-button:hover { background: #a9302a; }
 .admin-dashboard button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .admin-dashboard select,
@@ -326,8 +326,8 @@
   font: 600 14px Barlow, sans-serif;
   cursor: pointer;
 }
-.adm-approve { background: #e3f4e8; color: #17783a; }
-.adm-approve:hover { background: var(--good); color: #fff; }
+.adm-approve { background: var(--blue); color: #fff; }
+.adm-approve:hover { background: var(--blue-dark); }
 .adm-reject { background: var(--bad-bg); color: var(--bad); }
 .adm-reject:hover { background: var(--bad); color: #fff; }
 
@@ -944,6 +944,7 @@
 .bk-status-completed { background: #e1f6e8; color: #22a652; }
 .bk-status-pending { background: #fff0d2; color: #e58e00; }
 .bk-status-cancelled { background: #fbe3e2; color: #d33a34; }
+.bk-status-expired { background: #eceff1; color: #607d8b; }
 
 .bk-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .bk-actions .adm-approve,
@@ -1017,6 +1018,8 @@
 .bk-form label { display: flex; flex-direction: column; gap: 7px; font-size: 14px; font-weight: 700; color: var(--muted); width: 100%; }
 .bk-form textarea { min-height: 118px; width: 100%; resize: vertical; border-radius: 10px; padding: 12px 14px; }
 .bk-form > button { width: 100%; min-height: 46px; border-radius: 9px; font-size: 16px; font-weight: 700; }
+.bk-form > .admin-primary-button { background: var(--blue); }
+.bk-form > .admin-primary-button:hover:not(:disabled) { background: var(--blue-dark); }
 .bk-modal-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; }
 .bk-modal-actions > button { min-height: 46px; width: 100%; border-radius: 9px; font-size: 16px; font-weight: 700; }
 .bk-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
@@ -3941,8 +3944,8 @@
   }
 
   .admin-dashboard .bk-actions .adm-approve {
-    border: 1px solid #b8dfc5;
-    box-shadow: 0 4px 12px rgba(36, 161, 72, .08);
+    border: 1px solid var(--blue);
+    box-shadow: 0 4px 12px rgba(37, 84, 99, .12);
   }
 
   .admin-dashboard .bk-actions .adm-reject {

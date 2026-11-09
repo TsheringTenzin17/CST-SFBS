@@ -333,6 +333,21 @@
 }
 
 @media (max-width: 760px) {
+  .auth-page {
+    background-image: none;
+  }
+
+  .auth-page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    background:
+      linear-gradient(90deg, rgba(7, 26, 31, 0.78), rgba(7, 26, 31, 0.7)),
+      url('/images/collegeCST.jpg') center / cover no-repeat;
+    pointer-events: none;
+  }
+
   .auth-floor-wrap {
     display: none;
   }

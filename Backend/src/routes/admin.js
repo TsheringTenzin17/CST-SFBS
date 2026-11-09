@@ -125,7 +125,7 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled,
                 COUNT(*) FILTER (WHERE status = 'approved'
                   AND (booking_date < $2::date OR (booking_date = $2::date AND end_time <= $3::time)))::int AS completed,
-                COUNT(*) FILTER (WHERE status <> 'cancelled'
+                COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'expired')
                   AND (booking_date > $2::date OR (booking_date = $2::date AND end_time > $3::time)))::int AS upcoming
          FROM bookings WHERE user_id = $1`,
         [id, now.date, nowTime]
@@ -259,17 +259,17 @@ router.get('/reports', requireAdmin, async (req, res) => {
     const [totals, byFacility, byRole, users, month, active, hours, activity] = await Promise.all([
       pool.query(
         `SELECT COUNT(*)::int AS total,
-                COUNT(*) FILTER (WHERE status <> 'cancelled')::int AS confirmed,
+                COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'expired'))::int AS confirmed,
                 COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled
          FROM bookings`),
       pool.query(
         `SELECT f.group_name AS name, COUNT(*)::int AS bookings
          FROM bookings b JOIN facilities f ON f.id = b.facility_id
-         WHERE b.status <> 'cancelled' GROUP BY f.group_name ORDER BY bookings DESC`),
+         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY f.group_name ORDER BY bookings DESC`),
       pool.query(
         `SELECT u.role, COUNT(*)::int AS bookings
          FROM bookings b JOIN users u ON u.id = b.user_id
-         WHERE b.status <> 'cancelled' GROUP BY u.role ORDER BY bookings DESC`),
+         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY u.role ORDER BY bookings DESC`),
       pool.query('SELECT COUNT(*)::int AS n FROM users'),
       // this month vs last month, by booking date
       pool.query(
@@ -281,7 +281,7 @@ router.get('/reports', requireAdmin, async (req, res) => {
       // people who held at least one live booking in the last 30 days
       pool.query(
         `SELECT COUNT(DISTINCT user_id)::int AS n FROM bookings
-         WHERE status <> 'cancelled' AND booking_date BETWEEN $1 AND $2`,
+         WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2`,
         [w.thirtyDaysAgo, w.today]),
       // booked hours vs. open hours (from the standard weekly schedule rules) over the same 30 days
       pool.query(
@@ -296,7 +296,7 @@ router.get('/reports', requireAdmin, async (req, res) => {
          ), booked AS (
            SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 0) AS hours
            FROM bookings
-           WHERE status <> 'cancelled' AND booking_date BETWEEN $1 AND $2
+           WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2
          )
          SELECT open_h.hours::float AS open_hours, booked.hours::float AS booked_hours FROM open_h, booked`,
         [w.thirtyDaysAgo, w.today]),

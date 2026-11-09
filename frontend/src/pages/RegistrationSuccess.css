@@ -15,6 +15,11 @@
   font-weight: 700;
 }
 
+.registration-success-icon.is-cancelled {
+  border-color: #cf3f38;
+  color: #cf3f38;
+}
+
 .registration-success h1 {
   margin: 0 0 9px;
   color: var(--a-text, #eef5f6);
@@ -80,20 +85,27 @@
   min-height: 46px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: #fff;
-  color: #245562;
+  background: #255463;
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
+  transition: background-color .18s ease, transform .18s ease;
 }
 
 .registration-success-button:hover {
-  background: #dbe8eb;
+  background: #173f4a;
+  transform: translateY(-1px);
 }
 
 .registration-success-button:disabled {
   cursor: wait;
   opacity: 0.7;
+}
+
+.registration-success-button:focus-visible {
+  outline: 2px solid #a8cf7d;
+  outline-offset: 3px;
 }
 
 .registration-success-pending-actions {
@@ -104,22 +116,26 @@
 
 .registration-success-cancel {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid rgba(239, 141, 141, .45);
-  border-radius: 10px;
-  background: rgba(239, 141, 141, .08);
-  color: #f0aaaa;
-  font: 600 13px Barlow, sans-serif;
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #cf3f38;
+  color: #fff;
+  font: 600 14px Barlow, sans-serif;
   cursor: pointer;
+  transition: background-color .18s ease;
 }
 
 .registration-success-cancel:hover:not(:disabled) {
-  border-color: #ef8d8d;
-  background: rgba(239, 141, 141, .18);
+  background: #a9302a;
 }
 
 .registration-success-cancel:disabled { cursor: wait; opacity: .7; }
+.registration-success-cancel:focus-visible {
+  outline: 2px solid #ff9999;
+  outline-offset: 3px;
+}
 
 .registration-success-actions {
   display: flex;
