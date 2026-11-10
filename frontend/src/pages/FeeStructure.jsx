@@ -55,9 +55,15 @@ function FeeStructure() {
 
       <section className="fee-card">
         <h2>Other facilities</h2>
-        <p>
-          Student bookings for basketball, volleyball, badminton, and table tennis are free.
-          Outsider commercial rates for these facilities are handled offline with the DSA office.
+        <p className="fee-intro">
+          Basketball, volleyball, badminton, and table tennis bookings are free for eligible student
+          slots. Commercial bookings for these facilities cost{' '}
+          <strong>Nu. 1,500 per booking</strong>, including outsider bookings and slots opened at
+          the commercial rate.
+        </p>
+        <p className="fee-note">
+          Pay to account 221758633 and submit the payment screenshot and journal number with your
+          booking request. The booking remains pending until an administrator verifies the payment.
         </p>
       </section>
     </main>

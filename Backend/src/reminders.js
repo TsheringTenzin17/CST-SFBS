@@ -2,15 +2,32 @@ const pool = require('./db');
 
 async function expirePastPendingBookings() {
   const result = await pool.query(
-    `UPDATE bookings
-     SET status = 'expired'
-     WHERE status = 'pending'
-       AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`,
+    `WITH expired AS (
+       UPDATE bookings
+       SET status = 'expired'
+       WHERE status = 'pending'
+         AND ((booking_date + start_time) AT TIME ZONE 'Asia/Thimphu') <= now()
+       RETURNING id, user_id, facility_id, booking_date, start_time, payment_amount,
+                 payment_screenshot
+     ),
+     notices AS (
+       INSERT INTO notifications (user_id, type, message)
+       SELECT e.user_id, 'payment_resolution_required',
+              'Your paid booking for ' || f.name || ' on ' ||
+              to_char(e.booking_date, 'FMDD Mon YYYY') || ' was not approved before it started and has expired. Choose a full refund or booking credit in My Bookings. The DSA will arrange your choice.'
+       FROM expired e
+       JOIN facilities f ON f.id = e.facility_id
+       WHERE e.payment_amount IS NOT NULL AND e.payment_screenshot IS NOT NULL
+       RETURNING id
+     )
+     SELECT (SELECT count(*) FROM expired)::int AS expired_count,
+            (SELECT count(*) FROM notices)::int AS notified_count`,
   );
-  if (result.rowCount > 0) {
-    console.log(`Marked ${result.rowCount} past pending booking(s) as expired.`);
+  const expiredCount = result.rows[0]?.expired_count || 0;
+  if (expiredCount > 0) {
+    console.log(`Marked ${expiredCount} past pending booking(s) as expired.`);
   }
-  return result.rowCount;
+  return expiredCount;
 }
 
 async function processDueReminders() {

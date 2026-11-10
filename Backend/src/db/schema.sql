@@ -79,6 +79,15 @@ CREATE TABLE IF NOT EXISTS bookings (
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
   purpose TEXT,
   released_for_commercial BOOLEAN DEFAULT FALSE,
+  payment_amount INTEGER CHECK (
+    payment_amount IS NULL
+    OR payment_amount > 0
+  ),
+  payment_journal_number VARCHAR(100),
+  payment_screenshot TEXT,
+  payment_verified_at TIMESTAMPTZ,
+  payment_resolution VARCHAR(10) CHECK (payment_resolution IN ('refund', 'credit')),
+  payment_resolution_completed_at TIMESTAMPTZ,
   created_at TIMESTAMP DEFAULT now()
 );
 

@@ -304,6 +304,54 @@
   color: #46545b;
 }
 
+.my-bookings-status.payment-remedy-needed,
+.my-bookings-status.refund-requested,
+.my-bookings-status.credit-requested {
+  background: #fdf0c9;
+  color: #8a5a00;
+}
+
+.my-bookings-payment-resolution {
+  max-width: 360px;
+  margin-top: 10px;
+  color: #46545b;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.my-bookings-payment-resolution p {
+  margin: 0 0 8px;
+}
+
+.my-bookings-remedy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.my-bookings-remedy-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #255463;
+  border-radius: 6px;
+  background: #fff;
+  color: #255463;
+  font:
+    600 13px Barlow,
+    sans-serif;
+  cursor: pointer;
+}
+
+.my-bookings-remedy-actions button:hover:not(:disabled) {
+  background: #edf5f6;
+}
+
+.my-bookings-remedy-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 /* Row actions */
 .my-bookings-actions {
   text-align: right;

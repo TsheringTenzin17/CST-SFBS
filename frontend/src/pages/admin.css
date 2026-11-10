@@ -1580,6 +1580,26 @@
     sans-serif;
   white-space: nowrap;
 }
+.bk-resolution-status {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.bk-resolution-review {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.bk-resolution-review h4,
+.bk-resolution-review p {
+  margin: 0;
+}
+.bk-resolution-review p {
+  color: var(--muted);
+}
 .bk-role-student,
 .bk-role-faculty,
 .bk-role-admin {
@@ -1793,6 +1813,30 @@
 .bk-note {
   color: var(--muted);
   margin: 0;
+}
+.bk-payment-review {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.bk-payment-review .bk-summary {
+  margin-top: 0;
+}
+.bk-payment-image-link {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  color: var(--theme);
+  font-weight: 700;
+}
+.bk-payment-image {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  object-fit: contain;
+  background: #f7f9f9;
 }
 .bk-modal-footer {
   display: flex;

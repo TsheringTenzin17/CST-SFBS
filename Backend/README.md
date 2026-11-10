@@ -26,6 +26,17 @@ scripts are migrations and some are intended for initial setup or seed data;
 their ordering and re-run safety are not interchangeable. `src/db/run-sql.js`
 can execute a SQL file using the configured database connection.
 
+Paid-booking proof and late-review remedy tracking require the
+`src/db/booking-payment-proof.sql` migration on existing databases:
+
+```sh
+node src/db/run-sql.js src/db/booking-payment-proof.sql
+```
+
+Paid pending bookings expire at their start time if an administrator has not
+approved them. The user can choose a full refund or booking credit; the DSA
+arranges the selected remedy outside the app and records when it is complete.
+
 ## Local checks
 
 Start the API with `npm run dev` from this directory. The test scripts are

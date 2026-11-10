@@ -104,6 +104,8 @@ function StatCard({ label, children, tone }) {
 export default function AdminOverview({ bookingList, user, onReload }) {
   const [facilities, setFacilities] = useState([]);
   const [blocks, setBlocks] = useState([]);
+  const [facilitiesLoading, setFacilitiesLoading] = useState(true);
+  const [facilitiesError, setFacilitiesError] = useState('');
   const [rejecting, setRejecting] = useState(null); // { id, reason }
   const [busyId, setBusyId] = useState(null);
   const [message, setMessage] = useState('');
@@ -117,7 +119,12 @@ export default function AdminOverview({ bookingList, user, onReload }) {
         setFacilities(Array.isArray(f) ? f : []);
         setBlocks(Array.isArray(m) ? m : []);
       })
-      .catch(() => {}); // the arena card simply shows "—" if this fails
+      .catch((e) => {
+        if (active) setFacilitiesError(e.message || 'Could not load facility status.');
+      })
+      .finally(() => {
+        if (active) setFacilitiesLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -211,7 +218,11 @@ export default function AdminOverview({ bookingList, user, onReload }) {
         <small>For system administrators and facility managers.</small>
       </section>
 
-      <section className="admin-stats" aria-label="Booking statistics">
+      <section
+        className="admin-stats"
+        aria-label="Booking statistics"
+        aria-busy={facilitiesLoading}
+      >
         <StatCard label="Total Bookings Today" tone="admin-stat-blue">
           {todayCount} {todayCount === 1 ? 'Request' : 'Requests'}
         </StatCard>
@@ -219,9 +230,22 @@ export default function AdminOverview({ bookingList, user, onReload }) {
           {pending.length} Awaiting
         </StatCard>
         <StatCard label="Operational Arenas" tone="admin-stat-green">
-          {arenasKnown ? `${operational} / ${facilities.length} Active` : '—'}
+          {facilitiesLoading ? (
+            <Spinner label="Loading facility status…" />
+          ) : facilitiesError ? (
+            'Unavailable'
+          ) : arenasKnown ? (
+            `${operational} / ${facilities.length} Active`
+          ) : (
+            '—'
+          )}
         </StatCard>
       </section>
+      {facilitiesError && (
+        <p className="admin-error" role="alert">
+          {facilitiesError}
+        </p>
+      )}
 
       <section className="admin-panel" aria-label="Reservations requiring manual approval">
         <div className="admin-panel-heading">
@@ -277,16 +301,13 @@ export default function AdminOverview({ bookingList, user, onReload }) {
                     </td>
                     <td className="adm-triage-end" data-label="Actions">
                       <div className="admin-row-actions">
-                        <button
-                          type="button"
+                        <Link
+                          to="/admin/bookings"
+                          state={{ paymentReviewBookingId: b.id }}
                           className="adm-approve"
-                          disabled={busyId === b.id}
-                          onClick={() =>
-                            act(b.id, { status: 'approved' }, `Request R-${b.id} approved.`)
-                          }
                         >
-                          Approve
-                        </button>
+                          Review payment
+                        </Link>
                         <button
                           type="button"
                           className="adm-reject"

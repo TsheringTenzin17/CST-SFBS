@@ -329,6 +329,51 @@ async function main() {
     r.status === 200 && Array.isArray(r.body),
     `got ${r.status}`,
   );
+  const paidBooking = await post({
+    user_id: outsider,
+    facility_id: football,
+    booking_date: tuesday,
+    start_time: '18:00',
+    end_time: '20:00',
+  });
+  check(
+    'paid booking records its server-calculated fee and journal number',
+    paidBooking.status === 201 &&
+      paidBooking.body.booking.payment_amount === 3500 &&
+      paidBooking.body.booking.payment_journal_number === 'TEST-JOURNAL-001' &&
+      paidBooking.body.booking.payment_account_number === '221758633',
+    `got ${paidBooking.status} ${JSON.stringify(paidBooking.body)}`,
+  );
+  r = await api('GET', `/bookings/${paidBooking.body.booking.id}/payment-proof`, {
+    test_user_id: student,
+  });
+  check('payment screenshot is not exposed to regular users', r.status === 403, `got ${r.status}`);
+  r = await api('GET', `/bookings/${paidBooking.body.booking.id}/payment-proof`, {
+    test_user_id: admin,
+  });
+  check(
+    'admin can review a booking payment screenshot and journal number',
+    r.status === 200 &&
+      r.body.payment_journal_number === 'TEST-JOURNAL-001' &&
+      r.body.payment_amount === 3500 &&
+      r.body.payment_screenshot.startsWith('data:image/png;base64,'),
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('PATCH', `/bookings/${paidBooking.body.booking.id}`, {
+    admin_user_id: admin,
+    status: 'approved',
+  });
+  const verifiedPayment = await pool.query(
+    'SELECT status, payment_verified_at FROM bookings WHERE id = $1',
+    [paidBooking.body.booking.id],
+  );
+  check(
+    'admin approval records payment verification',
+    r.status === 200 &&
+      verifiedPayment.rows[0]?.status === 'approved' &&
+      verifiedPayment.rows[0]?.payment_verified_at != null,
+    `got ${r.status} ${JSON.stringify(verifiedPayment.rows[0])}`,
+  );
   r = await fetch(
     `${process.env.API_URL || 'http://localhost:4000'}/admin/users?admin_user_id=${admin}`,
   );
@@ -664,8 +709,15 @@ async function main() {
 
   console.log('Expired pending bookings');
   const staleBooking = await pool.query(
-    `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
-     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '10:00', '11:00', 'Expiry test', 'pending')
+    `INSERT INTO bookings (
+       user_id, facility_id, booking_date, start_time, end_time, purpose, status,
+       payment_amount, payment_journal_number, payment_screenshot
+     )
+     VALUES (
+       $1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1,
+       '10:00', '11:00', 'Expiry test', 'pending', 1500, 'EXPIRED-JOURNAL',
+       'data:image/png;base64,iVBORw0KGgo='
+     )
      RETURNING id`,
     [student, basketball],
   );
@@ -674,8 +726,70 @@ async function main() {
     staleBooking.rows[0].id,
   ]);
   check(
-    'past pending bookings are marked expired and retained',
+    'paid pending bookings are expired at start time and retained',
     expiredBooking.rows[0]?.status === 'expired',
+  );
+  const expiryNotice = await pool.query(
+    `SELECT id FROM notifications
+     WHERE user_id = $1 AND type = 'payment_resolution_required'
+       AND message LIKE '%full refund or booking credit%'`,
+    [student],
+  );
+  check(
+    'late paid booking expiry tells the user about refund or credit',
+    expiryNotice.rows.length > 0,
+  );
+  r = await api('PATCH', `/bookings/${staleBooking.rows[0].id}/payment-resolution`, {
+    test_user_id: other,
+    resolution: 'refund',
+  });
+  check(
+    'another user cannot choose the remedy for this booking',
+    r.status === 404,
+    `got ${r.status}`,
+  );
+  r = await api('PATCH', `/bookings/${staleBooking.rows[0].id}/payment-resolution`, {
+    admin_user_id: admin,
+    completed: true,
+  });
+  check(
+    'admin cannot complete a remedy before the user chooses one',
+    r.status === 404,
+    `got ${r.status}`,
+  );
+  r = await api('PATCH', `/bookings/${staleBooking.rows[0].id}/payment-resolution`, {
+    test_user_id: student,
+    resolution: 'refund',
+  });
+  check(
+    'user can select a full refund for an expired paid booking',
+    r.status === 200 && r.body.booking.payment_resolution === 'refund',
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('PATCH', `/bookings/${staleBooking.rows[0].id}/payment-resolution`, {
+    admin_user_id: admin,
+    completed: true,
+  });
+  const completedResolution = await pool.query(
+    `SELECT payment_resolution, payment_resolution_completed_at
+     FROM bookings WHERE id = $1`,
+    [staleBooking.rows[0].id],
+  );
+  check(
+    'admin can mark the requested refund as processed',
+    r.status === 200 &&
+      completedResolution.rows[0]?.payment_resolution === 'refund' &&
+      completedResolution.rows[0]?.payment_resolution_completed_at != null,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('PATCH', `/bookings/${staleBooking.rows[0].id}/payment-resolution`, {
+    admin_user_id: admin,
+    completed: true,
+  });
+  check(
+    'a processed remedy cannot be marked complete a second time',
+    r.status === 404,
+    `got ${r.status}`,
   );
 
   const lateApprovalBooking = await pool.query(
