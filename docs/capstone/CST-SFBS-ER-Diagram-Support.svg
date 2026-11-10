@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1900" viewBox="0 0 2600 1900">
+<rect width="2600" height="1900" fill="white"/>
+<text x="55" y="58" font-family="Arial" font-size="32" font-weight="bold" fill="#174B56">CST-SFBS Entity-Relationship Diagram</text>
+<text x="55" y="98" font-family="Arial" font-size="20" fill="#287C85">Chen notation | Support requests and signup</text>
+<text x="55" y="132" font-family="Arial" font-size="15" fill="#56656A">Rectangles = entities; ovals = attributes; diamonds = relationships; PK attributes are underlined.</text>
+<line x1="229.6" y1="935.0" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="188.1" y1="729.7" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="332.5" y1="555.4" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="588.7" y1="501.6" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="825.0" y1="596.0" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="920.0" y1="790.0" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="825.0" y1="984.0" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="588.7" y1="1078.4" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="332.5" y1="1024.6" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="188.1" y1="850.3" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="229.6" y1="645.0" x2="550" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1712.2" y1="567.8" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1971.5" y1="500.5" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2219.1" y1="591.0" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2320.0" y1="790.0" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2219.1" y1="989.0" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1971.5" y1="1079.5" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1712.2" y1="1012.2" x2="1950" y2="790" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1750.0" y1="1450.0" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1670.6" y1="1612.2" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1457.7" y1="1722.9" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1178.8" y1="1746.9" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="922.6" y1="1676.7" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="770.3" y1="1534.5" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="770.3" y1="1365.5" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="922.6" y1="1223.3" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1178.8" y1="1153.1" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1457.7" y1="1177.1" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1670.6" y1="1287.8" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1750.0" y1="1450.0" x2="1250" y2="1450" stroke="#657B80" stroke-width="1.5"/>
+<line x1="690" y1="790" x2="1140" y2="790" stroke="#657B80" stroke-width="2.5"/>
+<line x1="1360" y1="790" x2="1810" y2="790" stroke="#657B80" stroke-width="2.5"/>
+<polygon points="1250,746 1360,790 1250,834 1140,790" fill="#F5F5F5" stroke="#174B56" stroke-width="2.5"/>
+<text x="1250" y="796" text-anchor="middle" font-family="Arial" font-size="15" fill="#26383D">SUBMITS</text>
+<text x="725" y="780" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">1</text>
+<text x="1745" y="780" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">0..1</text>
+<ellipse cx="229.6" cy="935.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="229.6" y="940.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">id (PK)</text>
+<line x1="206.8" y1="943.0" x2="252.3" y2="943.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="188.1" cy="729.7" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="188.1" y="734.7" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">full_name</text>
+<ellipse cx="332.5" cy="555.4" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="332.5" y="560.4" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">email (UQ)</text>
+<ellipse cx="588.7" cy="501.6" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="588.7" y="506.6" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">student_staff_id</text>
+<ellipse cx="825.0" cy="596.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="825.0" y="601.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">role</text>
+<ellipse cx="920.0" cy="790.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="920.0" y="795.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">password_hash</text>
+<ellipse cx="825.0" cy="984.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="825.0" y="989.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">contact_number</text>
+<ellipse cx="588.7" cy="1078.4" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="588.7" y="1083.4" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">email_verified</text>
+<ellipse cx="332.5" cy="1024.6" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="332.5" y="1029.6" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">organization*</text>
+<ellipse cx="188.1" cy="850.3" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="188.1" y="855.3" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">is_active*</text>
+<ellipse cx="229.6" cy="645.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="229.6" y="650.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">created_at</text>
+<ellipse cx="1712.2" cy="567.8" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1712.2" y="572.8" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">id (PK)</text>
+<line x1="1689.4" y1="575.8" x2="1734.9" y2="575.8" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1971.5" cy="500.5" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1971.5" y="505.5" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">user_id (FK, nullable)</text>
+<ellipse cx="2219.1" cy="591.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="2219.1" y="596.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">name</text>
+<ellipse cx="2320.0" cy="790.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="2320.0" y="795.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">email</text>
+<ellipse cx="2219.1" cy="989.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="2219.1" y="994.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">message</text>
+<ellipse cx="1971.5" cy="1079.5" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1971.5" y="1084.5" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">status</text>
+<ellipse cx="1712.2" cy="1012.2" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1712.2" y="1017.2" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">created_at</text>
+<ellipse cx="1750.0" cy="1450.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1750.0" y="1455.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">token_hash (PK)</text>
+<line x1="1701.2" y1="1458.0" x2="1798.8" y2="1458.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1670.6" cy="1612.2" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1670.6" y="1617.2" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">cancel_token_hash (UQ)</text>
+<ellipse cx="1457.7" cy="1722.9" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1457.7" y="1727.9" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">full_name</text>
+<ellipse cx="1178.8" cy="1746.9" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1178.8" y="1751.9" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">email (UQ)</text>
+<ellipse cx="922.6" cy="1676.7" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="922.6" y="1681.7" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">student_staff_id</text>
+<ellipse cx="770.3" cy="1534.5" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="770.3" y="1539.5" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">role</text>
+<ellipse cx="770.3" cy="1365.5" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="770.3" y="1370.5" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">password_hash</text>
+<ellipse cx="922.6" cy="1223.3" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="922.6" y="1228.3" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">contact_number</text>
+<ellipse cx="1178.8" cy="1153.1" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1178.8" y="1158.1" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">organization</text>
+<ellipse cx="1457.7" cy="1177.1" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1457.7" y="1182.1" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">gender</text>
+<ellipse cx="1670.6" cy="1287.8" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1670.6" y="1292.8" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">expires_at</text>
+<ellipse cx="1750.0" cy="1450.0" rx="100" ry="29" fill="white" stroke="#525F63" stroke-width="2"/>
+<text x="1750.0" y="1455.0" text-anchor="middle" font-family="Arial" font-size="13" fill="#26383D">created_at</text>
+<rect x="410" y="745" width="280" height="90" fill="white" stroke="#174B56" stroke-width="3"/>
+<text x="550" y="797" text-anchor="middle" font-family="Arial" font-size="17" font-weight="bold" fill="#174B56">USERS</text>
+<rect x="1810" y="745" width="280" height="90" fill="white" stroke="#174B56" stroke-width="3"/>
+<text x="1950" y="797" text-anchor="middle" font-family="Arial" font-size="17" font-weight="bold" fill="#174B56">SUPPORT_REQUESTS</text>
+<rect x="1110" y="1405" width="280" height="90" fill="white" stroke="#174B56" stroke-width="3"/>
+<text x="1250" y="1457" text-anchor="middle" font-family="Arial" font-size="17" font-weight="bold" fill="#174B56">PENDING_REGISTRATIONS</text>
+<text x="55" y="1832" font-family="Arial" font-size="14" fill="#56656A">PENDING_REGISTRATIONS is a temporary signup entity with no user_id foreign key. * denotes migration-added user attributes.</text>
+<text x="55" y="1865" font-family="Arial" font-size="13" fill="#56656A">Source: Backend/src/db/schema.sql and migrations. Repository-derived; live database not queried.</text>
+</svg>

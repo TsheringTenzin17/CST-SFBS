@@ -26,6 +26,12 @@ scripts are migrations and some are intended for initial setup or seed data;
 their ordering and re-run safety are not interchangeable. `src/db/run-sql.js`
 can execute a SQL file using the configured database connection.
 
+Database connections use TLS with server-certificate validation by default.
+If the database uses a private CA, set `DB_SSL_CA` to its PEM certificate.
+Only set `DB_SSL=false` for local PostgreSQL instances that do not support TLS.
+SSL settings in `DATABASE_URL` are ignored so they cannot override these
+verification settings.
+
 ## Local checks
 
 Start the API with `npm run dev` from this directory. The test scripts are

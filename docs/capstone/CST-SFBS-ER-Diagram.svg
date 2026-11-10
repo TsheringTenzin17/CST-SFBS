@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="2550" viewBox="0 0 3200 2550">
+<rect width="3200" height="2550" fill="#FFFFFF"/>
+<text x="55" y="58" font-family="Arial" font-size="32" font-weight="bold" fill="#174B56">CST-SFBS Entity-Relationship Diagram</text>
+<text x="55" y="98" font-family="Arial" font-size="20" fill="#287C85">Chen notation | Core booking data</text>
+<text x="55" y="132" font-family="Arial" font-size="15" fill="#56656A">Rectangles = entities; ovals = attributes; diamonds = relationships; PK attributes are underlined.</text>
+<line x1="800.0" y1="439.0" x2="800.0" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="966.2" y1="486.5" x2="913.8" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1092.4" y1="618.6" x2="940.0" y2="733.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1121.3" y1="795.1" x2="940.0" y2="755.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1038.4" y1="956.3" x2="940.0" y2="780.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="884.6" y1="1049.0" x2="852.0" y2="795.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="715.4" y1="1049.0" x2="748.0" y2="795.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="561.6" y1="956.3" x2="660.0" y2="780.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="478.7" y1="795.1" x2="660.0" y2="755.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="507.6" y1="618.6" x2="660.0" y2="733.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="633.8" y1="486.5" x2="686.2" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2300.0" y1="439.0" x2="2300.0" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2466.2" y1="486.5" x2="2413.8" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2592.4" y1="618.6" x2="2440.0" y2="733.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2621.3" y1="795.1" x2="2440.0" y2="755.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2538.4" y1="956.3" x2="2440.0" y2="780.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2384.6" y1="1049.0" x2="2352.0" y2="795.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2215.4" y1="1049.0" x2="2248.0" y2="795.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2061.6" y1="956.3" x2="2160.0" y2="780.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1978.7" y1="795.1" x2="2160.0" y2="755.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2007.6" y1="618.6" x2="2160.0" y2="733.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2133.8" y1="486.5" x2="2186.2" y2="705.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2300.0" y1="1489.0" x2="2300.0" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2481.7" y1="1546.3" x2="2428.6" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2607.3" y1="1702.2" x2="2440.0" y2="1788.4" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2607.3" y1="1897.8" x2="2440.0" y2="1811.6" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2481.7" y1="2053.7" x2="2428.6" y2="1845.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2300.0" y1="2111.0" x2="2300.0" y2="1845.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2118.3" y1="2053.7" x2="2171.4" y2="1845.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1992.7" y1="1897.8" x2="2160.0" y2="1811.6" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1992.7" y1="1702.2" x2="2160.0" y2="1788.4" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2118.3" y1="1546.3" x2="2171.4" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="800.0" y1="1489.0" x2="800.0" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="966.2" y1="1536.5" x2="913.8" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1092.4" y1="1668.6" x2="940.0" y2="1783.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1121.3" y1="1845.1" x2="940.0" y2="1805.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="1038.4" y1="2006.3" x2="940.0" y2="1830.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="884.6" y1="2099.0" x2="852.0" y2="1845.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="715.4" y1="2099.0" x2="748.0" y2="1845.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="561.6" y1="2006.3" x2="660.0" y2="1830.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="478.7" y1="1845.1" x2="660.0" y2="1805.1" stroke="#657B80" stroke-width="1.5"/>
+<line x1="507.6" y1="1668.6" x2="660.0" y2="1783.8" stroke="#657B80" stroke-width="1.5"/>
+<line x1="633.8" y1="1536.5" x2="686.2" y2="1755.0" stroke="#657B80" stroke-width="1.5"/>
+<line x1="2300.0" y1="795" x2="1435.0" y2="1275.0" stroke="#657B80" stroke-width="2.5"/>
+<line x1="1665.0" y1="1275.0" x2="800.0" y2="1755" stroke="#657B80" stroke-width="2.5"/>
+<polygon points="1550.0,1234.0 1665.0,1275.0 1550.0,1316.0 1435.0,1275.0" fill="#F5F5F5" stroke="#174B56" stroke-width="2.5"/>
+<text x="1550.0" y="1281.0" text-anchor="middle" font-family="Arial" font-size="15" fill="#26383D">DEFINES</text>
+<text x="2098.4" y="902.2" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">1</text>
+<text x="1013.6" y="1631.8" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">N</text>
+<line x1="800.0" y1="795" x2="1435.0" y2="1275.0" stroke="#657B80" stroke-width="2.5"/>
+<line x1="1665.0" y1="1275.0" x2="2300.0" y2="1755" stroke="#657B80" stroke-width="2.5"/>
+<polygon points="1550.0,1234.0 1665.0,1275.0 1550.0,1316.0 1435.0,1275.0" fill="#F5F5F5" stroke="#174B56" stroke-width="2.5"/>
+<text x="1550.0" y="1281.0" text-anchor="middle" font-family="Arial" font-size="15" fill="#26383D">PLACES</text>
+<text x="958.4" y="902.2" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">1</text>
+<text x="2153.6" y="1631.8" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">N</text>
+<line x1="2300.0" y1="795" x2="2185.0" y2="1275.0" stroke="#657B80" stroke-width="2.5"/>
+<line x1="2415.0" y1="1275.0" x2="2300.0" y2="1755" stroke="#657B80" stroke-width="2.5"/>
+<polygon points="2300.0,1234.0 2415.0,1275.0 2300.0,1316.0 2185.0,1275.0" fill="#F5F5F5" stroke="#174B56" stroke-width="2.5"/>
+<text x="2300.0" y="1281.0" text-anchor="middle" font-family="Arial" font-size="15" fill="#26383D">IS RESERVED IN</text>
+<text x="2278.4" y="902.2" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">1</text>
+<text x="2333.6" y="1631.8" font-family="Arial" font-size="16" font-weight="bold" fill="#174B56">N</text>
+<ellipse cx="800.0" cy="410.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="800.0" y="415.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">id (PK)</text>
+<line x1="775.1" y1="418.0" x2="824.9" y2="418.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1032.5" cy="464.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1032.5" y="469.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">full_name</text>
+<ellipse cx="1191.1" cy="608.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1191.1" y="613.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">email (UQ)</text>
+<line x1="1155.6" y1="616.8" x2="1226.6" y2="616.8" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1225.6" cy="798.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1225.6" y="803.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">student_staff_id</text>
+<ellipse cx="1125.0" cy="972.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1125.0" y="977.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">role</text>
+<ellipse cx="921.1" cy="1076.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="921.1" y="1081.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">password_hash</text>
+<ellipse cx="678.9" cy="1076.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="678.9" y="1081.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">contact_number</text>
+<ellipse cx="475.0" cy="972.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="475.0" y="977.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">email_verified</text>
+<ellipse cx="374.4" cy="798.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="374.4" y="803.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">organization*</text>
+<ellipse cx="408.9" cy="608.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="408.9" y="613.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">is_active*</text>
+<ellipse cx="567.5" cy="464.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="567.5" y="469.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">created_at</text>
+<ellipse cx="2300.0" cy="410.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2300.0" y="415.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">id (PK)</text>
+<line x1="2275.2" y1="418.0" x2="2324.8" y2="418.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="2532.5" cy="464.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2532.5" y="469.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">name (UQ)</text>
+<line x1="2500.5" y1="472.0" x2="2564.4" y2="472.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="2691.1" cy="608.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2691.1" y="613.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">type</text>
+<ellipse cx="2725.6" cy="798.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2725.6" y="803.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">group_name</text>
+<ellipse cx="2625.0" cy="972.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2625.0" y="977.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">court_label</text>
+<ellipse cx="2421.1" cy="1076.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2421.1" y="1081.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">capacity</text>
+<ellipse cx="2178.9" cy="1076.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2178.9" y="1081.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">location</text>
+<ellipse cx="1975.0" cy="972.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1975.0" y="977.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">max_duration_minutes</text>
+<ellipse cx="1874.4" cy="798.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1874.4" y="803.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">is_active</text>
+<ellipse cx="1908.9" cy="608.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1908.9" y="613.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">description*</text>
+<ellipse cx="2067.5" cy="464.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2067.5" y="469.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">image_url*</text>
+<ellipse cx="2300.0" cy="1460.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2300.0" y="1465.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">id (PK)</text>
+<line x1="2275.2" y1="1468.0" x2="2324.8" y2="1468.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="2552.7" cy="1524.9" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2552.7" y="1529.9" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">user_id (FK)</text>
+<line x1="2510.1" y1="1532.9" x2="2595.3" y2="1532.9" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="2709.0" cy="1694.9" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2709.0" y="1699.9" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">facility_id (FK)</text>
+<line x1="2652.2" y1="1702.9" x2="2765.8" y2="1702.9" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="2709.0" cy="1905.1" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2709.0" y="1910.1" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">booking_date</text>
+<ellipse cx="2552.7" cy="2075.1" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2552.7" y="2080.1" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">start_time</text>
+<ellipse cx="2300.0" cy="2140.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2300.0" y="2145.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">end_time</text>
+<ellipse cx="2047.3" cy="2075.1" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2047.3" y="2080.1" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">status</text>
+<ellipse cx="1891.0" cy="1905.1" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1891.0" y="1910.1" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">purpose</text>
+<ellipse cx="1891.0" cy="1694.9" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1891.0" y="1699.9" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">released_for_commercial</text>
+<ellipse cx="2047.3" cy="1524.9" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="2047.3" y="1529.9" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">created_at</text>
+<ellipse cx="800.0" cy="1460.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="800.0" y="1465.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">id (PK)</text>
+<line x1="775.1" y1="1468.0" x2="824.9" y2="1468.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1032.5" cy="1514.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1032.5" y="1519.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">facility_id (FK)</text>
+<line x1="975.7" y1="1522.0" x2="1089.3" y2="1522.0" stroke="#26383D" stroke-width="1"/>
+<ellipse cx="1191.1" cy="1658.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1191.1" y="1663.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">day_of_week</text>
+<ellipse cx="1225.6" cy="1848.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1225.6" y="1853.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">start_time</text>
+<ellipse cx="1125.0" cy="2022.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="1125.0" y="2027.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">end_time</text>
+<ellipse cx="921.1" cy="2126.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="921.1" y="2131.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">primary_role</text>
+<ellipse cx="678.9" cy="2126.2" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="678.9" y="2131.2" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">fallback_role</text>
+<ellipse cx="475.0" cy="2022.7" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="475.0" y="2027.7" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">fallback_type</text>
+<ellipse cx="374.4" cy="1848.4" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="374.4" y="1853.4" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">notes</text>
+<ellipse cx="408.9" cy="1658.8" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="408.9" y="1663.8" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">timetable*</text>
+<ellipse cx="567.5" cy="1514.0" rx="110" ry="31" fill="#FFFFFF" stroke="#525F63" stroke-width="2"/>
+<text x="567.5" y="1519.0" text-anchor="middle" font-family="Arial" font-size="14" fill="#26383D">day_booking_cap*</text>
+<rect x="660" y="705" width="280" height="90" fill="#FFFFFF" stroke="#174B56" stroke-width="3"/>
+<text x="800.0" y="761" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="#174B56">USERS</text>
+<rect x="2160" y="705" width="280" height="90" fill="#FFFFFF" stroke="#174B56" stroke-width="3"/>
+<text x="2300.0" y="761" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="#174B56">FACILITIES</text>
+<rect x="2160" y="1755" width="280" height="90" fill="#FFFFFF" stroke="#174B56" stroke-width="3"/>
+<text x="2300.0" y="1811" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="#174B56">BOOKINGS</text>
+<rect x="660" y="1755" width="280" height="90" fill="#FFFFFF" stroke="#174B56" stroke-width="3"/>
+<text x="800.0" y="1811" text-anchor="middle" font-family="Arial" font-size="20" font-weight="bold" fill="#174B56">SCHEDULE_RULES</text>
+<text x="55" y="2482" font-family="Arial" font-size="14" fill="#56656A">* Added by a database migration. Only schema-defined columns are shown; the active Render database may differ if migrations are unapplied.</text>
+<text x="55" y="2515" font-family="Arial" font-size="13" fill="#56656A">Source: Backend/src/db/schema.sql and migrations. Repository-derived; live database not queried.</text>
+</svg>
