@@ -17,8 +17,9 @@ const lengthLabel = (minutes) => {
 };
 
 const longDate = (iso) =>
-  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-    .format(new Date(`${iso}T00:00:00Z`));
+  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
+    new Date(`${iso}T00:00:00Z`),
+  );
 
 // Group facilities by sport (Badminton Court 1 + 2 -> "Badminton Court"), then merge courts that share the same rules.
 function buildGroups(facilities, rules) {
@@ -26,7 +27,9 @@ function buildGroups(facilities, rules) {
   facilities.forEach((facility) => {
     const key = facility.group_name || facility.name;
     if (!byGroup.has(key)) byGroup.set(key, []);
-    byGroup.get(key).push({ ...facility, rules: rules.filter((r) => r.facility_id === facility.id) });
+    byGroup
+      .get(key)
+      .push({ ...facility, rules: rules.filter((r) => r.facility_id === facility.id) });
   });
 
   return [...byGroup].map(([name, list]) => {
@@ -48,7 +51,10 @@ function buildGroups(facilities, rules) {
 
 function Cell({ cell, commercial, label }) {
   return (
-    <td className={`${commercial ? 'set-commercial' : ''} ${!cell.ranges.length ? 'set-closed' : ''}`} data-label={label}>
+    <td
+      className={`${commercial ? 'set-commercial' : ''} ${!cell.ranges.length ? 'set-closed' : ''}`}
+      data-label={label}
+    >
       {!cell.ranges.length && 'Closed'}
       {cell.ranges.map((range) => (
         <div key={`${range.start}-${range.end}-${range.note}`}>
@@ -69,7 +75,11 @@ function PolicyTable({ rules, view }) {
         <thead>
           <tr>
             <th scope="col">Day</th>
-            {COLUMNS.map((col) => <th scope="col" key={col.key}>{col.label}</th>)}
+            {COLUMNS.map((col) => (
+              <th scope="col" key={col.key}>
+                {col.label}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -78,11 +88,17 @@ function PolicyTable({ rules, view }) {
               <th scope="row">{row.name}</th>
               {row.maintenance ? (
                 <td colSpan={COLUMNS.length} className="set-maint">
-                  Closed for maintenance, {clock(row.maintenance.start)} – {clock(row.maintenance.end)}
+                  Closed for maintenance, {clock(row.maintenance.start)} –{' '}
+                  {clock(row.maintenance.end)}
                 </td>
               ) : (
                 COLUMNS.map((col) => (
-                  <Cell key={col.key} cell={row.cells[col.key]} commercial={col.key === 'commercial'} label={col.label} />
+                  <Cell
+                    key={col.key}
+                    cell={row.cells[col.key]}
+                    commercial={col.key === 'commercial'}
+                    label={col.label}
+                  />
                 ))
               )}
             </tr>
@@ -95,9 +111,15 @@ function PolicyTable({ rules, view }) {
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const EDITABLE_ROLES = [
-  ['maintenance', 'Maintenance / closed'], ['student', 'Students'], ['student_female', 'Female students'],
-  ['faculty', 'Faculty / Staff'], ['faculty_male', 'Male faculty'], ['faculty_female', 'Female faculty'],
-  ['commercial', 'Commercial / Outsiders'], ['any', 'Students or commercial'], ['everyone', 'All users'],
+  ['maintenance', 'Maintenance / closed'],
+  ['student', 'Students'],
+  ['student_female', 'Female students'],
+  ['faculty', 'Faculty / Staff'],
+  ['faculty_male', 'Male faculty'],
+  ['faculty_female', 'Female faculty'],
+  ['commercial', 'Commercial / Outsiders'],
+  ['any', 'Students or commercial'],
+  ['everyone', 'All users'],
 ];
 
 function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
@@ -107,25 +129,72 @@ function ScheduleRuleRow({ rule, saving, onSave, onDelete }) {
   return (
     <tr>
       <td data-label="Day">
-        <select value={draft.day_of_week} onChange={(event) => update('day_of_week', Number(event.target.value))}>
-          {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
+        <select
+          value={draft.day_of_week}
+          onChange={(event) => update('day_of_week', Number(event.target.value))}
+        >
+          {DAYS.map((day, index) => (
+            <option key={day} value={index}>
+              {day}
+            </option>
+          ))}
         </select>
       </td>
-      <td data-label="Start"><input type="time" aria-label="Start time" value={draft.start_time} onChange={(event) => update('start_time', event.target.value)} /></td>
-      <td data-label="End"><input type="time" aria-label="End time" value={draft.end_time} onChange={(event) => update('end_time', event.target.value)} /></td>
+      <td data-label="Start">
+        <input
+          type="time"
+          aria-label="Start time"
+          value={draft.start_time}
+          onChange={(event) => update('start_time', event.target.value)}
+        />
+      </td>
+      <td data-label="End">
+        <input
+          type="time"
+          aria-label="End time"
+          value={draft.end_time}
+          onChange={(event) => update('end_time', event.target.value)}
+        />
+      </td>
       <td data-label="Access">
-        <select value={draft.primary_role} onChange={(event) => update('primary_role', event.target.value)}>
-          {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        <select
+          value={draft.primary_role}
+          onChange={(event) => update('primary_role', event.target.value)}
+        >
+          {EDITABLE_ROLES.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </td>
       <td data-label="Timetable">
-        <select value={draft.timetable || 'all'} onChange={(event) => update('timetable', event.target.value)}>
-          <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
+        <select
+          value={draft.timetable || 'all'}
+          onChange={(event) => update('timetable', event.target.value)}
+        >
+          <option value="all">All dates</option>
+          <option value="standard">Standard</option>
+          <option value="tournament">Tournament</option>
         </select>
       </td>
       <td className="schedule-rule-actions">
-        <button type="button" className="admin-primary-button" disabled={saving} onClick={() => onSave(draft)}>{saving ? <Spinner label="Saving rule…" /> : 'Save'}</button>
-        <button type="button" className="admin-secondary-button schedule-rule-delete" disabled={saving} onClick={() => onDelete(draft)}>{saving ? <Spinner label="Saving rule…" /> : 'Delete'}</button>
+        <button
+          type="button"
+          className="admin-primary-button"
+          disabled={saving}
+          onClick={() => onSave(draft)}
+        >
+          {saving ? <Spinner label="Saving rule…" /> : 'Save'}
+        </button>
+        <button
+          type="button"
+          className="admin-secondary-button schedule-rule-delete"
+          disabled={saving}
+          onClick={() => onDelete(draft)}
+        >
+          {saving ? <Spinner label="Saving rule…" /> : 'Delete'}
+        </button>
       </td>
     </tr>
   );
@@ -135,8 +204,12 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
   const [facilityId, setFacilityId] = useState(String(table.facilities[0]?.id || ''));
   const [savingId, setSavingId] = useState(null);
   const [newRule, setNewRule] = useState({
-    day_of_week: 1, start_time: '16:00', end_time: '18:00', primary_role: 'everyone',
-    timetable: 'all', day_booking_cap: '',
+    day_of_week: 1,
+    start_time: '16:00',
+    end_time: '18:00',
+    primary_role: 'everyone',
+    timetable: 'all',
+    day_booking_cap: '',
   });
 
   const facilityRules = allRules
@@ -159,7 +232,12 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
   }
 
   async function remove(rule) {
-    if (!window.confirm(`Delete the ${DAYS[rule.day_of_week]} schedule from ${rule.start_time} to ${rule.end_time}?`)) return;
+    if (
+      !window.confirm(
+        `Delete the ${DAYS[rule.day_of_week]} schedule from ${rule.start_time} to ${rule.end_time}?`,
+      )
+    )
+      return;
     setSavingId(rule.id);
     try {
       await apiCall(`/admin/settings/rules/${rule.id}`, 'DELETE');
@@ -174,7 +252,10 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
   async function add() {
     setSavingId('new');
     try {
-      await apiCall('/admin/settings/rules', 'POST', { ...newRule, facility_id: Number(facilityId) });
+      await apiCall('/admin/settings/rules', 'POST', {
+        ...newRule,
+        facility_id: Number(facilityId),
+      });
       onSaved('Schedule rule added.');
       setNewRule((current) => ({ ...current, start_time: '16:00', end_time: '18:00' }));
     } catch (requestError) {
@@ -195,7 +276,11 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
           <label>
             Facility
             <select value={facilityId} onChange={(event) => setFacilityId(event.target.value)}>
-              {table.facilities.map((facility) => <option key={facility.id} value={facility.id}>{facility.name}</option>)}
+              {table.facilities.map((facility) => (
+                <option key={facility.id} value={facility.id}>
+                  {facility.name}
+                </option>
+              ))}
             </select>
           </label>
         )}
@@ -203,63 +288,124 @@ function ScheduleEditor({ table, allRules, onSaved, onError }) {
 
       <details className="schedule-editor-details">
         <summary>
-          <span>{facilityRules.length ? `${facilityRules.length} timing rules` : 'No timing rules yet'}</span>
+          <span>
+            {facilityRules.length ? `${facilityRules.length} timing rules` : 'No timing rules yet'}
+          </span>
         </summary>
         <div className="schedule-editor-scroll">
           <table className="schedule-editor-table">
-          <thead>
-            <tr><th>Day</th><th>Start</th><th>End</th><th>Access</th><th>Timetable</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            {facilityRules.map((rule) => (
-              <ScheduleRuleRow
-                key={rule.id}
-                rule={rule}
-                saving={savingId === rule.id}
-                onSave={save}
-                onDelete={remove}
-              />
-            ))}
-          </tbody>
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Access</th>
+                <th>Timetable</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {facilityRules.map((rule) => (
+                <ScheduleRuleRow
+                  key={rule.id}
+                  rule={rule}
+                  saving={savingId === rule.id}
+                  onSave={save}
+                  onDelete={remove}
+                />
+              ))}
+            </tbody>
           </table>
         </div>
 
         <div className="schedule-rule-add">
-        <strong>Add timing rule</strong>
-        <div className="schedule-rule-fields">
-          <label>Day
-            <select aria-label="New rule day" value={newRule.day_of_week} onChange={(event) => setNewRule({ ...newRule, day_of_week: Number(event.target.value) })}>
-              {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
-            </select>
-          </label>
-          <label>Start
-            <input aria-label="New rule start" type="time" value={newRule.start_time} onChange={(event) => setNewRule({ ...newRule, start_time: event.target.value })} />
-          </label>
-          <label>End
-            <input aria-label="New rule end" type="time" value={newRule.end_time} onChange={(event) => setNewRule({ ...newRule, end_time: event.target.value })} />
-          </label>
-          <label>Access
-            <select aria-label="New rule access" value={newRule.primary_role} onChange={(event) => setNewRule({ ...newRule, primary_role: event.target.value })}>
-              {EDITABLE_ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </label>
-          <label>Timetable
-            <select aria-label="New rule timetable" value={newRule.timetable} onChange={(event) => setNewRule({ ...newRule, timetable: event.target.value })}>
-              <option value="all">All dates</option><option value="standard">Standard</option><option value="tournament">Tournament</option>
-            </select>
-          </label>
-          <button type="button" className="admin-primary-button" onClick={add} disabled={savingId === 'new'}>{savingId === 'new' ? <Spinner label="Adding rule…" /> : 'Add Rule'}</button>
+          <strong>Add timing rule</strong>
+          <div className="schedule-rule-fields">
+            <label>
+              Day
+              <select
+                aria-label="New rule day"
+                value={newRule.day_of_week}
+                onChange={(event) =>
+                  setNewRule({ ...newRule, day_of_week: Number(event.target.value) })
+                }
+              >
+                {DAYS.map((day, index) => (
+                  <option key={day} value={index}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Start
+              <input
+                aria-label="New rule start"
+                type="time"
+                value={newRule.start_time}
+                onChange={(event) => setNewRule({ ...newRule, start_time: event.target.value })}
+              />
+            </label>
+            <label>
+              End
+              <input
+                aria-label="New rule end"
+                type="time"
+                value={newRule.end_time}
+                onChange={(event) => setNewRule({ ...newRule, end_time: event.target.value })}
+              />
+            </label>
+            <label>
+              Access
+              <select
+                aria-label="New rule access"
+                value={newRule.primary_role}
+                onChange={(event) => setNewRule({ ...newRule, primary_role: event.target.value })}
+              >
+                {EDITABLE_ROLES.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Timetable
+              <select
+                aria-label="New rule timetable"
+                value={newRule.timetable}
+                onChange={(event) => setNewRule({ ...newRule, timetable: event.target.value })}
+              >
+                <option value="all">All dates</option>
+                <option value="standard">Standard</option>
+                <option value="tournament">Tournament</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className="admin-primary-button"
+              onClick={add}
+              disabled={savingId === 'new'}
+            >
+              {savingId === 'new' ? <Spinner label="Adding rule…" /> : 'Add Rule'}
+            </button>
+          </div>
         </div>
-      </div>
-        </details>
-      </div>
+      </details>
+    </div>
   );
 }
 
 const NOTIFICATIONS = [
-  ['Booking updates', 'The booker is notified when a booking is confirmed, waiting for approval, or cancelled.'],
+  [
+    'Booking updates',
+    'The booker is notified when a booking is confirmed, waiting for approval, or cancelled.',
+  ],
   ['Game reminders', 'Approved bookings get a reminder 24 hours and 2 hours before they start.'],
-  ['Maintenance alerts', 'People with bookings inside a new or changed maintenance block are told which bookings may be affected.'],
+  [
+    'Maintenance alerts',
+    'People with bookings inside a new or changed maintenance block are told which bookings may be affected.',
+  ],
 ];
 
 function AdminSettings() {
@@ -286,7 +432,9 @@ function AdminSettings() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const groups = useMemo(() => (data ? buildGroups(data.facilities, data.rules) : []), [data]);
   const group = groups.find((g) => g.name === selected) || groups[0];
@@ -303,23 +451,32 @@ function AdminSettings() {
       <header className="admin-page-header">
         <h1>System Settings &amp; Policies</h1>
         <p>
-          See how every facility is allocated, how long a booking can be, and which notifications go out.
-          Looking for help tickets? Open <Link to="/admin/support">Support Requests</Link>.
+          See how every facility is allocated, how long a booking can be, and which notifications go
+          out. Looking for help tickets? Open <Link to="/admin/support">Support Requests</Link>.
         </p>
       </header>
 
       {error && (
         <p className="admin-error" role="alert">
-          {error} <button className="admin-secondary-button" type="button" onClick={load}>Try again</button>
+          {error}{' '}
+          <button className="admin-secondary-button" type="button" onClick={load}>
+            Try again
+          </button>
         </p>
       )}
-      {scheduleMessage && <p className="admin-support-notice" role="status">{scheduleMessage}</p>}
+      {scheduleMessage && (
+        <p className="admin-support-notice" role="status">
+          {scheduleMessage}
+        </p>
+      )}
       {loading && !data && <AdminLoading label="Loading system settings" rows={4} />}
 
       {data && (
         <>
           <section className="admin-panel" aria-labelledby="set-limits">
-            <div className="admin-panel-heading"><h2 id="set-limits">Booking Limits &amp; Rules</h2></div>
+            <div className="admin-panel-heading">
+              <h2 id="set-limits">Booking Limits &amp; Rules</h2>
+            </div>
             <dl className="set-limits">
               {groups.map((g) => (
                 <div key={g.name}>
@@ -331,7 +488,9 @@ function AdminSettings() {
           </section>
 
           <section className="admin-panel" aria-labelledby="set-alloc">
-            <div className="admin-panel-heading"><h2 id="set-alloc">Day-by-Day Allocation Policies</h2></div>
+            <div className="admin-panel-heading">
+              <h2 id="set-alloc">Day-by-Day Allocation Policies</h2>
+            </div>
 
             <div className="sup-tabs" role="tablist" aria-label="Choose a sport">
               {groups.map((g) => (
@@ -353,8 +512,20 @@ function AdminSettings() {
                 {hasTournament && (
                   <div className="set-toolbar">
                     <div className="set-toggle" role="group" aria-label="Timetable">
-                      <button type="button" aria-pressed={activeView === 'standard'} onClick={() => setView('standard')}>Standard dates</button>
-                      <button type="button" aria-pressed={activeView === 'tournament'} onClick={() => setView('tournament')}>Tournament dates</button>
+                      <button
+                        type="button"
+                        aria-pressed={activeView === 'standard'}
+                        onClick={() => setView('standard')}
+                      >
+                        Standard dates
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={activeView === 'tournament'}
+                        onClick={() => setView('tournament')}
+                      >
+                        Tournament dates
+                      </button>
                     </div>
                     <p>
                       {data.info.active_tournament
@@ -365,16 +536,24 @@ function AdminSettings() {
                   </div>
                 )}
 
-                {group.allClosed && <p className="admin-error" role="status">This facility is currently closed for reservations.</p>}
+                {group.allClosed && (
+                  <p className="admin-error" role="status">
+                    This facility is currently closed for reservations.
+                  </p>
+                )}
 
                 {group.tables.map((table) => (
                   <div className="set-block" key={table.facilities.map((f) => f.id).join('-')}>
                     {group.courtCount > 1 && (
                       <h3>{table.facilities.map((f) => f.name).join(' and ')}</h3>
                     )}
-                    {table.rules.length === 0
-                      ? <p className="admin-state-message">No booking rules are set for this facility, so nothing can be booked.</p>
-                      : <PolicyTable rules={table.rules} view={activeView} />}
+                    {table.rules.length === 0 ? (
+                      <p className="admin-state-message">
+                        No booking rules are set for this facility, so nothing can be booked.
+                      </p>
+                    ) : (
+                      <PolicyTable rules={table.rules} view={activeView} />
+                    )}
                     <ScheduleEditor
                       table={table}
                       allRules={data.rules}
@@ -389,20 +568,37 @@ function AdminSettings() {
 
           <div className="set-pair">
             <section className="admin-panel" aria-labelledby="set-notify">
-              <div className="admin-panel-heading"><h2 id="set-notify">Notification Rules</h2></div>
+              <div className="admin-panel-heading">
+                <h2 id="set-notify">Notification Rules</h2>
+              </div>
               <ul className="set-list">
                 {NOTIFICATIONS.map(([title, text]) => (
-                  <li key={title}><strong>{title}</strong><span>{text}</span></li>
+                  <li key={title}>
+                    <strong>{title}</strong>
+                    <span>{text}</span>
+                  </li>
                 ))}
               </ul>
-              <p className="set-footnote">Everyone can switch these off for themselves in their profile settings.</p>
+              <p className="set-footnote">
+                Everyone can switch these off for themselves in their profile settings.
+              </p>
             </section>
 
             <section className="admin-panel" aria-labelledby="set-info">
-              <div className="admin-panel-heading"><h2 id="set-info">System Information</h2></div>
+              <div className="admin-panel-heading">
+                <h2 id="set-info">System Information</h2>
+              </div>
               <dl className="set-info">
-                <div><dt>Registered users</dt><dd>{data.info.registered_users.toLocaleString('en-GB')}</dd></div>
-                <div><dt>Facilities open</dt><dd>{data.info.open_facilities} of {data.info.total_facilities}</dd></div>
+                <div>
+                  <dt>Registered users</dt>
+                  <dd>{data.info.registered_users.toLocaleString('en-GB')}</dd>
+                </div>
+                <div>
+                  <dt>Facilities open</dt>
+                  <dd>
+                    {data.info.open_facilities} of {data.info.total_facilities}
+                  </dd>
+                </div>
                 <div>
                   <dt>Under maintenance today</dt>
                   <dd className={data.info.facilities_in_maintenance ? 'set-warn' : 'set-ok'}>

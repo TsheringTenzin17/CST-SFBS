@@ -1,12 +1,15 @@
+-- Base tables shared by the API; feature-specific changes live in separate migrations.
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   full_name VARCHAR(120) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
   student_staff_id VARCHAR(50),
-  role VARCHAR(20) NOT NULL CHECK (role IN ('student','faculty','outsider','admin')),
+  role VARCHAR(20) NOT NULL CHECK (
+    role IN ('student', 'faculty', 'outsider', 'admin')
+  ),
   password_hash VARCHAR(255) NOT NULL,
   contact_number VARCHAR(30),
-  email_verified BOOLEAN NOT NULL DEFAULT true,
+  email_verified BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT now()
 );
 
@@ -16,33 +19,32 @@ CREATE TABLE IF NOT EXISTS pending_registrations (
   full_name VARCHAR(120) NOT NULL,
   email VARCHAR(150) UNIQUE NOT NULL,
   student_staff_id VARCHAR(50),
-  role VARCHAR(20) NOT NULL CHECK (role IN ('student','faculty','outsider')),
+  role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'faculty', 'outsider')),
   password_hash VARCHAR(255) NOT NULL,
   contact_number VARCHAR(30) NOT NULL,
   organization VARCHAR(120),
-  gender VARCHAR(10) NOT NULL CHECK (gender IN ('female','male')),
+  gender VARCHAR(10) NOT NULL CHECK (gender IN ('female', 'male')),
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_pending_registrations_expires
-  ON pending_registrations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_pending_registrations_expires ON pending_registrations (expires_at);
 
 CREATE TABLE IF NOT EXISTS facilities (
-  id                    SERIAL PRIMARY KEY,
-  name                  VARCHAR(50) UNIQUE NOT NULL,
-  type                  VARCHAR(50),
-  group_name            VARCHAR(50),
-  court_label           VARCHAR(50),
-  capacity              INT,
-  location              VARCHAR(100),
-  max_duration_minutes  INT,
-  is_active             BOOLEAN DEFAULT true
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) UNIQUE NOT NULL,
+  type VARCHAR(50),
+  group_name VARCHAR(50),
+  court_label VARCHAR(50),
+  capacity INT,
+  location VARCHAR(100),
+  max_duration_minutes INT,
+  is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS schedule_rules (
   id SERIAL PRIMARY KEY,
-  facility_id INT NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+  facility_id INT NOT NULL REFERENCES facilities (id) ON DELETE CASCADE,
   day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
@@ -50,9 +52,11 @@ CREATE TABLE IF NOT EXISTS schedule_rules (
   fallback_role VARCHAR(30),
   fallback_type VARCHAR(20) DEFAULT 'none',
   notes TEXT,
-  timetable VARCHAR(20) NOT NULL DEFAULT 'all'
-    CHECK (timetable IN ('all', 'standard', 'tournament')),
-  day_booking_cap SMALLINT CHECK (day_booking_cap IS NULL OR day_booking_cap > 0)
+  timetable VARCHAR(20) NOT NULL DEFAULT 'all' CHECK (timetable IN ('all', 'standard', 'tournament')),
+  day_booking_cap SMALLINT CHECK (
+    day_booking_cap IS NULL
+    OR day_booking_cap > 0
+  )
 );
 
 CREATE TABLE IF NOT EXISTS tournament_periods (
@@ -60,63 +64,66 @@ CREATE TABLE IF NOT EXISTS tournament_periods (
   name VARCHAR(120),
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
-  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_by INT REFERENCES users (id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT now(),
   CHECK (end_date >= start_date)
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
   id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id),
-  facility_id INT NOT NULL REFERENCES facilities(id),
+  user_id INT NOT NULL REFERENCES users (id),
+  facility_id INT NOT NULL REFERENCES facilities (id),
   booking_date DATE NOT NULL,
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
   purpose TEXT,
-  released_for_commercial BOOLEAN DEFAULT false,
+  released_for_commercial BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS user_booking_archives (
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  booking_id INT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  booking_id INT NOT NULL REFERENCES bookings (id) ON DELETE CASCADE,
   archived_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, booking_id)
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
   id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id),
+  user_id INT NOT NULL REFERENCES users (id),
   type VARCHAR(30),
   message TEXT,
-  is_read BOOLEAN DEFAULT false,
+  is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS user_notification_preferences (
-  user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  booking_updates BOOLEAN NOT NULL DEFAULT true,
-  game_reminders BOOLEAN NOT NULL DEFAULT true,
-  maintenance_alerts BOOLEAN NOT NULL DEFAULT true,
+  user_id INT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+  booking_updates BOOLEAN NOT NULL DEFAULT TRUE,
+  game_reminders BOOLEAN NOT NULL DEFAULT TRUE,
+  maintenance_alerts BOOLEAN NOT NULL DEFAULT TRUE,
   updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS support_requests (
   id BIGSERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE SET NULL,
+  user_id INT REFERENCES users (id) ON DELETE SET NULL,
   name VARCHAR(120) NOT NULL,
   email VARCHAR(254) NOT NULL,
   message TEXT NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending_review'
-    CHECK (status IN ('pending_review', 'in_progress', 'resolved')),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending_review' CHECK (
+    status IN ('pending_review', 'in_progress', 'resolved')
+  ),
   created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS auth_tokens (
   token_hash CHAR(64) PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  purpose VARCHAR(30) NOT NULL CHECK (purpose IN ('email_verification', 'password_reset')),
+  user_id INT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  purpose VARCHAR(30) NOT NULL CHECK (
+    purpose IN ('email_verification', 'password_reset')
+  ),
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   consumed_at TIMESTAMPTZ
@@ -124,38 +131,44 @@ CREATE TABLE IF NOT EXISTS auth_tokens (
 
 CREATE TABLE IF NOT EXISTS booking_reminders (
   id BIGSERIAL PRIMARY KEY,
-  booking_id INT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  booking_id INT NOT NULL REFERENCES bookings (id) ON DELETE CASCADE,
   scheduled_for TIMESTAMPTZ NOT NULL,
   lead_hours SMALLINT NOT NULL CHECK (lead_hours IN (2, 24)),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (booking_id, scheduled_for, lead_hours)
 );
 
-CREATE INDEX IF NOT EXISTS idx_bookings_facility_date ON bookings(facility_id, booking_date);
-CREATE INDEX IF NOT EXISTS idx_schedule_rules_facility_day ON schedule_rules(facility_id, day_of_week);
+CREATE INDEX IF NOT EXISTS idx_bookings_facility_date ON bookings (facility_id, booking_date);
+
+CREATE INDEX IF NOT EXISTS idx_schedule_rules_facility_day ON schedule_rules (facility_id, day_of_week);
 
 -- =============================================================
 -- Backend/src/db/booking-hardening.sql   (run ONCE on the shared database)
 -- =============================================================
 -- 1. A cancelled booking must free its slot, so the "one booking per slot"
 --    rule now ignores cancelled rows.
-ALTER TABLE bookings DROP CONSTRAINT IF EXISTS unique_facility_slot;
-CREATE UNIQUE INDEX IF NOT EXISTS unique_active_slot
-  ON bookings (facility_id, booking_date, start_time)
-  WHERE status <> 'cancelled';
+ALTER TABLE bookings
+DROP CONSTRAINT IF EXISTS unique_facility_slot;
+
+CREATE UNIQUE INDEX IF NOT EXISTS unique_active_slot ON bookings (facility_id, booking_date, start_time)
+WHERE
+  status <> 'cancelled';
 
 -- 2. Maintenance blocks (used by the booking API and the admin dashboard).
 CREATE TABLE IF NOT EXISTS maintenance_blocks (
   id SERIAL PRIMARY KEY,
-  facility_id INT NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+  facility_id INT NOT NULL REFERENCES facilities (id) ON DELETE CASCADE,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   reason TEXT,
-  created_by INT REFERENCES users(id),
+  created_by INT REFERENCES users (id),
   created_at TIMESTAMP DEFAULT now(),
   CHECK (end_date >= start_date)
 );
 
 -- 3. The Wednesday faculty slot now opens by itself (no admin click).
-UPDATE schedule_rules SET fallback_type = 'auto_release'
-WHERE fallback_type = 'manual_release';
+UPDATE schedule_rules
+SET
+  fallback_type = 'auto_release'
+WHERE
+  fallback_type = 'manual_release';

@@ -24,7 +24,9 @@ router.post('/requests', optionalAuthenticate, async (req, res) => {
     return res.status(400).json({ error: 'Enter a valid response email address' });
   }
   if (!cleanMessage || cleanMessage.length > 3000) {
-    return res.status(400).json({ error: 'Message is required and must be 3000 characters or fewer' });
+    return res
+      .status(400)
+      .json({ error: 'Message is required and must be 3000 characters or fewer' });
   }
 
   try {
@@ -33,7 +35,7 @@ router.post('/requests', optionalAuthenticate, async (req, res) => {
       `INSERT INTO support_requests (user_id, name, email, message)
        VALUES ($1, $2, $3, $4)
        RETURNING id, to_char(created_at, 'YYYY') AS year`,
-      [req.user?.id || null, cleanName, cleanEmail, cleanMessage]
+      [req.user?.id || null, cleanName, cleanEmail, cleanMessage],
     );
     const request = result.rows[0];
     res.status(201).json({

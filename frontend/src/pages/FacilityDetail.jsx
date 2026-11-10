@@ -13,7 +13,15 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../AuthContext';
 import { Skeleton } from '../components/Loading';
 import { apiCall } from '../utils/api';
-import { ROLE_LABELS, STATE_LABELS, buildSlots, slotState, todayString, toHHMM, toMin } from '../utils/slots';
+import {
+  ROLE_LABELS,
+  STATE_LABELS,
+  buildSlots,
+  slotState,
+  todayString,
+  toHHMM,
+  toMin,
+} from '../utils/slots';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import './FacilityDetail.css';
 
@@ -41,10 +49,16 @@ function buildDaySlots(rules, slotMinutes, date) {
   if (!isWeekday(date)) return bookable;
 
   const closed = [];
-  for (let s = toMin(WEEKDAY_CLOSED.from); s + slotMinutes <= toMin(WEEKDAY_CLOSED.to); s += slotMinutes) {
+  for (
+    let s = toMin(WEEKDAY_CLOSED.from);
+    s + slotMinutes <= toMin(WEEKDAY_CLOSED.to);
+    s += slotMinutes
+  ) {
     const slot = { start: toHHMM(s), end: toHHMM(s + slotMinutes), rule: null, closed: true };
     // never hide a real bookable slot behind a closed one
-    const overlapsBookable = bookable.some((b) => toMin(b.start) < toMin(slot.end) && toMin(b.end) > toMin(slot.start));
+    const overlapsBookable = bookable.some(
+      (b) => toMin(b.start) < toMin(slot.end) && toMin(b.end) > toMin(slot.start),
+    );
     if (!overlapsBookable) closed.push(slot);
   }
   return [...bookable, ...closed].sort((a, b) => toMin(a.start) - toMin(b.start));
@@ -62,7 +76,9 @@ function getWeekDates(date) {
 
 function formatDay(date) {
   return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
-    weekday: 'short', month: 'short', day: 'numeric',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
   });
 }
 
@@ -106,7 +122,9 @@ function FacilityDetail() {
 
   // 1a. every facility (needed for the name and for the court tabs)
   useEffect(() => {
-    apiCall('/facilities').then(setAllFacilities).catch((e) => setError(e.message));
+    apiCall('/facilities')
+      .then(setAllFacilities)
+      .catch((e) => setError(e.message));
   }, []);
 
   // 1b. rules + bookings for THIS facility across the chosen week
@@ -117,13 +135,23 @@ function FacilityDetail() {
     setSelected(null);
     setWeeklyAvailability({});
     const dates = [...new Set([...getWeekDates(weekStart), todayString()])];
-    Promise.all(dates.map((day) =>
-      apiCall(`/facilities/${id}/availability?date=${day}`).then((data) => [day, data]),
-    ))
-      .then((entries) => { if (!cancelled) setWeeklyAvailability(Object.fromEntries(entries)); })
-      .catch((e) => { if (!cancelled) setError(e.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    Promise.all(
+      dates.map((day) =>
+        apiCall(`/facilities/${id}/availability?date=${day}`).then((data) => [day, data]),
+      ),
+    )
+      .then((entries) => {
+        if (!cancelled) setWeeklyAvailability(Object.fromEntries(entries));
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id, weekStart]);
 
   useEffect(() => {
@@ -146,10 +174,14 @@ function FacilityDetail() {
     };
   }, []);
 
-
   // ---------- 2. loading / error screens ----------
   if (!allFacilities) {
-    if (error) return <main className="main"><p className="error">{error}</p></main>;
+    if (error)
+      return (
+        <main className="main">
+          <p className="error">{error}</p>
+        </main>
+      );
     return (
       <main className="main fd-loading-page" role="status" aria-label="Loading facility">
         <section className="fd-card fd-loading-info">
@@ -185,25 +217,37 @@ function FacilityDetail() {
   // ---------- 3. page layout ----------
   const courts = allFacilities.filter((f) => f.group_name === facility.group_name); // e.g. Badminton 1 + 2
   const slotMinutes = facility.max_duration_minutes || 120; // courts 1h, football 2h
-  const slotsByDate = Object.fromEntries(weekDates.map((day) => [
-    day,
-    weeklyAvailability[day] ? buildDaySlots(weeklyAvailability[day].rules, slotMinutes, day) : [],
-  ]));
-  const availableCountsByDate = Object.fromEntries(weekDates.map((day) => {
-    const dayAvailability = weeklyAvailability[day];
-    const count = dayAvailability
-      ? slotsByDate[day].filter((slot) => slot.rule && slotState(slot, {
-        date: day,
-        availability: dayAvailability,
-        user,
-      }) === 'open').length
-      : null;
-    return [day, count];
-  }));
+  const slotsByDate = Object.fromEntries(
+    weekDates.map((day) => [
+      day,
+      weeklyAvailability[day] ? buildDaySlots(weeklyAvailability[day].rules, slotMinutes, day) : [],
+    ]),
+  );
+  const availableCountsByDate = Object.fromEntries(
+    weekDates.map((day) => {
+      const dayAvailability = weeklyAvailability[day];
+      const count = dayAvailability
+        ? slotsByDate[day].filter(
+            (slot) =>
+              slot.rule &&
+              slotState(slot, {
+                date: day,
+                availability: dayAvailability,
+                user,
+              }) === 'open',
+          ).length
+        : null;
+      return [day, count];
+    }),
+  );
   const selectedDateAvailableCount = availableCountsByDate[date] ?? null;
-  const slotRows = [...new Map(
-    Object.values(slotsByDate).flat().map((slot) => [`${slot.start}-${slot.end}`, { start: slot.start, end: slot.end }]),
-  ).values()].sort((a, b) => toMin(a.start) - toMin(b.start));
+  const slotRows = [
+    ...new Map(
+      Object.values(slotsByDate)
+        .flat()
+        .map((slot) => [`${slot.start}-${slot.end}`, { start: slot.start, end: slot.end }]),
+    ).values(),
+  ].sort((a, b) => toMin(a.start) - toMin(b.start));
 
   function handleBook() {
     if (!selected) return;
@@ -211,22 +255,32 @@ function FacilityDetail() {
       navigate('/login');
       return;
     }
-    navigate(`/book?facility_id=${id}&date=${selected.date}&start=${selected.start}&end=${selected.end}`);
+    navigate(
+      `/book?facility_id=${id}&date=${selected.date}&start=${selected.start}&end=${selected.end}`,
+    );
   }
 
   return (
     <main className="fd-page">
       <aside className="fd-left">
         <section className="fd-card fd-info-card">
-          <Link to="/facilities" className="fd-back-link">All facilities</Link>
+          <Link to="/facilities" className="fd-back-link">
+            All facilities
+          </Link>
           <div className="fd-category-row">
             <div className="fd-category">
-              <span className="fd-category-icon" aria-hidden="true">{categoryIcon(facility.type)}</span>
+              <span className="fd-category-icon" aria-hidden="true">
+                {categoryIcon(facility.type)}
+              </span>
               <span>{facilityCategory(facility.type)}</span>
             </div>
             <div className="fd-today-slots" aria-live="polite">
-              <span>{date === todayString() ? 'Today' : 'Selected date'} · {formatDay(date)}</span>
-              <strong>{selectedDateAvailableCount === null ? '—' : selectedDateAvailableCount}</strong>
+              <span>
+                {date === todayString() ? 'Today' : 'Selected date'} · {formatDay(date)}
+              </span>
+              <strong>
+                {selectedDateAvailableCount === null ? '—' : selectedDateAvailableCount}
+              </strong>
               <small>available slots</small>
             </div>
           </div>
@@ -237,18 +291,26 @@ function FacilityDetail() {
             className="fd-img"
             src={facility.image_url || IMAGES[facility.type]}
             alt={`${facility.name} facility`}
-            onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+            onError={(event) => {
+              event.currentTarget.style.visibility = 'hidden';
+            }}
           />
           <p className="fd-desc">{facility.description || DESCRIPTIONS[facility.type] || ''}</p>
           <div className="fd-facts">
             <span>{facility.location}</span>
             <span>Capacity {facility.capacity}</span>
-            {facility.max_duration_minutes && <span>{facility.max_duration_minutes / 60}-hour booking limit</span>}
+            {facility.max_duration_minutes && (
+              <span>{facility.max_duration_minutes / 60}-hour booking limit</span>
+            )}
           </div>
           {courts.length > 1 && (
             <nav className="court-tabs" aria-label="Courts in this facility">
               {courts.map((court) => (
-                <Link key={court.id} to={`/facilities/${court.id}?date=${date}`} className={court.id === facility.id ? 'court-tab active' : 'court-tab'}>
+                <Link
+                  key={court.id}
+                  to={`/facilities/${court.id}?date=${date}`}
+                  className={court.id === facility.id ? 'court-tab active' : 'court-tab'}
+                >
                   {court.name}
                 </Link>
               ))}
@@ -264,12 +326,20 @@ function FacilityDetail() {
               <div className="fd-rule" key={day}>
                 <strong className="fd-rule-day">{formatDay(day)}</strong>
                 <div className="fd-rule-details">
-                  {dayAvailability?.rules.length ? dayAvailability.rules.map((rule) => (
-                    <div className="fd-rule-line" key={`${rule.start_time}-${rule.end_time}`}>
-                      <span>{rule.start_time}–{rule.end_time}</span>
-                      <span>{ROLE_LABELS[rule.primary_role] || rule.primary_role}</span>
-                    </div>
-                  )) : dayAvailability ? <span className="fd-muted">No booking rules</span> : <Skeleton className="fd-loading-rule" />}
+                  {dayAvailability?.rules.length ? (
+                    dayAvailability.rules.map((rule) => (
+                      <div className="fd-rule-line" key={`${rule.start_time}-${rule.end_time}`}>
+                        <span>
+                          {rule.start_time}–{rule.end_time}
+                        </span>
+                        <span>{ROLE_LABELS[rule.primary_role] || rule.primary_role}</span>
+                      </div>
+                    ))
+                  ) : dayAvailability ? (
+                    <span className="fd-muted">No booking rules</span>
+                  ) : (
+                    <Skeleton className="fd-loading-rule" />
+                  )}
                 </div>
               </div>
             );
@@ -284,10 +354,22 @@ function FacilityDetail() {
             <p className="fd-muted">Select an open slot to begin your booking.</p>
           </div>
           <div className="fd-legend" aria-label="Availability legend">
-            <span><i className="fd-dot fd-green" />Available</span>
-            <span><i className="fd-dot fd-red" />Booked</span>
-            <span><i className="fd-dot fd-gray" />Unavailable</span>
-            <span><i className="fd-dot fd-orange" />Selected</span>
+            <span>
+              <i className="fd-dot fd-green" />
+              Available
+            </span>
+            <span>
+              <i className="fd-dot fd-red" />
+              Booked
+            </span>
+            <span>
+              <i className="fd-dot fd-gray" />
+              Unavailable
+            </span>
+            <span>
+              <i className="fd-dot fd-orange" />
+              Selected
+            </span>
           </div>
         </div>
 
@@ -301,7 +383,9 @@ function FacilityDetail() {
             max={Object.values(weeklyAvailability)[0]?.booking_window?.to || undefined}
             onChange={(event) => setDate(event.target.value)}
           />
-          <span>{formatDay(weekDates[0])} – {formatDay(weekDates[6])}</span>
+          <span>
+            {formatDay(weekDates[0])} – {formatDay(weekDates[6])}
+          </span>
         </div>
         <div className="fd-mobile-dates" aria-label="Choose booking date">
           {weekDates.map((day) => (
@@ -312,67 +396,105 @@ function FacilityDetail() {
               aria-label={`${formatDay(day)}: ${availableCountsByDate[day] === null ? 'availability loading' : `${availableCountsByDate[day]} available slots`}`}
               onClick={() => setDate(day)}
             >
-              <span>{new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}</span>
+              <span>
+                {new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}
+              </span>
               <strong>{new Date(`${day}T12:00:00`).getDate()}</strong>
-              <small>{availableCountsByDate[day] === null ? '…' : `${availableCountsByDate[day]} open`}</small>
+              <small>
+                {availableCountsByDate[day] === null ? '…' : `${availableCountsByDate[day]} open`}
+              </small>
             </button>
           ))}
         </div>
 
         {error && <p className="fd-error">{error}</p>}
         <div className="fd-grid-scroll">
-          <div className="fd-grid" role={loading ? 'status' : 'table'} aria-label={loading ? 'Loading weekly availability' : 'Weekly facility availability'} aria-busy={loading}>
-            {loading && Array.from({ length: 5 }, (_, index) => (
-              <div className="fd-loading-slot-row" key={index}>
-                <Skeleton className="skeleton-line fd-loading-slot-time" />
-                <Skeleton className="fd-loading-slot" />
-              </div>
-            ))}
-            {!loading && (
-            <>
-            <div className="fd-row fd-header-row" role="row">
-              <span className="fd-day fd-time" role="columnheader">Time</span>
-              {weekDates.map((day) => (
-                <span className="fd-day fd-day-with-count" role="columnheader" key={day}>
-                  <span>{formatDay(day)}</span>
-                  <small>{availableCountsByDate[day] === null ? '…' : `${availableCountsByDate[day]} open`}</small>
-                </span>
+          <div
+            className="fd-grid"
+            role={loading ? 'status' : 'table'}
+            aria-label={loading ? 'Loading weekly availability' : 'Weekly facility availability'}
+            aria-busy={loading}
+          >
+            {loading &&
+              Array.from({ length: 5 }, (_, index) => (
+                <div className="fd-loading-slot-row" key={index}>
+                  <Skeleton className="skeleton-line fd-loading-slot-time" />
+                  <Skeleton className="fd-loading-slot" />
+                </div>
               ))}
-            </div>
-            {slotRows.map((row) => (
-              <div className="fd-row" role="row" key={`${row.start}-${row.end}`}>
-                <span className="fd-time" role="rowheader">{formatTime(row.start)} – {formatTime(row.end)}</span>
-                {weekDates.map((day) => {
-                  const slot = slotsByDate[day].find((item) => item.start === row.start && item.end === row.end);
-                  const dayAvailability = weeklyAvailability[day];
-                  const state = !slot || !dayAvailability
-                    ? 'unavailable'
-                    : slot.closed ? 'closed' : slotState(slot, { date: day, availability: dayAvailability, user });
-                  const isSelected = selected?.date === day && selected.start === row.start && selected.end === row.end;
-                  const stateClass = state === 'open' ? 'fd-available' : state === 'booked' ? 'fd-booked' : 'fd-unavailable';
-                  const label = state === 'open' ? 'Available'
-                    : state === 'booked' ? STATE_LABELS.booked
-                      : state === 'restricted' ? STATE_LABELS.restricted : STATE_LABELS[state] || 'Unavailable';
-                  return (
-                    <button
-                      type="button"
-                      role="cell"
-                      key={day}
-                      data-day={formatDay(day)}
-                      className={`fd-cell ${stateClass}${isSelected ? ' fd-selected' : ''}${day === date ? '' : ' fd-mobile-day-hidden'}`}
-                      disabled={state !== 'open' || loading}
-                      aria-label={`${formatDay(day)}, ${formatTime(row.start)} to ${formatTime(row.end)}: ${label}`}
-                      aria-pressed={isSelected}
-                      onClick={() => setSelected({ date: day, start: row.start, end: row.end })}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-            {!loading && slotRows.length === 0 && <p className="fd-muted">No time slots are configured for this week.</p>}
-            </>
+            {!loading && (
+              <>
+                <div className="fd-row fd-header-row" role="row">
+                  <span className="fd-day fd-time" role="columnheader">
+                    Time
+                  </span>
+                  {weekDates.map((day) => (
+                    <span className="fd-day fd-day-with-count" role="columnheader" key={day}>
+                      <span>{formatDay(day)}</span>
+                      <small>
+                        {availableCountsByDate[day] === null
+                          ? '…'
+                          : `${availableCountsByDate[day]} open`}
+                      </small>
+                    </span>
+                  ))}
+                </div>
+                {slotRows.map((row) => (
+                  <div className="fd-row" role="row" key={`${row.start}-${row.end}`}>
+                    <span className="fd-time" role="rowheader">
+                      {formatTime(row.start)} – {formatTime(row.end)}
+                    </span>
+                    {weekDates.map((day) => {
+                      const slot = slotsByDate[day].find(
+                        (item) => item.start === row.start && item.end === row.end,
+                      );
+                      const dayAvailability = weeklyAvailability[day];
+                      const state =
+                        !slot || !dayAvailability
+                          ? 'unavailable'
+                          : slot.closed
+                            ? 'closed'
+                            : slotState(slot, { date: day, availability: dayAvailability, user });
+                      const isSelected =
+                        selected?.date === day &&
+                        selected.start === row.start &&
+                        selected.end === row.end;
+                      const stateClass =
+                        state === 'open'
+                          ? 'fd-available'
+                          : state === 'booked'
+                            ? 'fd-booked'
+                            : 'fd-unavailable';
+                      const label =
+                        state === 'open'
+                          ? 'Available'
+                          : state === 'booked'
+                            ? STATE_LABELS.booked
+                            : state === 'restricted'
+                              ? STATE_LABELS.restricted
+                              : STATE_LABELS[state] || 'Unavailable';
+                      return (
+                        <button
+                          type="button"
+                          role="cell"
+                          key={day}
+                          data-day={formatDay(day)}
+                          className={`fd-cell ${stateClass}${isSelected ? ' fd-selected' : ''}${day === date ? '' : ' fd-mobile-day-hidden'}`}
+                          disabled={state !== 'open' || loading}
+                          aria-label={`${formatDay(day)}, ${formatTime(row.start)} to ${formatTime(row.end)}: ${label}`}
+                          aria-pressed={isSelected}
+                          onClick={() => setSelected({ date: day, start: row.start, end: row.end })}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+                {!loading && slotRows.length === 0 && (
+                  <p className="fd-muted">No time slots are configured for this week.</p>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -381,10 +503,17 @@ function FacilityDetail() {
           <div>
             <span className="fd-muted">Selected slot</span>
             <p className="fd-selected">
-              {selected ? `${formatDay(selected.date)} · ${formatTime(selected.start)} – ${formatTime(selected.end)}` : 'None'}
+              {selected
+                ? `${formatDay(selected.date)} · ${formatTime(selected.start)} – ${formatTime(selected.end)}`
+                : 'None'}
             </p>
           </div>
-          <button type="button" className="fd-book" disabled={!selected || loading} onClick={handleBook}>
+          <button
+            type="button"
+            className="fd-book"
+            disabled={!selected || loading}
+            onClick={handleBook}
+          >
             {selected && !user ? 'Sign In to Book' : 'Select Slot & Book'}
           </button>
         </div>

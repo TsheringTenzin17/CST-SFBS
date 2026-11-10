@@ -1,4 +1,7 @@
-.verify-email { text-align: center; }
+/* Email verification status states and their follow-up actions. */
+.verify-email {
+  text-align: center;
+}
 
 .verify-email-icon {
   display: grid;
@@ -29,7 +32,7 @@
   color: var(--a-cyan, #8fc4d0);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -44,23 +47,23 @@
   justify-items: center;
   margin: 14px 0 0;
   padding: 13px 15px;
-  border: 1px solid rgba(143, 196, 208, .25);
+  border: 1px solid rgba(143, 196, 208, 0.25);
   border-radius: 12px;
-  background: rgba(143, 196, 208, .08);
+  background: rgba(143, 196, 208, 0.08);
   color: #d3e6ea;
   font-size: 14px;
   line-height: 1.55;
 }
 
 .verify-email.success .verify-email-message {
-  border-color: rgba(127, 211, 138, .35);
-  background: rgba(127, 211, 138, .1);
+  border-color: rgba(127, 211, 138, 0.35);
+  background: rgba(127, 211, 138, 0.1);
   color: #b7e8bb;
 }
 
 .verify-email.error .verify-email-message {
-  border-color: rgba(255, 153, 153, .35);
-  background: rgba(255, 123, 123, .1);
+  border-color: rgba(255, 153, 153, 0.35);
+  background: rgba(255, 123, 123, 0.1);
   color: #ffc0c0;
 }
 
@@ -83,7 +86,9 @@
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
-  transition: background-color .18s ease, transform .18s ease;
+  transition:
+    background-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .verify-email-primary:hover {
@@ -109,7 +114,9 @@
   text-decoration: none;
 }
 
-.verify-email-secondary:hover { color: #fff; }
+.verify-email-secondary:hover {
+  color: #fff;
+}
 
 .verify-email-help {
   margin: 0;
@@ -124,14 +131,20 @@
   border: 3px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
-  animation: verify-email-spin .75s linear infinite;
+  animation: verify-email-spin 0.75s linear infinite;
 }
 
 @keyframes verify-email-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .verify-email-spinner { animation-duration: 1.8s; }
-  .verify-email-primary { transition: none; }
+  .verify-email-spinner {
+    animation-duration: 1.8s;
+  }
+  .verify-email-primary {
+    transition: none;
+  }
 }

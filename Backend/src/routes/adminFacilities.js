@@ -22,7 +22,7 @@ async function notifyFacilityStatus(queryable, facilityName, isActive) {
      SELECT id, 'facility_status', $1
      FROM users
      WHERE is_active IS TRUE AND role <> 'admin'`,
-    [message]
+    [message],
   );
 }
 
@@ -32,25 +32,38 @@ function addDays(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 const dow = (dateStr) => new Date(`${dateStr}T00:00:00Z`).getUTCDay();
-const hhmm = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+const hhmm = (min) =>
+  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 
 // First free slot in the next 7 days, ignoring who is allowed to book it.
 function nextFreeSlot(fac, ctx) {
   const slotMin = fac.max_duration_minutes || 120; // same step the public summary uses
   for (let offset = 0; offset < 7; offset += 1) {
     const date = addDays(ctx.today, offset);
-    if (ctx.blocks.some((b) => b.facility_id === fac.id && b.start_date <= date && date <= b.end_date)) continue;
+    if (
+      ctx.blocks.some((b) => b.facility_id === fac.id && b.start_date <= date && date <= b.end_date)
+    )
+      continue;
 
-    const timetable = ctx.tournaments.some((t) => t.start_date <= date && date <= t.end_date) ? 'tournament' : 'standard';
-    const rules = ctx.rules.filter((r) =>
-      r.facility_id === fac.id && r.day_of_week === dow(date) &&
-      ['all', timetable].includes(r.timetable) && r.primary_role !== 'maintenance');
+    const timetable = ctx.tournaments.some((t) => t.start_date <= date && date <= t.end_date)
+      ? 'tournament'
+      : 'standard';
+    const rules = ctx.rules.filter(
+      (r) =>
+        r.facility_id === fac.id &&
+        r.day_of_week === dow(date) &&
+        ['all', timetable].includes(r.timetable) &&
+        r.primary_role !== 'maintenance',
+    );
     const booked = ctx.bookings.filter((b) => b.facility_id === fac.id && b.booking_date === date);
 
     const capped = rules.filter((r) => r.day_booking_cap);
     const cap = capped.length ? capped[0].day_booking_cap : null;
-    const usedInCap = booked.filter((b) => capped.some(
-      (r) => toMin(r.start_time) <= toMin(b.start_time) && toMin(r.end_time) >= toMin(b.end_time))).length;
+    const usedInCap = booked.filter((b) =>
+      capped.some(
+        (r) => toMin(r.start_time) <= toMin(b.start_time) && toMin(r.end_time) >= toMin(b.end_time),
+      ),
+    ).length;
 
     const candidates = [];
     for (const r of rules) {
@@ -76,38 +89,52 @@ router.get('/', requireAdmin, async (req, res) => {
       pool.query(
         `SELECT id, name, type, group_name, court_label, capacity, location, max_duration_minutes,
                 description, image_url, is_active
-         FROM facilities ORDER BY id`),
+         FROM facilities ORDER BY id`,
+      ),
       pool.query(
         `SELECT facility_id, day_of_week, to_char(start_time,'HH24:MI') AS start_time,
                 to_char(end_time,'HH24:MI') AS end_time, primary_role, timetable, day_booking_cap
-         FROM schedule_rules`),
+         FROM schedule_rules`,
+      ),
       pool.query(
         `SELECT facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                 to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time
-         FROM bookings WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2`, [today, horizon]),
+         FROM bookings WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2`,
+        [today, horizon],
+      ),
       pool.query(
         `SELECT m.id, m.facility_id, f.name AS facility_name, m.reason,
                 to_char(m.start_date,'YYYY-MM-DD') AS start_date, to_char(m.end_date,'YYYY-MM-DD') AS end_date
          FROM maintenance_blocks m JOIN facilities f ON f.id = m.facility_id
-         WHERE m.end_date >= $1::date ORDER BY m.start_date, m.id`, [today]),
+         WHERE m.end_date >= $1::date ORDER BY m.start_date, m.id`,
+        [today],
+      ),
       pool.query(
         `SELECT to_char(start_date,'YYYY-MM-DD') AS start_date, to_char(end_date,'YYYY-MM-DD') AS end_date
-         FROM tournament_periods`),
+         FROM tournament_periods`,
+      ),
     ]);
 
     const ctx = {
-      today, nowMinutes: now.minutes,
-      rules: rules.rows, bookings: bookings.rows, blocks: blocks.rows, tournaments: tournaments.rows,
+      today,
+      nowMinutes: now.minutes,
+      rules: rules.rows,
+      bookings: bookings.rows,
+      blocks: blocks.rows,
+      tournaments: tournaments.rows,
     };
 
     const list = facilities.rows.map((f) => {
       const closedByMaintenance = blocks.rows.some(
-        (b) => b.facility_id === f.id && b.start_date <= today && today <= b.end_date);
+        (b) => b.facility_id === f.id && b.start_date <= today && today <= b.end_date,
+      );
       const status = !f.is_active ? 'closed' : closedByMaintenance ? 'maintenance' : 'active';
       return {
         ...f,
         status,
-        today_bookings: bookings.rows.filter((b) => b.facility_id === f.id && b.booking_date === today).length,
+        today_bookings: bookings.rows.filter(
+          (b) => b.facility_id === f.id && b.booking_date === today,
+        ).length,
         next_slot: f.is_active ? nextFreeSlot(f, ctx) : null,
       };
     });
@@ -125,7 +152,11 @@ router.get('/', requireAdmin, async (req, res) => {
 });
 
 const cleanText = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-const slug = (v) => String(v).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+const slug = (v) =>
+  String(v)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 // An image is either an uploaded photo (compressed data URL) or a web address / site path.
 const MAX_DATA_URL = 700000; // characters, about 500 KB of picture
 const DATA_URL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
@@ -144,7 +175,8 @@ router.post('/', requireAdmin, async (req, res) => {
   const location = cleanText(req.body.location, 100) || 'Main Campus';
   const description = cleanText(req.body.description, 600) || null;
   const imageUrl = cleanImage(req.body.image_url) || null;
-  const capacity = req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);
+  const capacity =
+    req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);
   const maxMinutes = Number(req.body.max_duration_minutes ?? 60);
   const role = req.body.role || 'everyone';
   const hours = req.body.hours || {};
@@ -156,10 +188,16 @@ router.post('/', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Capacity must be a whole number above 0' });
   }
   if (!Number.isInteger(maxMinutes) || maxMinutes < 15 || maxMinutes > 480) {
-    return res.status(400).json({ error: 'Maximum booking length must be between 15 and 480 minutes' });
+    return res
+      .status(400)
+      .json({ error: 'Maximum booking length must be between 15 and 480 minutes' });
   }
-  if (!PRIMARY_ROLES.includes(role)) return res.status(400).json({ error: 'Choose who can book this facility' });
-  if (!validImage(imageUrl)) return res.status(400).json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
+  if (!PRIMARY_ROLES.includes(role))
+    return res.status(400).json({ error: 'Choose who can book this facility' });
+  if (!validImage(imageUrl))
+    return res
+      .status(400)
+      .json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
 
   const windows = [
     ['weekday', hours.weekday_start, hours.weekday_end, [1, 2, 3, 4, 5]],
@@ -167,10 +205,14 @@ router.post('/', requireAdmin, async (req, res) => {
   ];
   for (const [label, start, end] of windows) {
     if (!isValidTime(start) || !isValidTime(end) || toMin(end) <= toMin(start)) {
-      return res.status(400).json({ error: `Enter valid ${label} opening hours (closing must be after opening)` });
+      return res
+        .status(400)
+        .json({ error: `Enter valid ${label} opening hours (closing must be after opening)` });
     }
     if (toMin(end) - toMin(start) < maxMinutes) {
-      return res.status(400).json({ error: `The ${label} opening window is shorter than one booking` });
+      return res
+        .status(400)
+        .json({ error: `The ${label} opening window is shorter than one booking` });
     }
   }
 
@@ -183,7 +225,18 @@ router.post('/', requireAdmin, async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING id, name, type, group_name, court_label, capacity, location, max_duration_minutes,
                  description, image_url, is_active`,
-      [name, slug(sport), group, courtLabel, capacity, location, maxMinutes, description, imageUrl, isActive]
+      [
+        name,
+        slug(sport),
+        group,
+        courtLabel,
+        capacity,
+        location,
+        maxMinutes,
+        description,
+        imageUrl,
+        isActive,
+      ],
     );
     const facility = inserted.rows[0];
     for (const [label, start, end, days] of windows) {
@@ -191,7 +244,7 @@ router.post('/', requireAdmin, async (req, res) => {
         await client.query(
           `INSERT INTO schedule_rules (facility_id, day_of_week, start_time, end_time, primary_role, fallback_type, notes)
            VALUES ($1,$2,$3,$4,$5,'none',$6)`,
-          [facility.id, day, start, end, role, `Default ${label} hours (added by admin)`]
+          [facility.id, day, start, end, role, `Default ${label} hours (added by admin)`],
         );
       }
     }
@@ -199,7 +252,8 @@ router.post('/', requireAdmin, async (req, res) => {
     res.status(201).json({ facility });
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') return res.status(409).json({ error: 'A facility with that name already exists' });
+    if (err.code === '23505')
+      return res.status(409).json({ error: 'A facility with that name already exists' });
     console.error(err);
     res.status(500).json({ error: 'Failed to add facility' });
   } finally {
@@ -209,14 +263,19 @@ router.post('/', requireAdmin, async (req, res) => {
 
 router.patch('/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid facility id' });
+  if (!Number.isSafeInteger(id) || id <= 0)
+    return res.status(400).json({ error: 'Invalid facility id' });
 
   const sets = [];
   const values = [];
-  const add = (column, value) => { values.push(value); sets.push(`${column} = $${values.length}`); };
+  const add = (column, value) => {
+    values.push(value);
+    sets.push(`${column} = $${values.length}`);
+  };
 
   if ('is_active' in req.body) {
-    if (typeof req.body.is_active !== 'boolean') return res.status(400).json({ error: 'is_active must be true or false' });
+    if (typeof req.body.is_active !== 'boolean')
+      return res.status(400).json({ error: 'is_active must be true or false' });
     add('is_active', req.body.is_active);
   }
   if ('name' in req.body) {
@@ -228,11 +287,15 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   if ('location' in req.body) add('location', cleanText(req.body.location, 100) || null);
   if ('image_url' in req.body) {
     const image = cleanImage(req.body.image_url) || null;
-    if (!validImage(image)) return res.status(400).json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
+    if (!validImage(image))
+      return res
+        .status(400)
+        .json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
     add('image_url', image);
   }
   if ('capacity' in req.body) {
-    const capacity = req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);
+    const capacity =
+      req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);
     if (capacity !== null && (!Number.isInteger(capacity) || capacity <= 0)) {
       return res.status(400).json({ error: 'Capacity must be a whole number above 0' });
     }
@@ -249,7 +312,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
 
     const previous = await client.query(
       'SELECT is_active FROM facilities WHERE id = $1 FOR UPDATE',
-      [id]
+      [id],
     );
     if (previous.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -261,7 +324,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     const result = await client.query(
       `UPDATE facilities SET ${sets.join(', ')} WHERE id = $${values.length}
        RETURNING id, name, is_active`,
-      values
+      values,
     );
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -280,7 +343,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       const count = await client.query(
         `SELECT COUNT(*)::int AS n FROM bookings
          WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date >= $2::date`,
-        [id, bhutanNow().date]
+        [id, bhutanNow().date],
       );
       upcoming = count.rows[0].n;
     }
@@ -292,7 +355,8 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       await client.query('ROLLBACK');
       transactionStarted = false;
     }
-    if (err.code === '23505') return res.status(409).json({ error: 'A facility with that name already exists' });
+    if (err.code === '23505')
+      return res.status(409).json({ error: 'A facility with that name already exists' });
     console.error(err);
     res.status(500).json({ error: 'Failed to update facility' });
   } finally {

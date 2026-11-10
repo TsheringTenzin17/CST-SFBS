@@ -11,8 +11,12 @@ import { AdminLoading } from '../components/Loading';
 const TZ = 'Asia/Thimphu';
 const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Outsider', admin: 'Admin' };
 const STATUS_LABEL = {
-  approved: 'Approved', pending: 'Pending', cancelled: 'Cancelled',
-  active: 'Active', upcoming: 'Upcoming', ended: 'Ended',
+  approved: 'Approved',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+  active: 'Active',
+  upcoming: 'Upcoming',
+  ended: 'Ended',
 };
 
 const PIE_COLORS = ['#245562', '#4f8fa0', '#e58e00', '#24a148', '#8d67b5', '#d66b54'];
@@ -36,13 +40,22 @@ const bhutanDay = (date) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).f
 // '2026-10-30T04:45:00Z' -> 'Today, 10:45 AM' / 'Yesterday, 04:30 PM' / '24 Oct, 11:00 AM'
 function activityTime(iso) {
   const date = new Date(iso);
-  const time = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: true }).format(date);
+  const time = new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
   const day = bhutanDay(date);
   const today = bhutanDay(new Date());
   const yesterday = bhutanDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
   if (day === today) return `Today, ${time}`;
   if (day === yesterday) return `Yesterday, ${time}`;
-  const label = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'short' }).format(date);
+  const label = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    day: 'numeric',
+    month: 'short',
+  }).format(date);
   return `${label}, ${time}`;
 }
 
@@ -54,17 +67,43 @@ function AdminReports() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    apiCall('/admin/reports').then(setReport).catch((e) => setError(e.message));
+    apiCall('/admin/reports')
+      .then(setReport)
+      .catch((e) => setError(e.message));
   }, []);
 
   async function downloadCsv() {
     try {
       const rows = await apiCall('/bookings');
-      const header = ['Booking ID', 'Requester', 'Role', 'Facility', 'Date', 'Start', 'End', 'Status', 'Purpose'];
+      const header = [
+        'Booking ID',
+        'Requester',
+        'Role',
+        'Facility',
+        'Date',
+        'Start',
+        'End',
+        'Status',
+        'Purpose',
+      ];
       const lines = rows.map((b) =>
-        [`B-${b.id}`, b.user_name, b.user_role, b.facility_name, b.booking_date, b.start_time, b.end_time, b.status, b.purpose].map(csvCell).join(',')
+        [
+          `B-${b.id}`,
+          b.user_name,
+          b.user_role,
+          b.facility_name,
+          b.booking_date,
+          b.start_time,
+          b.end_time,
+          b.status,
+          b.purpose,
+        ]
+          .map(csvCell)
+          .join(','),
       );
-      const blob = new Blob([`\uFEFF${[header.join(','), ...lines].join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+      const blob = new Blob([`\uFEFF${[header.join(','), ...lines].join('\r\n')}`], {
+        type: 'text/csv;charset=utf-8',
+      });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.href = url;
@@ -78,13 +117,32 @@ function AdminReports() {
     }
   }
 
-  if (error) return <div className="rp-page"><div className="admin-error" role="alert"><span>{error}</span></div></div>;
-  if (!report) return <div className="rp-page"><AdminLoading label="Loading report" rows={4} /></div>;
+  if (error)
+    return (
+      <div className="rp-page">
+        <div className="admin-error" role="alert">
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  if (!report)
+    return (
+      <div className="rp-page">
+        <AdminLoading label="Loading report" rows={4} />
+      </div>
+    );
 
   const { month, hours } = report;
-  const change = month.last_total > 0 ? Math.round(((month.this_total - month.last_total) / month.last_total) * 100) : null;
-  const cancelRate = month.this_total > 0 ? ((month.this_cancelled / month.this_total) * 100).toFixed(1) : '0.0';
-  const utilization = hours.open_hours > 0 ? Math.min(100, Math.round((hours.booked_hours / hours.open_hours) * 100)) : 0;
+  const change =
+    month.last_total > 0
+      ? Math.round(((month.this_total - month.last_total) / month.last_total) * 100)
+      : null;
+  const cancelRate =
+    month.this_total > 0 ? ((month.this_cancelled / month.this_total) * 100).toFixed(1) : '0.0';
+  const utilization =
+    hours.open_hours > 0
+      ? Math.min(100, Math.round((hours.booked_hours / hours.open_hours) * 100))
+      : 0;
 
   const roleTotal = report.by_role.reduce((sum, r) => sum + r.bookings, 0);
   const facilityChart = report.by_facility.map((row) => ({ name: row.name, value: row.bookings }));
@@ -100,8 +158,12 @@ function AdminReports() {
         <h1>Reports &amp; Analytics</h1>
         <p>System-wide performance metrics, arena utilization logs, and analytics.</p>
         <div className="rp-actions">
-          <button type="button" onClick={downloadCsv}>Download CSV</button>
-          <button type="button" onClick={() => window.print()}>Generate PDF Report</button>
+          <button type="button" onClick={downloadCsv}>
+            Download CSV
+          </button>
+          <button type="button" onClick={() => window.print()}>
+            Generate PDF Report
+          </button>
         </div>
       </header>
 
@@ -110,7 +172,9 @@ function AdminReports() {
           <span>Total Bookings This Month</span>
           <strong className="rp-teal">{month.this_total}</strong>
           <small>
-            {change === null ? 'No bookings last month' : `${change >= 0 ? '+' : ''}${change}% from last month`}
+            {change === null
+              ? 'No bookings last month'
+              : `${change >= 0 ? '+' : ''}${change}% from last month`}
           </small>
         </article>
         <article>
@@ -138,17 +202,33 @@ function AdminReports() {
         ) : (
           <div className="rp-chart">
             <div className="rp-pie-wrap">
-              <div className="rp-pie" style={{ background: pieGradient(facilityChart) }} role="img" aria-label="Bookings by facility pie chart">
-                <div className="rp-pie-center"><strong>{facilityChart.reduce((sum, row) => sum + row.value, 0)}</strong><span>bookings</span></div>
+              <div
+                className="rp-pie"
+                style={{ background: pieGradient(facilityChart) }}
+                role="img"
+                aria-label="Bookings by facility pie chart"
+              >
+                <div className="rp-pie-center">
+                  <strong>{facilityChart.reduce((sum, row) => sum + row.value, 0)}</strong>
+                  <span>bookings</span>
+                </div>
               </div>
             </div>
             <ul className="rp-chart-legend">
               {facilityChart.map((row, index) => (
                 <li key={row.name}>
-                  <span style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} aria-hidden="true" />
+                  <span
+                    style={{ background: PIE_COLORS[index % PIE_COLORS.length] }}
+                    aria-hidden="true"
+                  />
                   <strong>{row.name}</strong>
                   <b>{row.value}</b>
-                  <small>{Math.round((row.value / facilityChart.reduce((sum, item) => sum + item.value, 0)) * 100)}%</small>
+                  <small>
+                    {Math.round(
+                      (row.value / facilityChart.reduce((sum, item) => sum + item.value, 0)) * 100,
+                    )}
+                    %
+                  </small>
                 </li>
               ))}
             </ul>
@@ -164,14 +244,25 @@ function AdminReports() {
           <>
             <div className="rp-chart rp-role-chart">
               <div className="rp-pie-wrap">
-                <div className="rp-pie" style={{ background: pieGradient(roleChart) }} role="img" aria-label="Bookings by role pie chart">
-                  <div className="rp-pie-center"><strong>{roleTotal}</strong><span>bookings</span></div>
+                <div
+                  className="rp-pie"
+                  style={{ background: pieGradient(roleChart) }}
+                  role="img"
+                  aria-label="Bookings by role pie chart"
+                >
+                  <div className="rp-pie-center">
+                    <strong>{roleTotal}</strong>
+                    <span>bookings</span>
+                  </div>
                 </div>
               </div>
               <ul className="rp-chart-legend rp-role-legend">
                 {roleChart.map((row, index) => (
                   <li key={row.role}>
-                    <span style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} aria-hidden="true" />
+                    <span
+                      style={{ background: PIE_COLORS[index % PIE_COLORS.length] }}
+                      aria-hidden="true"
+                    />
                     <strong>{row.name}</strong>
                     <b>{row.value}</b>
                     <small>{Math.round((row.value / roleTotal) * 100)}%</small>
@@ -189,19 +280,33 @@ function AdminReports() {
         <div className="admin-table-scroll">
           <table className="rp-log">
             <thead>
-              <tr><th>Timestamp</th><th>User</th><th>Action</th><th>Facility</th><th>Status</th></tr>
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Facility</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody>
               {report.recent_activity.length === 0 ? (
-                <tr><td className="admin-empty-state" colSpan="5">No activity yet.</td></tr>
+                <tr>
+                  <td className="admin-empty-state" colSpan="5">
+                    No activity yet.
+                  </td>
+                </tr>
               ) : (
                 report.recent_activity.map((e, i) => (
                   <tr key={`${e.happened_at}-${i}`}>
                     <td data-label="Time">{activityTime(e.happened_at)}</td>
-                    <td data-label="User">{e.user_name} <span>({ROLE_LABEL[e.user_role] || e.user_role})</span></td>
+                    <td data-label="User">
+                      {e.user_name} <span>({ROLE_LABEL[e.user_role] || e.user_role})</span>
+                    </td>
                     <td data-label="Action">{e.action}</td>
                     <td data-label="Facility">{e.facility}</td>
-                    <td data-label="Status" className="rp-status">{STATUS_LABEL[e.status] || e.status}</td>
+                    <td data-label="Status" className="rp-status">
+                      {STATUS_LABEL[e.status] || e.status}
+                    </td>
                   </tr>
                 ))
               )}

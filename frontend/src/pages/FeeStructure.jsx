@@ -4,13 +4,15 @@ function FeeStructure() {
   return (
     <main className="main fee-page">
       <h1 className="title">Fee Structure</h1>
-      <p className="subtitle">Facility charges for bookings at the College of Science and Technology.</p>
+      <p className="subtitle">
+        Facility charges for bookings at the College of Science and Technology.
+      </p>
 
       <section className="fee-card">
         <h2>Football ground</h2>
         <p className="fee-intro">
-          Students and faculty/staff must also pay when booking a commercial slot.
-          The Wednesday female-student slot is free for female students.
+          Students and faculty/staff must also pay when booking a commercial slot. The Wednesday
+          female-student slot is free for female students.
         </p>
         <div className="fee-table-scroll">
           <table className="fee-table">
@@ -25,28 +27,29 @@ function FeeStructure() {
             <tbody>
               <tr>
                 <th scope="row">Students</th>
-                <td>All days</td>
-                <td>Nu. 2,500</td>
-                <td>Nu. 2,900</td>
+                <td data-label="Booking time">All days</td>
+                <td data-label="One referee">Nu. 2,500</td>
+                <td data-label="Referee and assistant referees">Nu. 2,900</td>
               </tr>
               <tr>
                 <th scope="row">Staff and outsiders</th>
-                <td>Weekdays</td>
-                <td>Nu. 3,500</td>
-                <td>Nu. 3,900</td>
+                <td data-label="Booking time">Weekdays</td>
+                <td data-label="One referee">Nu. 3,500</td>
+                <td data-label="Referee and assistant referees">Nu. 3,900</td>
               </tr>
               <tr>
                 <th scope="row">Staff and outsiders</th>
-                <td>Weekends</td>
-                <td>Nu. 4,000</td>
-                <td>Nu. 4,400</td>
+                <td data-label="Booking time">Weekends</td>
+                <td data-label="One referee">Nu. 4,000</td>
+                <td data-label="Referee and assistant referees">Nu. 4,400</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="fee-note">
-          Commercial football bookings must be paid offline at the DSA office before an admin can approve the booking.
-          The Thursday 6:00 PM – 8:00 PM faculty slot is free for faculty/staff until Wednesday at 8:00 PM, then becomes commercial if unbooked.
+          Commercial football bookings must be paid offline at the DSA office before an admin can
+          approve the booking. The Thursday 6:00 PM – 8:00 PM faculty slot is free for faculty/staff
+          until Wednesday at 8:00 PM, then becomes commercial if unbooked.
         </p>
       </section>
 

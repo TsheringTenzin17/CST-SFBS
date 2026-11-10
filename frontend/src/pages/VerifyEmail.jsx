@@ -16,7 +16,9 @@ function VerifyEmail() {
     if (!token) {
       setStatus('error');
       setMessage('This verification link is missing its token. Request a new link to continue.');
-      return () => { active = false; };
+      return () => {
+        active = false;
+      };
     }
 
     setStatus('loading');
@@ -31,10 +33,15 @@ function VerifyEmail() {
       .catch((requestError) => {
         if (active) {
           setStatus('error');
-          setMessage(requestError.message || 'We could not verify this email. Request a new link and try again.');
+          setMessage(
+            requestError.message ||
+              'We could not verify this email. Request a new link and try again.',
+          );
         }
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   const isLoading = status === 'loading';
@@ -51,23 +58,41 @@ function VerifyEmail() {
           {isLoading ? <span className="verify-email-spinner" /> : isSuccess ? '✓' : '!'}
         </div>
         <span className="verify-email-eyebrow">
-          {isLoading ? 'Email verification' : isSuccess ? 'Verification complete' : 'Verification needed'}
+          {isLoading
+            ? 'Email verification'
+            : isSuccess
+              ? 'Verification complete'
+              : 'Verification needed'}
         </span>
-        <h1>{isLoading ? 'Verifying your email' : isSuccess ? 'You’re all set' : 'We couldn’t verify your email'}</h1>
+        <h1>
+          {isLoading
+            ? 'Verifying your email'
+            : isSuccess
+              ? 'You’re all set'
+              : 'We couldn’t verify your email'}
+        </h1>
         <p className="verify-email-message" role={isLoading ? 'status' : 'alert'}>
           {isLoading ? <Spinner label={message} /> : message}
         </p>
         {!isLoading && (
           <div className="verify-email-actions">
             {isSuccess ? (
-              <Link className="verify-email-primary" to="/login">Continue to sign in</Link>
+              <Link className="verify-email-primary" to="/login">
+                Continue to sign in
+              </Link>
             ) : (
               <>
-                <Link className="verify-email-primary" to="/register">Return to registration</Link>
-                <p className="verify-email-help">If the link has expired, register again to request a new verification email.</p>
+                <Link className="verify-email-primary" to="/register">
+                  Return to registration
+                </Link>
+                <p className="verify-email-help">
+                  If the link has expired, register again to request a new verification email.
+                </p>
               </>
             )}
-            <Link className="verify-email-secondary" to="/">Return to home</Link>
+            <Link className="verify-email-secondary" to="/">
+              Return to home
+            </Link>
           </div>
         )}
       </div>

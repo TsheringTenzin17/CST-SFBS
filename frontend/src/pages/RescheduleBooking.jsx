@@ -24,10 +24,7 @@ function RescheduleBooking() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      apiCall(`/bookings/user/${user.id}`),
-      apiCall('/facilities'),
-    ])
+    Promise.all([apiCall(`/bookings/user/${user.id}`), apiCall('/facilities')])
       .then(([userBookings, facilities]) => {
         if (!active) return;
         const current = userBookings.find((item) => item.id === Number(id));
@@ -50,7 +47,9 @@ function RescheduleBooking() {
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [id, user.id]);
 
   useEffect(() => {
@@ -60,18 +59,27 @@ function RescheduleBooking() {
     setAvailabilityLoading(true);
     setSelectedSlot(null);
     apiCall(`/facilities/${facility.id}/availability?date=${date}`)
-      .then((result) => { if (active) setAvailability(result); })
-      .catch((requestError) => { if (active) setError(requestError.message); })
-      .finally(() => { if (active) setAvailabilityLoading(false); });
-    return () => { active = false; };
+      .then((result) => {
+        if (active) setAvailability(result);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setAvailabilityLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [booking, facility, date]);
 
   const duration = booking ? toMin(booking.end_time) - toMin(booking.start_time) : 0;
-  const availableSlots = availability && user
-    ? buildSlots(availability.rules, duration).filter(
-      (slot) => slotState(slot, { date, availability, user }) === 'open'
-    )
-    : [];
+  const availableSlots =
+    availability && user
+      ? buildSlots(availability.rules, duration).filter(
+          (slot) => slotState(slot, { date, availability, user }) === 'open',
+        )
+      : [];
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -87,7 +95,9 @@ function RescheduleBooking() {
         reason,
       });
       setBooking({ ...booking, ...result.booking });
-      setSuccess(`Booking B-${booking.id} has been moved to ${prettyDate(date)} at ${selectedSlot.start}–${selectedSlot.end}.`);
+      setSuccess(
+        `Booking B-${booking.id} has been moved to ${prettyDate(date)} at ${selectedSlot.start}–${selectedSlot.end}.`,
+      );
       setSelectedSlot(null);
       setReason('');
     } catch (requestError) {
@@ -98,14 +108,20 @@ function RescheduleBooking() {
   }
 
   if (loading) {
-    return <main className="main reschedule-page"><p role="status">Loading booking…</p></main>;
+    return (
+      <main className="main reschedule-page">
+        <p role="status">Loading booking…</p>
+      </main>
+    );
   }
 
   if (error && !booking) {
     return (
       <main className="main reschedule-page">
         <h1 className="title">Reschedule Your Booking</h1>
-        <p className="error" role="alert">{error}</p>
+        <p className="error" role="alert">
+          {error}
+        </p>
         <Link to="/my-bookings">Back to My Bookings</Link>
       </main>
     );
@@ -115,11 +131,17 @@ function RescheduleBooking() {
 
   return (
     <main className="main reschedule-page">
-      <Link className="reschedule-back" to="/my-bookings">← My Bookings</Link>
+      <Link className="reschedule-back" to="/my-bookings">
+        ← My Bookings
+      </Link>
       <h1 className="title">Reschedule Your Booking</h1>
       <p className="subtitle">Choose a new available slot for your reservation.</p>
 
-      {error && <p className="reschedule-alert error" role="alert">{error}</p>}
+      {error && (
+        <p className="reschedule-alert error" role="alert">
+          {error}
+        </p>
+      )}
       {success && (
         <div className="reschedule-alert success" role="status">
           <strong>Reschedule confirmed.</strong> {success}
@@ -130,9 +152,20 @@ function RescheduleBooking() {
       <section className="reschedule-current">
         <h2>Current Booking Details</h2>
         <dl>
-          <div><dt>Booking ID</dt><dd>B-{booking.id}</dd></div>
-          <div><dt>Facility</dt><dd>{facility.name}</dd></div>
-          <div><dt>Current schedule</dt><dd>{prettyDate(booking.booking_date)} · {booking.start_time}–{booking.end_time}</dd></div>
+          <div>
+            <dt>Booking ID</dt>
+            <dd>B-{booking.id}</dd>
+          </div>
+          <div>
+            <dt>Facility</dt>
+            <dd>{facility.name}</dd>
+          </div>
+          <div>
+            <dt>Current schedule</dt>
+            <dd>
+              {prettyDate(booking.booking_date)} · {booking.start_time}–{booking.end_time}
+            </dd>
+          </div>
         </dl>
       </section>
 
@@ -156,25 +189,39 @@ function RescheduleBooking() {
           </div>
 
           {availability?.maintenance?.length > 0 && (
-            <p className="reschedule-empty">This facility is closed for maintenance on this date. Choose another day.</p>
+            <p className="reschedule-empty">
+              This facility is closed for maintenance on this date. Choose another day.
+            </p>
           )}
-          {availabilityLoading && <p className="reschedule-empty" role="status">Checking available slots…</p>}
+          {availabilityLoading && (
+            <p className="reschedule-empty" role="status">
+              Checking available slots…
+            </p>
+          )}
           {!availabilityLoading && availability && availableSlots.length === 0 && (
-            <p className="reschedule-empty">No suitable slots are available on this date. Try another date.</p>
+            <p className="reschedule-empty">
+              No suitable slots are available on this date. Try another date.
+            </p>
           )}
           {!availabilityLoading && availableSlots.length > 0 && (
             <div className="reschedule-slots" role="radiogroup" aria-label="Available time slots">
               {availableSlots.map((slot) => {
-                const selected = selectedSlot?.start === slot.start && selectedSlot?.end === slot.end;
+                const selected =
+                  selectedSlot?.start === slot.start && selectedSlot?.end === slot.end;
                 return (
-                  <label className={`reschedule-slot${selected ? ' selected' : ''}`} key={`${slot.start}-${slot.end}`}>
+                  <label
+                    className={`reschedule-slot${selected ? ' selected' : ''}`}
+                    key={`${slot.start}-${slot.end}`}
+                  >
                     <input
                       type="radio"
                       name="slot"
                       checked={selected}
                       onChange={() => setSelectedSlot(slot)}
                     />
-                    <span>{slot.start} – {slot.end}</span>
+                    <span>
+                      {slot.start} – {slot.end}
+                    </span>
                     <small>Available</small>
                   </label>
                 );
@@ -195,7 +242,11 @@ function RescheduleBooking() {
           </label>
 
           <div className="reschedule-actions">
-            <button type="button" className="btn-secondary" onClick={() => navigate('/my-bookings')}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/my-bookings')}
+            >
               Cancel
             </button>
             <button

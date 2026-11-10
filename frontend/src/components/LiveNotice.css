@@ -1,3 +1,4 @@
+/* Sticky live-notice ticker, controls, and compact mobile presentation. */
 .live-notice {
   position: sticky;
   top: 112px;
@@ -11,7 +12,7 @@
   padding: 0 18px;
   background: linear-gradient(90deg, #102f40 0%, #123b50 55%, #123445 100%);
   color: #fff;
-  box-shadow: 0 4px 18px rgba(5, 31, 43, .16);
+  box-shadow: 0 4px 18px rgba(5, 31, 43, 0.16);
 }
 
 .live-notice .sr-only {
@@ -37,7 +38,7 @@
   height: 28px;
   padding: 0 13px;
   border: 0;
-  border-right: 1px solid rgba(54, 198, 221, .18);
+  border-right: 1px solid rgba(54, 198, 221, 0.18);
   color: #36c6dd;
   font-size: 11px;
   font-weight: 900;
@@ -55,34 +56,45 @@
 }
 
 .live-notice-track {
- position: relative;
- z-index: 1;
- height: 44px;
- min-width: 0;
- overflow: hidden;
+  position: relative;
+  z-index: 1;
+  height: 44px;
+  min-width: 0;
+  overflow: hidden;
 }
 .live-notice-content {
- position: absolute;
- top: 0;
- left: 0;
- display: flex;
- width: max-content;
- animation: liveNoticeScroll 38s linear infinite;
- will-change: transform;
- font-size: 14px;
- font-weight: 600;
- line-height: 44px;
- white-space: nowrap;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: max-content;
+  animation: liveNoticeScroll 38s linear infinite;
+  will-change: transform;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 44px;
+  white-space: nowrap;
 }
 .live-notice-group {
   display: flex;
   flex: none;
   align-items: center;
 }
-.live-notice-group span { flex: none; }
-.live-notice-track.paused .live-notice-content { animation-play-state: paused; }
-.live-notice-content strong { color: #36c6dd; text-transform: uppercase; }
-.live-notice-content i { margin: 0 28px; color: #f3b33d; font-style: normal; }
+.live-notice-group span {
+  flex: none;
+}
+.live-notice-track.paused .live-notice-content {
+  animation-play-state: paused;
+}
+.live-notice-content strong {
+  color: #36c6dd;
+  text-transform: uppercase;
+}
+.live-notice-content i {
+  margin: 0 28px;
+  color: #f3b33d;
+  font-style: normal;
+}
 
 .live-notice-control,
 .live-notice-close {
@@ -97,8 +109,13 @@
   position: relative;
   z-index: 3;
 }
-.live-notice-control { font-size: 15px; }
-.live-notice-close { font-size: 22px; line-height: 1; }
+.live-notice-control {
+  font-size: 15px;
+}
+.live-notice-close {
+  font-size: 22px;
+  line-height: 1;
+}
 
 .live-notice-details {
   height: 28px;
@@ -115,10 +132,18 @@
 }
 
 @keyframes liveNoticeScroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
-@keyframes liveNoticePulse { 50% { opacity: .35; } }
+@keyframes liveNoticePulse {
+  50% {
+    opacity: 0.35;
+  }
+}
 
 @media (max-width: 700px) {
   .live-notice {
@@ -135,7 +160,14 @@
     justify-content: flex-start;
     font-size: 0;
   }
-  .live-notice-label::after { content: 'NOTICE'; font-size: 11px; letter-spacing: 1px; }  .live-notice-track { height: 52px; }
+  .live-notice-label::after {
+    content: 'NOTICE';
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .live-notice-track {
+    height: 52px;
+  }
   .live-notice-content {
     height: 52px;
     font-size: 13px;
@@ -143,7 +175,9 @@
     animation-duration: 55s;
     animation-delay: -8s;
   }
-  .live-notice-details { display: none; }
+  .live-notice-details {
+    display: none;
+  }
   .live-notice-control,
   .live-notice-close {
     width: 36px;
@@ -155,15 +189,19 @@
   }
   .live-notice-control {
     font-size: 13px;
-    background: rgba(54, 198, 221, .12);
+    background: rgba(54, 198, 221, 0.12);
   }
   .live-notice-close {
     font-size: 22px;
-    background: rgba(255,255,255,.08);
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-notice-content { animation-duration: 45s; }
-  .live-notice-dot { animation: none; }
+  .live-notice-content {
+    animation-duration: 45s;
+  }
+  .live-notice-dot {
+    animation: none;
+  }
 }

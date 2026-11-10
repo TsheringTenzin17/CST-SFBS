@@ -14,7 +14,9 @@ export function AuthProvider({ children }) {
     if (!token) {
       localStorage.removeItem('cst_user');
       setIsLoading(false);
-      return () => { active = false; };
+      return () => {
+        active = false;
+      };
     }
 
     fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
@@ -34,7 +36,9 @@ export function AuthProvider({ children }) {
         if (active) setIsLoading(false);
       });
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   function login(u, token) {

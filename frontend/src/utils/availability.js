@@ -36,7 +36,8 @@ export function slotsText(s) {
 export function groupFacilities(facilities) {
   const groups = {};
   for (const f of facilities) {
-    if (!groups[f.group_name]) groups[f.group_name] = { ...f, displayName: f.group_name, courtCount: 0, courtIds: [] };
+    if (!groups[f.group_name])
+      groups[f.group_name] = { ...f, displayName: f.group_name, courtCount: 0, courtIds: [] };
     groups[f.group_name].courtCount += 1;
     groups[f.group_name].courtIds.push(f.id);
   }

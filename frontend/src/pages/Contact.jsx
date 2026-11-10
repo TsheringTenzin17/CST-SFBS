@@ -9,10 +9,22 @@ import './Contact.css';
 export const DSA_EMAIL = 'kelzangdorji.cst@rub.edu.bt';
 const SSO_EMAIL = 'purnabdrmongar.cst@rub.edu.bt';
 const STEPS = [
-  { title: 'Browse Facilities', text: 'Explore our list of athletic courts, football grounds, traditional archery ranges, and indoor table tennis halls.' },
-  { title: 'Check Availability', text: 'Select a preferred date and view live time slots. See real-time availability based on student, faculty, and commercial schedules.' },
-  { title: 'Book a Slot', text: 'The system will already have your Student/Staff ID, contact information. You will need to accept university athletic regulations, and lock your slot.' },
-  { title: 'Get Confirmation', text: 'Receive a confirmation receipt and check-in guide. Present your physical ID card to safety and security on arrival.' },
+  {
+    title: 'Browse Facilities',
+    text: 'Explore our list of athletic courts, football grounds, traditional archery ranges, and indoor table tennis halls.',
+  },
+  {
+    title: 'Check Availability',
+    text: 'Select a preferred date and view live time slots. See real-time availability based on student, faculty, and commercial schedules.',
+  },
+  {
+    title: 'Book a Slot',
+    text: 'The system will already have your Student/Staff ID, contact information. You will need to accept university athletic regulations, and lock your slot.',
+  },
+  {
+    title: 'Get Confirmation',
+    text: 'Receive a confirmation receipt and check-in guide. Present your physical ID card to safety and security on arrival.',
+  },
 ];
 
 const OFFICE_DETAILS = [
@@ -53,10 +65,11 @@ function Contact() {
         <span className="contact-eyebrow">Student support</span>
         <h1>About CST-SFBS</h1>
         <p>
-          The College of Science and Technology Sports Facility Booking System (CST-SFBS) is a state-of-the-art
-          administrative portal designed to coordinate athletic scheduling, recreational court assignments, and
-          tournament rules. Managed under the Dean of Student Affairs (DSA), the system services students, academic
-          staff, and registered commercial partners in Phuentsholing, Chhukha, Bhutan.
+          The College of Science and Technology Sports Facility Booking System (CST-SFBS) is a
+          state-of-the-art administrative portal designed to coordinate athletic scheduling,
+          recreational court assignments, and tournament rules. Managed under the Dean of Student
+          Affairs (DSA), the system services students, academic staff, and registered commercial
+          partners in Phuentsholing, Chhukha, Bhutan.
         </p>
       </section>
 
@@ -87,15 +100,30 @@ function Contact() {
 
         <form className="contact-form" onSubmit={submitRequest}>
           <h3>Send us a Message</h3>
-          {error && <p className="contact-error" role="alert">{error}</p>}
+          {error && (
+            <p className="contact-error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="contact-form-row">
             <label className="contact-field">
               Your Name
-              <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} required />
+              <input
+                value={name}
+                maxLength={120}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </label>
             <label className="contact-field">
               Your Email
-              <input type="email" value={email} maxLength={254} onChange={(e) => setEmail(e.target.value)} required />
+              <input
+                type="email"
+                value={email}
+                maxLength={254}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </label>
           </div>
           <label className="contact-field">
@@ -108,7 +136,9 @@ function Contact() {
               required
             />
           </label>
-          <p className="contact-hint">We’ll save your request and show a ticket number for follow-up.</p>
+          <p className="contact-hint">
+            We’ll save your request and show a ticket number for follow-up.
+          </p>
           <button className="contact-submit" type="submit" disabled={submitting}>
             {submitting ? 'Sending…' : 'Submit Message'}
           </button>

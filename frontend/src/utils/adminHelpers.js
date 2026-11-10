@@ -41,11 +41,18 @@ export function clock(hhmm) {
 
 // '2026-10-22' -> '22 Oct'
 export function shortDay(dateStr) {
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-    .format(new Date(`${dateStr}T00:00:00Z`));
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${dateStr}T00:00:00Z`));
 }
 
 // 'table_tennis' -> 'Table Tennis'
 export function sportName(type = '') {
-  return String(type).split('_').filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  return String(type)
+    .split('_')
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
 }

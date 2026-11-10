@@ -8,7 +8,7 @@
 async function timetableForDate(queryable, date) {
   const result = await queryable.query(
     'SELECT 1 FROM tournament_periods WHERE $1::date BETWEEN start_date AND end_date LIMIT 1',
-    [date]
+    [date],
   );
   return result.rows.length > 0 ? 'tournament' : 'standard';
 }

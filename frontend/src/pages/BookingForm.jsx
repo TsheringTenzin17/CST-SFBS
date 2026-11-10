@@ -8,7 +8,12 @@ import { Spinner } from '../components/Loading';
 import ConflictPanel from '../components/ConflictPanel';
 import './Booking.css';
 
-const ROLE_NAMES = { student: 'Student', faculty: 'Faculty / Staff', outsider: 'Outsider (commercial)', admin: 'Admin' };
+const ROLE_NAMES = {
+  student: 'Student',
+  faculty: 'Faculty / Staff',
+  outsider: 'Outsider (commercial)',
+  admin: 'Admin',
+};
 
 function formatTime(value) {
   if (!value) return '';
@@ -26,18 +31,23 @@ function bookingMode(role, commercialSlot = false) {
 
 function sportLabel(type) {
   if (!type) return 'Facility';
-  return type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  return type
+    .split('_')
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 function footballFee(role, date, assistantReferees = false) {
   if (assistantReferees) {
     if (role === 'student') return 2900;
-    if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6) return 4400;
+    if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6)
+      return 4400;
     return 3900;
   }
 
   if (role === 'student') return 2500;
-  if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6) return 4000;
+  if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6)
+    return 4000;
   return 3500;
 }
 
@@ -85,18 +95,18 @@ function BookingForm() {
   const [assistantReferees, setAssistantReferees] = useState(false);
   const conflict = conflictSlot === slotKey;
   const bookingUser = accountProfile ? { ...user, ...accountProfile } : user;
-  const selectedRule = availability?.rules?.find((rule) =>
-    toMin(rule.start_time) <= toMin(start) &&
-    toMin(rule.end_time) >= toMin(end)
+  const selectedRule = availability?.rules?.find(
+    (rule) => toMin(rule.start_time) <= toMin(start) && toMin(rule.end_time) >= toMin(end),
   );
   const bookingDetailsLoading = !facility || !availability || !accountProfile;
   const commercialSlot = selectedRule
     ? isCommercialBooking(selectedRule, date, bookingUser)
     : false;
   const requiresPayment = bookingUser?.role === 'outsider' || commercialSlot;
-  const footballFeeAmount = requiresPayment && facility?.type === 'football'
-    ? footballFee(bookingUser.role, date, assistantReferees)
-    : null;
+  const footballFeeAmount =
+    requiresPayment && facility?.type === 'football'
+      ? footballFee(bookingUser.role, date, assistantReferees)
+      : null;
 
   useEffect(() => {
     apiCall('/facilities')
@@ -123,14 +133,18 @@ function BookingForm() {
   if (!facilityId || !date || !start || !end) {
     return (
       <main className="main">
-        <p>No slot selected. <Link to="/facilities">Choose a facility</Link> and pick a slot first.</p>
+        <p>
+          No slot selected. <Link to="/facilities">Choose a facility</Link> and pick a slot first.
+        </p>
       </main>
     );
   }
   if (!user) {
     return (
       <main className="main">
-        <p>Please <Link to="/login">sign in</Link> to book a slot.</p>
+        <p>
+          Please <Link to="/login">sign in</Link> to book a slot.
+        </p>
       </main>
     );
   }
@@ -152,7 +166,9 @@ function BookingForm() {
         state: {
           bookingId: data.booking.id,
           facility: facility ? facility.name : `Facility ${facilityId}`,
-          date, start, end,
+          date,
+          start,
+          end,
           role: bookingUser.role,
           status: data.booking.status,
           commercialSlot,
@@ -167,7 +183,6 @@ function BookingForm() {
       } else {
         setError(requestError.message || 'Booking failed');
       }
-
     } finally {
       setSubmitting(false);
     }
@@ -192,7 +207,8 @@ function BookingForm() {
       {conflict && (
         <div className="conflict-box">
           <strong>Booking conflict detected.</strong> This slot was just booked by someone else.{' '}
-          <Link to={`/facilities/${facilityId}?date=${date}`}>Back to availability</Link> to pick another slot.
+          <Link to={`/facilities/${facilityId}?date=${date}`}>Back to availability</Link> to pick
+          another slot.
         </div>
       )}
       {error && <p className="error">{error}</p>}
@@ -215,17 +231,41 @@ function BookingForm() {
           </div>
           <div className="summary-body">
             <div className="summary-item">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
+                <rect x="3" y="5" width="18" height="16" rx="3" />
+                <path d="M3 10h18M8 3v4M16 3v4" />
+              </svg>
               <div>
                 <div className="summary-label">Date</div>
                 <div className="summary-value">{prettyDate(date)}</div>
               </div>
             </div>
             <div className="summary-item">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
               <div>
                 <div className="summary-label">Time</div>
-                <div className="summary-value">{formatTime(start)} – {formatTime(end)}</div>
+                <div className="summary-value">
+                  {formatTime(start)} – {formatTime(end)}
+                </div>
               </div>
             </div>
             {(() => {
@@ -243,7 +283,9 @@ function BookingForm() {
             <div className="rules-brief">
               <strong>Rules brief</strong>
               <ul>
-                {rulesFor(facility?.type).map((rule) => <li key={rule}>{rule}</li>)}
+                {rulesFor(facility?.type).map((rule) => (
+                  <li key={rule}>{rule}</li>
+                ))}
               </ul>
             </div>
             {requiresPayment && facility?.type === 'football' && (
@@ -256,12 +298,18 @@ function BookingForm() {
           </div>
         </aside>
 
-        <form className="form-card" onSubmit={handleSubmit} aria-busy={submitting || bookingDetailsLoading}>
+        <form
+          className="form-card"
+          onSubmit={handleSubmit}
+          aria-busy={submitting || bookingDetailsLoading}
+        >
           <div className="form-card-heading">
             <span>Booking details</span>
             <h2>Facility Booking Request</h2>
           </div>
-          <p className="booking-intro">Complete your details to reserve this slot. Fields marked * are required.</p>
+          <p className="booking-intro">
+            Complete your details to reserve this slot. Fields marked * are required.
+          </p>
           {(() => {
             const identity = identityField(bookingUser.role, bookingUser);
             return (
@@ -272,14 +320,34 @@ function BookingForm() {
                 </label>
                 <label className="form-field">
                   {identity.label} <span className="required">*</span>
-                  <input value={identity.value || 'Not provided'} readOnly aria-readonly="true" title="This value comes from your account profile and cannot be edited here" />
+                  <input
+                    value={identity.value || 'Not provided'}
+                    readOnly
+                    aria-readonly="true"
+                    title="This value comes from your account profile and cannot be edited here"
+                  />
                 </label>
               </div>
             );
           })()}
           <div className="form-grid">
-            <label className="form-field">Role Type <span className="required">*</span><input value={ROLE_NAMES[bookingUser.role] || bookingUser.role || ''} readOnly aria-readonly="true" /></label>
-            <label className="form-field">Contact Number <span className="required">*</span><input value={bookingUser.contact_number || 'Not provided'} readOnly aria-readonly="true" title="This value comes from your account profile and cannot be edited here" /></label>
+            <label className="form-field">
+              Role Type <span className="required">*</span>
+              <input
+                value={ROLE_NAMES[bookingUser.role] || bookingUser.role || ''}
+                readOnly
+                aria-readonly="true"
+              />
+            </label>
+            <label className="form-field">
+              Contact Number <span className="required">*</span>
+              <input
+                value={bookingUser.contact_number || 'Not provided'}
+                readOnly
+                aria-readonly="true"
+                title="This value comes from your account profile and cannot be edited here"
+              />
+            </label>
           </div>
           <label className="form-field">
             Purpose of Booking <span className="required">*</span>
@@ -303,23 +371,46 @@ function BookingForm() {
             </label>
           )}
           <label className="agree-row">
-            <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} required />
-            I agree to the college rules and guidelines set by the Office of the Dean of Student Affairs.
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              required
+            />
+            I agree to the college rules and guidelines set by the Office of the Dean of Student
+            Affairs.
           </label>
-          <div className={`booking-fee-summary${requiresPayment ? ' is-paid' : ''}`} aria-live="polite">
+          <div
+            className={`booking-fee-summary${requiresPayment ? ' is-paid' : ''}`}
+            aria-live="polite"
+          >
             {bookingDetailsLoading ? (
               <Spinner label="Loading booking fee…" />
             ) : footballFeeAmount !== null ? (
               <>
-                <span>{bookingUser.role === 'outsider' ? 'Outsider football fee — pay at the DSA office' : 'Fee to pay at the DSA office'}</span>
+                <span>
+                  {bookingUser.role === 'outsider'
+                    ? 'Outsider football fee — pay at the DSA office'
+                    : 'Fee to pay at the DSA office'}
+                </span>
                 <strong>Nu. {footballFeeAmount.toLocaleString()}</strong>
-                <small>{assistantReferees ? 'Referee and assistant referees' : 'One referee'} · offline payment required before approval</small>
+                <small>
+                  {assistantReferees ? 'Referee and assistant referees' : 'One referee'} · offline
+                  payment required before approval
+                </small>
               </>
             ) : requiresPayment ? (
               <>
-                <span>{bookingUser.role === 'outsider' ? 'Outsider facility fee — payment required' : 'Commercial facility fee'}</span>
+                <span>
+                  {bookingUser.role === 'outsider'
+                    ? 'Outsider facility fee — payment required'
+                    : 'Commercial facility fee'}
+                </span>
                 <strong>Confirm amount with the DSA office</strong>
-                <small>Ask the DSA office to confirm the amount. Pay offline before your booking can be approved.</small>
+                <small>
+                  Ask the DSA office to confirm the amount. Pay offline before your booking can be
+                  approved.
+                </small>
               </>
             ) : (
               <>
@@ -329,11 +420,21 @@ function BookingForm() {
             )}
           </div>
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
-            <button type="submit" className="btn-primary" disabled={submitting || bookingDetailsLoading || !agree}>
-              {submitting
-                ? <Spinner label="Confirming…" />
-                : bookingDetailsLoading ? <Spinner label="Loading booking details…" /> : 'Confirm Booking'}
+            <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={submitting || bookingDetailsLoading || !agree}
+            >
+              {submitting ? (
+                <Spinner label="Confirming…" />
+              ) : bookingDetailsLoading ? (
+                <Spinner label="Loading booking details…" />
+              ) : (
+                'Confirm Booking'
+              )}
             </button>
           </div>
         </form>

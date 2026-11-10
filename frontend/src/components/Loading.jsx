@@ -51,7 +51,9 @@ export function FacilityCardSkeleton() {
 export function FacilityCardSkeletons({ count = 6 }) {
   return (
     <div className="grid facilities-skeleton-grid" role="status" aria-label="Loading facilities">
-      {Array.from({ length: count }, (_, index) => <FacilityCardSkeleton key={index} />)}
+      {Array.from({ length: count }, (_, index) => (
+        <FacilityCardSkeleton key={index} />
+      ))}
     </div>
   );
 }

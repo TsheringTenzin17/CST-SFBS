@@ -21,13 +21,15 @@ function RegistrationSuccess() {
         '/auth/resend-verification',
         'POST',
         { email: state.email },
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       setResendMessage(result.message);
     } catch (error) {
-      setResendMessage(controller.signal.aborted
-        ? 'The email service took too long to respond. Please try again later.'
-        : error.message);
+      setResendMessage(
+        controller.signal.aborted
+          ? 'The email service took too long to respond. Please try again later.'
+          : error.message,
+      );
     } finally {
       window.clearTimeout(timeout);
       setResending(false);
@@ -35,7 +37,13 @@ function RegistrationSuccess() {
   }
 
   async function cancelRegistration() {
-    if (!state?.cancel_token || !window.confirm('Cancel this pending registration? The verification link will stop working and no account will be created.')) return;
+    if (
+      !state?.cancel_token ||
+      !window.confirm(
+        'Cancel this pending registration? The verification link will stop working and no account will be created.',
+      )
+    )
+      return;
     setCanceling(true);
     setResendMessage('');
     try {
@@ -61,8 +69,12 @@ function RegistrationSuccess() {
             Start registration first, then you’ll see the email verification details here.
           </p>
           <div className="registration-success-actions">
-            <Link className="registration-success-button" to="/register">Create an account</Link>
-            <Link className="registration-success-secondary" to="/login">Back to sign in</Link>
+            <Link className="registration-success-button" to="/register">
+              Create an account
+            </Link>
+            <Link className="registration-success-secondary" to="/login">
+              Back to sign in
+            </Link>
           </div>
         </div>
       </AuthLayout>
@@ -72,7 +84,12 @@ function RegistrationSuccess() {
   return (
     <AuthLayout tagline="Nurturing sporting excellence, teamwork and healthy campus life.">
       <div className="registration-success">
-        <div className={`registration-success-icon${cancelled ? ' is-cancelled' : ''}`} aria-hidden="true">{cancelled ? '×' : '✓'}</div>
+        <div
+          className={`registration-success-icon${cancelled ? ' is-cancelled' : ''}`}
+          aria-hidden="true"
+        >
+          {cancelled ? '×' : '✓'}
+        </div>
         <h1>{cancelled ? 'Registration cancelled' : 'Verify your email'}</h1>
         <p className="registration-success-description">
           {cancelled
@@ -96,24 +113,50 @@ function RegistrationSuccess() {
           </p>
         )}
 
-        {resendMessage && <p className="registration-success-note" role="status">{resendMessage}</p>}
+        {resendMessage && (
+          <p className="registration-success-note" role="status">
+            {resendMessage}
+          </p>
+        )}
         {!cancelled && (
           <div className="registration-success-pending-actions">
-            <button className="registration-success-button" onClick={resendVerification} disabled={resending || canceling} type="button">
+            <button
+              className="registration-success-button"
+              onClick={resendVerification}
+              disabled={resending || canceling}
+              type="button"
+            >
               {resending ? 'Sending…' : 'Resend verification email'}
             </button>
             {state.cancel_token && (
-              <button className="registration-success-cancel" onClick={cancelRegistration} disabled={resending || canceling} type="button">
+              <button
+                className="registration-success-cancel"
+                onClick={cancelRegistration}
+                disabled={resending || canceling}
+                type="button"
+              >
                 {canceling ? 'Cancelling…' : 'Cancel registration'}
               </button>
             )}
           </div>
         )}
         <div className="registration-success-actions">
-          {cancelled
-            ? <Link className="registration-success-secondary" to="/register">Register again</Link>
-            : <Link className="registration-success-secondary" to="/login" state={{ registered: true, email: state.email }}>Continue to Sign In</Link>}
-          <Link className="registration-success-secondary" to="/">Return to home</Link>
+          {cancelled ? (
+            <Link className="registration-success-secondary" to="/register">
+              Register again
+            </Link>
+          ) : (
+            <Link
+              className="registration-success-secondary"
+              to="/login"
+              state={{ registered: true, email: state.email }}
+            >
+              Continue to Sign In
+            </Link>
+          )}
+          <Link className="registration-success-secondary" to="/">
+            Return to home
+          </Link>
         </div>
       </div>
     </AuthLayout>

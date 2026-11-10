@@ -29,7 +29,13 @@ function ForgotPassword() {
 
   return (
     <AuthLayout
-      headline={<>Book your court.<br />Play your game.</>}
+      headline={
+        <>
+          Book your court.
+          <br />
+          Play your game.
+        </>
+      }
       tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
       chips={SPORTS}
     >
@@ -38,13 +44,23 @@ function ForgotPassword() {
         Enter your account email and we’ll send a one-hour reset link if a verified account exists.
       </p>
 
-      {message && <p className="auth-note" role="status">{message}</p>}
-      {resetUrl && (
-        <p className="auth-note">
-          <a className="auth-link" href={resetUrl}>Open password reset page</a>
+      {message && (
+        <p className="auth-note" role="status">
+          {message}
         </p>
       )}
-      {error && <p className="auth-error" role="alert">{error}</p>}
+      {resetUrl && (
+        <p className="auth-note">
+          <a className="auth-link" href={resetUrl}>
+            Open password reset page
+          </a>
+        </p>
+      )}
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <form onSubmit={submit} className="auth-form">
         <label className="auth-field">
@@ -63,7 +79,9 @@ function ForgotPassword() {
       </form>
 
       <p className="auth-switch">
-        <Link className="auth-link" to="/login">Back to sign in</Link>
+        <Link className="auth-link" to="/login">
+          Back to sign in
+        </Link>
       </p>
     </AuthLayout>
   );

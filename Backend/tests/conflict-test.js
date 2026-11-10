@@ -19,7 +19,7 @@ async function conflictFreeTuesday(facilityIds) {
        SELECT 1 FROM maintenance_blocks
        WHERE facility_id = ANY($1::int[]) AND $2::date BETWEEN start_date AND end_date
        LIMIT 1`,
-      [facilityIds, date]
+      [facilityIds, date],
     );
     if (conflicts.rows.length === 0) return date;
   }
@@ -35,7 +35,13 @@ async function main() {
   const court2 = await facilityId('Badminton Court 2');
   const volleyball = await facilityId('Volleyball Court (Male)');
   const date = await conflictFreeTuesday([basketball, court1, court2, volleyball]);
-  const slot = { user_id: alice, facility_id: basketball, booking_date: date, start_time: '16:00', end_time: '17:00' };
+  const slot = {
+    user_id: alice,
+    facility_id: basketball,
+    booking_date: date,
+    start_time: '16:00',
+    end_time: '17:00',
+  };
 
   // ---- Test 1: 5 requests for the SAME slot at the SAME moment -------------
   console.log('Test 1: 5 simultaneous requests for one slot');
@@ -50,7 +56,11 @@ async function main() {
   // ---- Test 2: a PARTLY overlapping slot is also refused --------------------
   console.log('Test 2: overlapping times');
   const r2 = await post({ ...slot, user_id: bob, start_time: '16:30', end_time: '17:30' });
-  check('16:30-17:30 overlaps the 16:00-17:00 booking -> 409', r2.status === 409, `got ${r2.status}`);
+  check(
+    '16:30-17:30 overlaps the 16:00-17:00 booking -> 409',
+    r2.status === 409,
+    `got ${r2.status}`,
+  );
   const r2b = await post({ ...slot, user_id: bob, start_time: '17:00', end_time: '18:00' });
   check('17:00-18:00 is right after it -> allowed', r2b.status === 201, `got ${r2b.status}`);
 
@@ -69,7 +79,7 @@ async function main() {
   check('first booking succeeds', first.status === 201, `got ${first.status}`);
   const id = first.body.booking && first.body.booking.id;
   const wrong = await api('PATCH', `/bookings/${id}/cancel`, { user_id: bob });
-  check("another user cannot cancel it -> 404", wrong.status === 404, `got ${wrong.status}`);
+  check('another user cannot cancel it -> 404', wrong.status === 404, `got ${wrong.status}`);
   const cancel = await api('PATCH', `/bookings/${id}/cancel`, { user_id: alice });
   check('the owner can cancel it', cancel.status === 200, `got ${cancel.status}`);
   const again = await post({ ...slot, user_id: bob, facility_id: volleyball });

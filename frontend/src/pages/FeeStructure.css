@@ -1,3 +1,4 @@
+/* Fee cards and table; the narrow-screen table becomes labeled row cards. */
 .fee-page {
   display: grid;
   gap: 16px;
@@ -13,7 +14,7 @@
   border: 1px solid #e5e5e5;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 8px 22px rgba(37, 84, 99, .06);
+  box-shadow: 0 8px 22px rgba(37, 84, 99, 0.06);
 }
 
 .fee-card h2 {
@@ -36,7 +37,9 @@
 }
 
 .fee-table-scroll {
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
 }
 
 .fee-table {
@@ -78,14 +81,83 @@
 
 @media (max-width: 600px) {
   .fee-page {
-    padding: 18px 12px 28px;
+    gap: 12px;
+    padding: 20px 14px 32px;
   }
 
   .fee-card {
-    padding: 16px;
+    padding: 16px 14px;
   }
 
-  .fee-table {
-    min-width: 620px;
+  .fee-table-scroll {
+    overflow: visible;
+  }
+
+  .fee-table,
+  .fee-table tbody,
+  .fee-table tr,
+  .fee-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .fee-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .fee-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .fee-table tbody tr {
+    padding: 12px;
+    border: 1px solid #e5e9eb;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .fee-table tbody th,
+  .fee-table tbody td {
+    padding: 8px 0;
+    border-bottom: 1px solid #edf1f2;
+  }
+
+  .fee-table tbody th {
+    padding-top: 0;
+    color: #295361;
+    font-size: 15px;
+  }
+
+  .fee-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    text-align: right;
+  }
+
+  .fee-table tbody td::before {
+    color: #66717b;
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .fee-table tbody th,
+  .fee-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  .fee-card .fee-note {
+    padding: 12px;
+    font-size: 13px;
   }
 }

@@ -1,3 +1,4 @@
+/* Facility browsing header, filters, cards, and responsive layouts. */
 .facilities-page {
   width: min(100%, 1120px);
 }
@@ -9,12 +10,12 @@
   gap: 24px;
   margin-bottom: 22px;
   padding: 26px 28px;
-  border: 1px solid rgba(37, 84, 99, .12);
+  border: 1px solid rgba(37, 84, 99, 0.12);
   border-radius: 18px;
   background:
-    radial-gradient(circle at 92% 20%, rgba(255, 255, 255, .75), transparent 26%),
+    radial-gradient(circle at 92% 20%, rgba(255, 255, 255, 0.75), transparent 26%),
     linear-gradient(135deg, #edf5f7, #fff);
-  box-shadow: 0 14px 34px rgba(31, 59, 69, .06);
+  box-shadow: 0 14px 34px rgba(31, 59, 69, 0.06);
 }
 
 .facilities-heading .title {
@@ -35,7 +36,7 @@
   color: #b57910;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -48,7 +49,7 @@
   padding: 0 16px;
   border: 1px solid #cadde2;
   border-radius: 10px;
-  background: rgba(255, 255, 255, .88);
+  background: rgba(255, 255, 255, 0.88);
   color: #255463;
   font-size: 13px;
   font-weight: 800;
@@ -58,10 +59,12 @@
 .facilities-page .facilities-filter-bar {
   padding: 10px;
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(31, 59, 69, .07);
+  box-shadow: 0 8px 24px rgba(31, 59, 69, 0.07);
 }
 
-.facilities-page .filter-tabs { gap: 6px; }
+.facilities-page .filter-tabs {
+  gap: 6px;
+}
 
 .facilities-page .tab {
   min-height: 44px;
@@ -69,7 +72,9 @@
   border-radius: 8px;
 }
 
-.facilities-page .tab.active { box-shadow: 0 5px 14px rgba(37, 84, 99, .22); }
+.facilities-page .tab.active {
+  box-shadow: 0 5px 14px rgba(37, 84, 99, 0.22);
+}
 
 .facilities-page .sort-label select {
   min-height: 44px;
@@ -83,13 +88,15 @@
 .facilities-page .card {
   border-radius: 16px;
   border-color: #e1e7e9;
-  box-shadow: 0 10px 28px rgba(31, 59, 69, .07);
-  transition: transform .2s ease, box-shadow .2s ease;
+  box-shadow: 0 10px 28px rgba(31, 59, 69, 0.07);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .facilities-page .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 34px rgba(31, 59, 69, .12);
+  box-shadow: 0 16px 34px rgba(31, 59, 69, 0.12);
 }
 
 .facilities-page .card-img {

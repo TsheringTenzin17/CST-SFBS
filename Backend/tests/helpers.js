@@ -21,12 +21,12 @@ async function api(method, path, body) {
     const query = path.match(/[?&](?:admin_user_id|test_user_id)=(\d+)/);
     if (query) adminId = query[1];
   }
-    const requestBody = body && { ...body };
-    if (requestBody) {
-      delete requestBody.admin_user_id;
-      delete requestBody.test_user_id;
-    }
-    const token = adminId ? await sessionToken(adminId) : null;
+  const requestBody = body && { ...body };
+  if (requestBody) {
+    delete requestBody.admin_user_id;
+    delete requestBody.test_user_id;
+  }
+  const token = adminId ? await sessionToken(adminId) : null;
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
@@ -62,7 +62,7 @@ async function createUser(role) {
   const password = `test-password-${Math.random()}`;
   const r = await pool.query(
     `INSERT INTO users (full_name, email, role, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [`Test ${role}`, email, role, await bcrypt.hash(password, 10)]
+    [`Test ${role}`, email, role, await bcrypt.hash(password, 10)],
   );
   const id = r.rows[0].id;
   created.users.push(id);
@@ -91,7 +91,7 @@ function dateOnWeekday(dow) {
 async function addMaintenanceBlock(facility_id, date, reason = 'test block') {
   const r = await pool.query(
     `INSERT INTO maintenance_blocks (facility_id, start_date, end_date, reason) VALUES ($1, $2, $2, $3) RETURNING id`,
-    [facility_id, date, reason]
+    [facility_id, date, reason],
   );
   created.blocks.push(r.rows[0].id);
 }
@@ -109,8 +109,10 @@ async function finish() {
       await pool.query('DELETE FROM notifications WHERE user_id = ANY($1)', [created.users]);
       await pool.query('DELETE FROM bookings WHERE user_id = ANY($1)', [created.users]);
     }
-    if (created.blocks.length > 0) await pool.query('DELETE FROM maintenance_blocks WHERE id = ANY($1)', [created.blocks]);
-    if (created.users.length > 0) await pool.query('DELETE FROM users WHERE id = ANY($1)', [created.users]);
+    if (created.blocks.length > 0)
+      await pool.query('DELETE FROM maintenance_blocks WHERE id = ANY($1)', [created.blocks]);
+    if (created.users.length > 0)
+      await pool.query('DELETE FROM users WHERE id = ANY($1)', [created.users]);
   } finally {
     await pool.end();
   }
@@ -118,4 +120,14 @@ async function finish() {
   process.exit(failures === 0 ? 0 : 1);
 }
 
-module.exports = { api, post, createUser, testCredentials, facilityId, dateOnWeekday, addMaintenanceBlock, check, finish };
+module.exports = {
+  api,
+  post,
+  createUser,
+  testCredentials,
+  facilityId,
+  dateOnWeekday,
+  addMaintenanceBlock,
+  check,
+  finish,
+};

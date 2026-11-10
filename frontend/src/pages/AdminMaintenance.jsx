@@ -112,7 +112,9 @@ function AdminMaintenance() {
       const affected = result.affected_bookings
         ? ` ${result.affected_bookings} existing booking(s) fall within this period.`
         : '';
-      setMessage(`${editingId ? 'Maintenance block updated.' : 'Maintenance block added.'}${affected}`);
+      setMessage(
+        `${editingId ? 'Maintenance block updated.' : 'Maintenance block added.'}${affected}`,
+      );
       if (editingId) stopEdit();
       else setForm((current) => ({ ...current, reason: '' }));
       await loadData();
@@ -138,7 +140,9 @@ function AdminMaintenance() {
   }
 
   const today = bhutanToday();
-  const current = blocks.filter((b) => b.end_date >= today).sort((a, b) => a.start_date.localeCompare(b.start_date));
+  const current = blocks
+    .filter((b) => b.end_date >= today)
+    .sort((a, b) => a.start_date.localeCompare(b.start_date));
   const past = blocks.filter((b) => b.end_date < today);
   const visible = showPast ? [...current, ...past] : current;
 
@@ -149,32 +153,76 @@ function AdminMaintenance() {
         <p>Define downtime and prevent general bookings during maintenance operations.</p>
       </header>
 
-      {error && <div className="admin-error" role="alert">{error}</div>}
-      {message && <div className="mt-success" role="status">{message}</div>}
+      {error && (
+        <div className="admin-error" role="alert">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="mt-success" role="status">
+          {message}
+        </div>
+      )}
 
       <div className="mt-grid">
         <section className="mt-card" aria-labelledby="mt-form-title">
           <h2 id="mt-form-title">{editingId ? 'Edit Block' : 'Schedule New Block'}</h2>
           <form className="mt-form" onSubmit={saveBlock}>
-            <label>Select Facility
+            <label>
+              Select Facility
               <select required value={form.facility_id} onChange={setField('facility_id')}>
-                {facilities.map((facility) => <option key={facility.id} value={facility.id}>{facility.name}</option>)}
+                {facilities.map((facility) => (
+                  <option key={facility.id} value={facility.id}>
+                    {facility.name}
+                  </option>
+                ))}
               </select>
             </label>
-            <label>Start Date
-              <input required type="date" value={form.start_date} onChange={setField('start_date')} />
+            <label>
+              Start Date
+              <input
+                required
+                type="date"
+                value={form.start_date}
+                onChange={setField('start_date')}
+              />
             </label>
-            <label>End Date
-              <input required type="date" min={form.start_date} value={form.end_date} onChange={setField('end_date')} />
+            <label>
+              End Date
+              <input
+                required
+                type="date"
+                min={form.start_date}
+                value={form.end_date}
+                onChange={setField('end_date')}
+              />
             </label>
-            <label>Reason / Description
-              <textarea value={form.reason} maxLength={500} onChange={setField('reason')} placeholder="Optional maintenance details" />
+            <label>
+              Reason / Description
+              <textarea
+                value={form.reason}
+                maxLength={500}
+                onChange={setField('reason')}
+                placeholder="Optional maintenance details"
+              />
             </label>
-            <button className="mt-submit" disabled={saving || loading || !facilities.length} type="submit">
-              {saving ? <Spinner label="Saving maintenance block…" /> : editingId ? 'Save Changes' : 'Block Facility'}
+            <button
+              className="mt-submit"
+              disabled={saving || loading || !facilities.length}
+              type="submit"
+            >
+              {saving ? (
+                <Spinner label="Saving maintenance block…" />
+              ) : editingId ? (
+                'Save Changes'
+              ) : (
+                'Block Facility'
+              )}
             </button>
             {editingId && (
-              <button className="mt-cancel-edit" onClick={stopEdit} type="button">Cancel editing</button>
+              <button className="mt-cancel-edit" onClick={stopEdit} type="button">
+                Cancel editing
+              </button>
             )}
           </form>
         </section>
@@ -191,18 +239,31 @@ function AdminMaintenance() {
               {visible.map((block) => {
                 const status = blockStatus(block, today);
                 return (
-                  <article key={block.id} className={`mt-block${editingId === block.id ? ' is-editing' : ''}`}>
+                  <article
+                    key={block.id}
+                    className={`mt-block${editingId === block.id ? ' is-editing' : ''}`}
+                  >
                     <div className="mt-block-head">
                       <h3>{block.facility_name}</h3>
                       <span className={`mt-badge mt-badge-${status.key}`}>{status.label}</span>
                     </div>
                     <div className="mt-label">Period</div>
-                    <div className="mt-value">{longDate(block.start_date)} - {longDate(block.end_date)}</div>
+                    <div className="mt-value">
+                      {longDate(block.start_date)} - {longDate(block.end_date)}
+                    </div>
                     <div className="mt-label">Reason</div>
                     <div className="mt-value">{block.reason || '—'}</div>
                     <div className="mt-block-actions">
-                      <button className="mt-edit" onClick={() => startEdit(block)} type="button">Edit</button>
-                      <button className="mt-delete" onClick={() => removeBlock(block)} type="button">Delete</button>
+                      <button className="mt-edit" onClick={() => startEdit(block)} type="button">
+                        Edit
+                      </button>
+                      <button
+                        className="mt-delete"
+                        onClick={() => removeBlock(block)}
+                        type="button"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </article>
                 );
