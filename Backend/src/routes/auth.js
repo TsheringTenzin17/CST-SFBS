@@ -19,12 +19,12 @@ async function issueToken(userId, purpose, expiresInHours) {
   const token = crypto.randomBytes(32).toString('hex');
   await pool.query(
     `DELETE FROM auth_tokens WHERE user_id = $1 AND purpose = $2 AND consumed_at IS NULL`,
-    [userId, purpose]
+    [userId, purpose],
   );
   await pool.query(
     `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at)
      VALUES ($1, $2, $3, now() + ($4 * interval '1 hour'))`,
-    [hashToken(token), userId, purpose, expiresInHours]
+    [hashToken(token), userId, purpose, expiresInHours],
   );
   return token;
 }
@@ -34,12 +34,12 @@ async function issueEmailChangeToken(userId, newEmail, expiresInHours) {
   const token = crypto.randomBytes(32).toString('hex');
   await pool.query(
     `DELETE FROM auth_tokens WHERE user_id = $1 AND purpose = 'email_change' AND consumed_at IS NULL`,
-    [userId]
+    [userId],
   );
   await pool.query(
     `INSERT INTO auth_tokens (token_hash, user_id, purpose, new_email, expires_at)
      VALUES ($1, $2, 'email_change', $3, now() + ($4 * interval '1 hour'))`,
-    [hashToken(token), userId, newEmail, expiresInHours]
+    [hashToken(token), userId, newEmail, expiresInHours],
   );
   return token;
 }
@@ -57,21 +57,30 @@ function roleFromCollegeEmail(email) {
 }
 
 router.post('/register', async (req, res) => {
-  const { full_name, password, contact_number, organization, role: requestedRole, gender } = req.body;  
+  const {
+    full_name,
+    password,
+    contact_number,
+    organization,
+    role: requestedRole,
+    gender,
+  } = req.body;
   const email = (req.body.email || '').trim().toLowerCase();
-  
 
   if (!full_name || !email || !password) {
     return res.status(400).json({ error: 'full_name, email and password are required' });
   }
-  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  if (password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   if (!/^(?:16|17|77)\d{6}$/.test(String(contact_number || ''))) {
-    return res.status(400).json({ error: 'Enter an 8-digit Bhutan mobile number starting with 16, 17 or 77' });
+    return res
+      .status(400)
+      .json({ error: 'Enter an 8-digit Bhutan mobile number starting with 16, 17 or 77' });
   }
 
   if (!['female', 'male'].includes(gender)) {
-     return res.status(400).json({ error: 'Select your gender (female or male).' });
-   }
+    return res.status(400).json({ error: 'Select your gender (female or male).' });
+  }
 
   // Role (and the student ID) always come from the email, never from the request.
   // Public registration cannot create admins.
@@ -84,18 +93,24 @@ router.post('/register', async (req, res) => {
     role = roleFromCollegeEmail(email);
     if (requestedRole && requestedRole !== role) {
       return res.status(400).json({
-        error: role === 'student'
-          ? 'This is a student email. Pick the Student option.'
-          : 'This is a staff email. Pick the Staff option.',
+        error:
+          role === 'student'
+            ? 'This is a student email. Pick the Student option.'
+            : 'This is a staff email. Pick the Staff option.',
       });
     }
     if (role === 'student') student_staff_id = email.split('.cst@')[0];
   } else {
     if (requestedRole === 'student' || requestedRole === 'faculty') {
-      return res.status(400).json({ error: 'Student and staff accounts need a college email ending .cst@rub.edu.bt' });
+      return res
+        .status(400)
+        .json({ error: 'Student and staff accounts need a college email ending .cst@rub.edu.bt' });
     }
     if (!OUTSIDER_EMAIL.test(email)) {
-      return res.status(400).json({ error: 'Use your college email (.cst@rub.edu.bt) or a Gmail address (@gmail.com) to register.' });
+      return res.status(400).json({
+        error:
+          'Use your college email (.cst@rub.edu.bt) or a Gmail address (@gmail.com) to register.',
+      });
     }
     role = 'outsider';
   }
@@ -103,10 +118,14 @@ router.post('/register', async (req, res) => {
   // Outsiders must give an organization name (or a team name). Students and staff do not.
   const organizationName = role === 'outsider' ? String(organization || '').trim() : null;
   if (role === 'outsider' && !organizationName) {
-    return res.status(400).json({ error: 'Enter your organization name, or your team name if you are not with an organization.' });
+    return res.status(400).json({
+      error: 'Enter your organization name, or your team name if you are not with an organization.',
+    });
   }
   if (organizationName && organizationName.length > 120) {
-    return res.status(400).json({ error: 'Organization or team name must be 120 characters or fewer' });
+    return res
+      .status(400)
+      .json({ error: 'Organization or team name must be 120 characters or fewer' });
   }
 
   let client;
@@ -118,15 +137,27 @@ router.post('/register', async (req, res) => {
     client = await pool.connect();
     await client.query('BEGIN');
     transactionStarted = true;
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`registration-email:${email}`]);
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`registration-phone:${contact_number}`]);
-    await client.query('DELETE FROM pending_registrations WHERE expires_at <= now() AND email <> $1', [email]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+      `registration-email:${email}`,
+    ]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+      `registration-phone:${contact_number}`,
+    ]);
+    await client.query(
+      'DELETE FROM pending_registrations WHERE expires_at <= now() AND email <> $1',
+      [email],
+    );
 
-    const existingAccount = await client.query('SELECT 1 FROM users WHERE LOWER(email) = $1 LIMIT 1', [email]);
+    const existingAccount = await client.query(
+      'SELECT 1 FROM users WHERE LOWER(email) = $1 LIMIT 1',
+      [email],
+    );
     if (existingAccount.rows.length > 0) {
       await client.query('ROLLBACK');
       transactionStarted = false;
-      return res.status(409).json({ error: 'An account with this email already exists. Sign in or request a verification link.' });
+      return res.status(409).json({
+        error: 'An account with this email already exists. Sign in or request a verification link.',
+      });
     }
 
     const duplicatePhone = await client.query(
@@ -138,12 +169,14 @@ router.post('/register', async (req, res) => {
        ) existing_numbers
        WHERE digits IN ($1, '975' || $1)
        LIMIT 1`,
-      [contact_number, email]
+      [contact_number, email],
     );
     if (duplicatePhone.rows.length > 0) {
       await client.query('ROLLBACK');
       transactionStarted = false;
-      return res.status(409).json({ error: 'This phone number is already registered or awaiting verification' });
+      return res
+        .status(409)
+        .json({ error: 'This phone number is already registered or awaiting verification' });
     }
 
     if (student_staff_id) {
@@ -152,12 +185,15 @@ router.post('/register', async (req, res) => {
          UNION ALL
          SELECT 1 FROM pending_registrations WHERE student_staff_id = $1 AND email <> $2
          LIMIT 1`,
-        [student_staff_id, email]
+        [student_staff_id, email],
       );
       if (taken.rows.length > 0) {
         await client.query('ROLLBACK');
         transactionStarted = false;
-        return res.status(409).json({ error: 'An account with this Student / Staff ID already exists or is awaiting verification' });
+        return res.status(409).json({
+          error:
+            'An account with this Student / Staff ID already exists or is awaiting verification',
+        });
       }
     }
 
@@ -179,7 +215,18 @@ router.post('/register', async (req, res) => {
          gender = EXCLUDED.gender,
          expires_at = EXCLUDED.expires_at,
          created_at = now()`,
-      [hashToken(verificationToken), hashToken(cancelToken), full_name.trim(), email, student_staff_id || null, role, passwordHash, contact_number, organizationName, gender]
+      [
+        hashToken(verificationToken),
+        hashToken(cancelToken),
+        full_name.trim(),
+        email,
+        student_staff_id || null,
+        role,
+        passwordHash,
+        contact_number,
+        organizationName,
+        gender,
+      ],
     );
     await client.query('COMMIT');
     transactionStarted = false;
@@ -187,7 +234,10 @@ router.post('/register', async (req, res) => {
     client = null;
   } catch (err) {
     if (client && transactionStarted) await client.query('ROLLBACK');
-    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email or phone number already exists' });
+    if (err.code === '23505')
+      return res
+        .status(409)
+        .json({ error: 'An account with this email or phone number already exists' });
     console.error(err);
     return res.status(500).json({ error: 'Registration could not be started' });
   } finally {
@@ -200,10 +250,22 @@ router.post('/register', async (req, res) => {
       subject: 'Verify your CST-SFBS account',
       text: `Hello ${full_name.trim()},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', verificationToken)}\n\nYour account will only be created after you verify this email.`,
     });
-    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: true, cancel_token: cancelToken });
+    res.status(202).json({
+      pending_verification: true,
+      email,
+      role,
+      verification_email_sent: true,
+      cancel_token: cancelToken,
+    });
   } catch (emailError) {
     console.error(emailError);
-    res.status(202).json({ pending_verification: true, email, role, verification_email_sent: false, cancel_token: cancelToken });
+    res.status(202).json({
+      pending_verification: true,
+      email,
+      role,
+      verification_email_sent: false,
+      cancel_token: cancelToken,
+    });
   }
 });
 
@@ -211,16 +273,18 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const identifier = (req.body.email || req.body.identifier || '').trim();
   const { password } = req.body;
-  if (!identifier || !password) return res.status(400).json({ error: 'email (or ID) and password are required' });
+  if (!identifier || !password)
+    return res.status(400).json({ error: 'email (or ID) and password are required' });
 
   try {
     const result = await pool.query(
       `SELECT id, full_name, email, role, password_hash, email_verified,
               student_staff_id, contact_number, organization, gender, is_active FROM users
        WHERE LOWER(email) = LOWER($1) OR student_staff_id = $1 LIMIT 1`,
-      [identifier]
+      [identifier],
     );
-    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid email/ID or password' });
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: 'Invalid email/ID or password' });
 
     const row = result.rows[0];
     let ok;
@@ -230,19 +294,25 @@ router.post('/login', async (req, res) => {
       // Upgrade a legacy plain-text password after successful verification.
       ok = row.password_hash === password; // old plain-text account
       if (ok) {
-        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [await bcrypt.hash(password, 10), row.id]);
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
+          await bcrypt.hash(password, 10),
+          row.id,
+        ]);
       }
     }
     if (!ok) return res.status(401).json({ error: 'Invalid email/ID or password' });
     if (!row.email_verified) {
       return res.status(403).json({
-        error: 'Verify your email before signing in. You can request another verification email from the registration page.',
+        error:
+          'Verify your email before signing in. You can request another verification email from the registration page.',
         code: 'EMAIL_NOT_VERIFIED',
       });
     }
 
     if (row.is_active === false) {
-      return res.status(403).json({ error: 'This account has been suspended. Please contact the DSA office.' });
+      return res
+        .status(403)
+        .json({ error: 'This account has been suspended. Please contact the DSA office.' });
     }
 
     const { password_hash, email_verified, is_active, ...user } = row;
@@ -261,7 +331,7 @@ router.post('/resend-verification', async (req, res) => {
   try {
     const pendingResult = await pool.query(
       'SELECT full_name, email FROM pending_registrations WHERE LOWER(email) = $1',
-      [email]
+      [email],
     );
     if (pendingResult.rows.length > 0) {
       const pending = pendingResult.rows[0];
@@ -270,19 +340,22 @@ router.post('/resend-verification', async (req, res) => {
         `UPDATE pending_registrations
          SET token_hash = $1, expires_at = now() + interval '24 hours', created_at = now()
          WHERE LOWER(email) = $2`,
-        [hashToken(token), email]
+        [hashToken(token), email],
       );
       await sendEmail({
         to: pending.email,
         subject: 'Verify your CST-SFBS account',
         text: `Hello ${pending.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nYour account will only be created after you verify this email.`,
       });
-      return res.json({ message: 'If a pending registration exists for that email, a verification link has been sent.' });
+      return res.json({
+        message:
+          'If a pending registration exists for that email, a verification link has been sent.',
+      });
     }
 
     const result = await pool.query(
       'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND email_verified = false',
-      [email]
+      [email],
     );
     if (result.rows.length > 0) {
       const user = result.rows[0];
@@ -293,10 +366,14 @@ router.post('/resend-verification', async (req, res) => {
         text: `Hello ${user.full_name},\n\nVerify your email address within 24 hours:\n${actionUrl('/verify-email', token)}\n\nIf you did not create this account, you can ignore this message.`,
       });
     }
-    res.json({ message: 'If an unverified account exists for that email, a verification link has been sent.' });
+    res.json({
+      message: 'If an unverified account exists for that email, a verification link has been sent.',
+    });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ error: 'Could not send the verification email. Please try again later.' });
+    res
+      .status(503)
+      .json({ error: 'Could not send the verification email. Please try again later.' });
   }
 });
 
@@ -312,10 +389,12 @@ router.post('/cancel-registration', async (req, res) => {
       `DELETE FROM pending_registrations
        WHERE LOWER(email) = $1 AND cancel_token_hash = $2 AND expires_at > now()
        RETURNING email`,
-      [email, hashToken(cancelToken)]
+      [email, hashToken(cancelToken)],
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'This pending registration was not found or has expired.' });
+      return res
+        .status(404)
+        .json({ error: 'This pending registration was not found or has expired.' });
     }
     res.json({ message: 'Registration cancelled. No account was created.' });
   } catch (err) {
@@ -339,7 +418,7 @@ router.post('/verify-email', async (req, res) => {
        FROM pending_registrations
        WHERE token_hash = $1 AND expires_at > now()
        FOR UPDATE`,
-      [tokenHash]
+      [tokenHash],
     );
 
     if (pendingResult.rows.length > 0) {
@@ -350,11 +429,13 @@ router.post('/verify-email', async (req, res) => {
             OR ($2::varchar IS NOT NULL AND student_staff_id = $2)
             OR regexp_replace(contact_number, '[^0-9]', '', 'g') IN ($3, '975' || $3)
          LIMIT 1`,
-        [pending.email, pending.student_staff_id, pending.contact_number]
+        [pending.email, pending.student_staff_id, pending.contact_number],
       );
       if (duplicate.rows.length > 0) {
         await client.query('ROLLBACK');
-        return res.status(409).json({ error: 'These registration details are already in use. Please contact support.' });
+        return res.status(409).json({
+          error: 'These registration details are already in use. Please contact support.',
+        });
       }
 
       const inserted = await client.query(
@@ -362,13 +443,21 @@ router.post('/verify-email', async (req, res) => {
                             contact_number, organization, gender, email_verified)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)
          RETURNING id`,
-        [pending.full_name, pending.email, pending.student_staff_id, pending.role,
-          pending.password_hash, pending.contact_number, pending.organization, pending.gender]
+        [
+          pending.full_name,
+          pending.email,
+          pending.student_staff_id,
+          pending.role,
+          pending.password_hash,
+          pending.contact_number,
+          pending.organization,
+          pending.gender,
+        ],
       );
       await client.query(
         `INSERT INTO auth_tokens (token_hash, user_id, purpose, expires_at, consumed_at)
          VALUES ($1, $2, 'email_verification', $3, now())`,
-        [tokenHash, inserted.rows[0].id, pending.expires_at]
+        [tokenHash, inserted.rows[0].id, pending.expires_at],
       );
       await client.query('DELETE FROM pending_registrations WHERE token_hash = $1', [tokenHash]);
       await client.query('COMMIT');
@@ -380,7 +469,7 @@ router.post('/verify-email', async (req, res) => {
        WHERE token_hash = $1 AND purpose = 'email_verification'
          AND consumed_at IS NULL AND expires_at > now()
        RETURNING user_id`,
-      [tokenHash]
+      [tokenHash],
     );
     if (result.rows.length === 0) {
       const alreadyVerified = await client.query(
@@ -388,7 +477,7 @@ router.post('/verify-email', async (req, res) => {
          JOIN users u ON u.id = t.user_id
          WHERE t.token_hash = $1 AND t.purpose = 'email_verification'
            AND t.consumed_at IS NOT NULL AND u.email_verified = true`,
-        [tokenHash]
+        [tokenHash],
       );
       if (alreadyVerified.rows.length > 0) {
         await client.query('COMMIT');
@@ -397,7 +486,9 @@ router.post('/verify-email', async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Invalid or expired verification link' });
     }
-    await client.query('UPDATE users SET email_verified = true WHERE id = $1', [result.rows[0].user_id]);
+    await client.query('UPDATE users SET email_verified = true WHERE id = $1', [
+      result.rows[0].user_id,
+    ]);
     await client.query('COMMIT');
     res.json({ message: 'Email verified. You can now sign in.' });
   } catch (err) {
@@ -416,19 +507,20 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND email_verified = true',
-      [email]
+      [email],
     );
     if (result.rows.length > 0) {
       const user = result.rows[0];
       const token = await issueToken(user.id, 'password_reset', 1);
       const resetUrl = actionUrl('/reset-password', token);
-            const emailConfigured =
+      const emailConfigured =
         (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) ||
         (process.env.RESEND_API_KEY && process.env.RESEND_FROM);
       if (!emailConfigured) {
         if (process.env.NODE_ENV !== 'production') {
           return res.json({
-            message: 'Email delivery is not configured. Use this local development reset link (valid for one hour).',
+            message:
+              'Email delivery is not configured. Use this local development reset link (valid for one hour).',
             reset_url: resetUrl,
           });
         }
@@ -440,10 +532,15 @@ router.post('/forgot-password', async (req, res) => {
         text: `Hello ${user.full_name},\n\nReset your password within one hour:\n${resetUrl}\n\nIf you did not request this, you can ignore this message.`,
       });
     }
-    res.json({ message: 'If a verified account exists for that email, password reset instructions have been sent.' });
+    res.json({
+      message:
+        'If a verified account exists for that email, password reset instructions have been sent.',
+    });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ error: 'Could not send password reset instructions. Please try again later.' });
+    res
+      .status(503)
+      .json({ error: 'Could not send password reset instructions. Please try again later.' });
   }
 });
 
@@ -465,13 +562,16 @@ router.post('/reset-password', async (req, res) => {
        WHERE token_hash = $1 AND purpose = 'password_reset'
          AND consumed_at IS NULL AND expires_at > now()
        RETURNING user_id`,
-      [hashToken(token)]
+      [hashToken(token)],
     );
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Invalid or expired password reset link' });
     }
-    await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, result.rows[0].user_id]);
+    await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
+      passwordHash,
+      result.rows[0].user_id,
+    ]);
     await client.query('COMMIT');
     res.json({ message: 'Password reset successfully. Sign in with your new password.' });
   } catch (err) {
@@ -495,12 +595,12 @@ router.get('/profile', authenticate, async (req, res) => {
         `SELECT id, full_name, email, role, student_staff_id, contact_number,
                 organization, gender, to_char(created_at, 'YYYY-MM-DD') AS joined
          FROM users WHERE id = $1`,
-        [req.user.id]
+        [req.user.id],
       ),
       pool.query(
         `SELECT booking_updates, game_reminders, maintenance_alerts
          FROM user_notification_preferences WHERE user_id = $1`,
-        [req.user.id]
+        [req.user.id],
       ),
     ]);
     if (profile.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
@@ -513,7 +613,7 @@ router.get('/profile', authenticate, async (req, res) => {
          WHERE user_id = $1 AND purpose = 'email_change'
            AND consumed_at IS NULL AND expires_at > now()
          ORDER BY created_at DESC LIMIT 1`,
-        [req.user.id]
+        [req.user.id],
       );
       pendingEmail = pending.rows[0]?.new_email || null;
     } catch (pendingError) {
@@ -535,12 +635,16 @@ router.get('/profile', authenticate, async (req, res) => {
 
 router.delete('/account', authenticate, async (req, res) => {
   if (req.user.role === 'admin') {
-    return res.status(403).json({ error: 'Admin accounts cannot be deleted from profile settings' });
+    return res
+      .status(403)
+      .json({ error: 'Admin accounts cannot be deleted from profile settings' });
   }
 
   const { current_password } = req.body;
   if (typeof current_password !== 'string' || !current_password) {
-    return res.status(400).json({ error: 'Your current password is required to delete your account' });
+    return res
+      .status(400)
+      .json({ error: 'Your current password is required to delete your account' });
   }
 
   let client;
@@ -550,10 +654,9 @@ router.delete('/account', authenticate, async (req, res) => {
     await client.query('BEGIN');
     transactionStarted = true;
 
-    const result = await client.query(
-      'SELECT password_hash FROM users WHERE id = $1 FOR UPDATE',
-      [req.user.id]
-    );
+    const result = await client.query('SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [
+      req.user.id,
+    ]);
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
       transactionStarted = false;
@@ -573,13 +676,15 @@ router.delete('/account', authenticate, async (req, res) => {
     const deletedEmail = `deleted-${req.user.id}-${crypto.randomBytes(8).toString('hex')}@account.invalid`;
     const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
 
-    await client.query('DELETE FROM user_notification_preferences WHERE user_id = $1', [req.user.id]);
+    await client.query('DELETE FROM user_notification_preferences WHERE user_id = $1', [
+      req.user.id,
+    ]);
     await client.query('DELETE FROM notifications WHERE user_id = $1', [req.user.id]);
     await client.query('DELETE FROM auth_tokens WHERE user_id = $1', [req.user.id]);
     await client.query(
       `DELETE FROM booking_reminders
        WHERE booking_id IN (SELECT id FROM bookings WHERE user_id = $1)`,
-      [req.user.id]
+      [req.user.id],
     );
     await client.query(
       `UPDATE bookings
@@ -590,14 +695,14 @@ router.delete('/account', authenticate, async (req, res) => {
        END,
        purpose = NULL
        WHERE user_id = $1`,
-      [req.user.id]
+      [req.user.id],
     );
     await client.query(
       `UPDATE support_requests
        SET user_id = NULL, name = 'Deleted account', email = $2,
            message = 'Content removed at account deletion request.'
        WHERE user_id = $1`,
-      [req.user.id, deletedEmail]
+      [req.user.id, deletedEmail],
     );
     await client.query(
       `UPDATE users
@@ -605,7 +710,7 @@ router.delete('/account', authenticate, async (req, res) => {
            password_hash = $3, contact_number = NULL, organization = NULL,
            gender = NULL, email_verified = false, is_active = false
        WHERE id = $1`,
-      [req.user.id, deletedEmail, unusablePasswordHash]
+      [req.user.id, deletedEmail, unusablePasswordHash],
     );
 
     await client.query('COMMIT');
@@ -629,7 +734,9 @@ router.patch('/profile', authenticate, async (req, res) => {
     return res.status(400).json({ error: 'Phone number must be text' });
   }
   if (contact_number && contact_number.trim() && !PHONE_PATTERN.test(contact_number.trim())) {
-    return res.status(400).json({ error: 'Enter a valid phone number (digits, spaces, + - ( ) only, 7-20 characters)' });
+    return res.status(400).json({
+      error: 'Enter a valid phone number (digits, spaces, + - ( ) only, 7-20 characters)',
+    });
   }
   if (gender != null && !['female', 'male'].includes(gender)) {
     return res.status(400).json({ error: 'Gender must be female or male' });
@@ -642,7 +749,7 @@ router.patch('/profile', authenticate, async (req, res) => {
       `UPDATE users SET full_name = $1, contact_number = $2, gender = COALESCE(gender, $3)
        WHERE id = $4
        RETURNING id, full_name, email, role, student_staff_id, contact_number, organization, gender`,
-      [full_name.trim(), contact_number?.trim() || null, gender || null, req.user.id]
+      [full_name.trim(), contact_number?.trim() || null, gender || null, req.user.id],
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
     res.json({ profile: result.rows[0] });
@@ -659,7 +766,8 @@ router.patch('/profile', authenticate, async (req, res) => {
 router.post('/email-change', authenticate, async (req, res) => {
   if (req.user.role !== 'outsider') {
     return res.status(403).json({
-      error: 'College email addresses cannot be changed here. Contact the DSA office through Help & Contact.',
+      error:
+        'College email addresses cannot be changed here. Contact the DSA office through Help & Contact.',
     });
   }
   const { new_email, current_password } = req.body;
@@ -684,7 +792,8 @@ router.post('/email-change', authenticate, async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Current password is incorrect' });
 
     const taken = await pool.query('SELECT 1 FROM users WHERE LOWER(email) = $1', [newEmail]);
-    if (taken.rows.length > 0) return res.status(409).json({ error: 'An account with this email already exists' });
+    if (taken.rows.length > 0)
+      return res.status(409).json({ error: 'An account with this email already exists' });
 
     const token = await issueEmailChangeToken(req.user.id, newEmail, 24);
     await sendEmail({
@@ -692,10 +801,15 @@ router.post('/email-change', authenticate, async (req, res) => {
       subject: 'Confirm your new CST-SFBS email address',
       text: `Hello ${req.user.full_name},\n\nConfirm this address as your new CST-SFBS email within 24 hours:\n${actionUrl('/confirm-email-change', token)}\n\nIf you did not ask for this, ignore this message. Your email will not change.`,
     });
-    res.json({ message: `We sent a confirmation link to ${newEmail}. Your email changes once you open it.`, pending_email: newEmail });
+    res.json({
+      message: `We sent a confirmation link to ${newEmail}. Your email changes once you open it.`,
+      pending_email: newEmail,
+    });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ error: 'Could not send the confirmation email. Please try again later.' });
+    res
+      .status(503)
+      .json({ error: 'Could not send the confirmation email. Please try again later.' });
   }
 });
 
@@ -716,7 +830,7 @@ router.post('/confirm-email-change', async (req, res) => {
        WHERE token_hash = $1 AND purpose = 'email_change'
          AND consumed_at IS NULL AND expires_at > now()
        RETURNING user_id, new_email`,
-      [hashToken(token)]
+      [hashToken(token)],
     );
     if (consumed.rows.length === 0) {
       // Opening the same link twice should not look like a failure.
@@ -724,18 +838,24 @@ router.post('/confirm-email-change', async (req, res) => {
         `SELECT u.email FROM auth_tokens t JOIN users u ON u.id = t.user_id
          WHERE t.token_hash = $1 AND t.purpose = 'email_change'
            AND t.consumed_at IS NOT NULL AND LOWER(u.email) = LOWER(t.new_email)`,
-        [hashToken(token)]
+        [hashToken(token)],
       );
       await client.query('ROLLBACK');
       if (already.rows.length > 0) {
-        return res.json({ message: 'Your email address was already updated.', email: already.rows[0].email });
+        return res.json({
+          message: 'Your email address was already updated.',
+          email: already.rows[0].email,
+        });
       }
       return res.status(400).json({ error: 'Invalid or expired confirmation link' });
     }
 
     const { user_id: userId } = consumed.rows[0];
     newEmail = consumed.rows[0].new_email;
-    const current = await client.query('SELECT email, full_name, role FROM users WHERE id = $1 FOR UPDATE', [userId]);
+    const current = await client.query(
+      'SELECT email, full_name, role FROM users WHERE id = $1 FOR UPDATE',
+      [userId],
+    );
     if (current.rows.length === 0 || current.rows[0].role !== 'outsider') {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Invalid or expired confirmation link' });
@@ -743,11 +863,15 @@ router.post('/confirm-email-change', async (req, res) => {
     oldEmail = current.rows[0].email;
     fullName = current.rows[0].full_name;
 
-    await client.query('UPDATE users SET email = $1, email_verified = true WHERE id = $2', [newEmail, userId]);
+    await client.query('UPDATE users SET email = $1, email_verified = true WHERE id = $2', [
+      newEmail,
+      userId,
+    ]);
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') return res.status(409).json({ error: 'An account with this email already exists' });
+    if (err.code === '23505')
+      return res.status(409).json({ error: 'An account with this email already exists' });
     console.error(err);
     return res.status(500).json({ error: 'Could not update your email address' });
   } finally {
@@ -759,14 +883,20 @@ router.post('/confirm-email-change', async (req, res) => {
     to: oldEmail,
     subject: 'Your CST-SFBS email address was changed',
     text: `Hello ${fullName},\n\nThe email on your CST-SFBS account was changed to ${newEmail}.\n\nIf this was not you, contact the DSA office right away.`,
-  }).catch((emailError) => console.error('Could not notify the old email address:', emailError.message));
+  }).catch((emailError) =>
+    console.error('Could not notify the old email address:', emailError.message),
+  );
 
   res.json({ message: 'Your email address has been updated.', email: newEmail });
 });
 
 router.patch('/password', authenticate, async (req, res) => {
   const { current_password, new_password } = req.body;
-  if (typeof current_password !== 'string' || !current_password || typeof new_password !== 'string') {
+  if (
+    typeof current_password !== 'string' ||
+    !current_password ||
+    typeof new_password !== 'string'
+  ) {
     return res.status(400).json({ error: 'Current and new passwords are required' });
   }
   if (new_password.length < 8) {
@@ -781,10 +911,14 @@ router.patch('/password', authenticate, async (req, res) => {
     const validCurrentPassword = passwordHash.startsWith('$2')
       ? await bcrypt.compare(current_password, passwordHash)
       : current_password === passwordHash;
-    if (!validCurrentPassword) return res.status(400).json({ error: 'Current password is incorrect' });
+    if (!validCurrentPassword)
+      return res.status(400).json({ error: 'Current password is incorrect' });
 
     const newPasswordHash = await bcrypt.hash(new_password, 10);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPasswordHash, req.user.id]);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
+      newPasswordHash,
+      req.user.id,
+    ]);
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
     console.error(err);
@@ -795,8 +929,13 @@ router.patch('/password', authenticate, async (req, res) => {
 router.patch('/preferences', authenticate, async (req, res) => {
   const preferenceFields = ['booking_updates', 'game_reminders', 'maintenance_alerts'];
   const entries = Object.entries(req.body);
-  if (entries.length === 0 || entries.some(([key, value]) => !preferenceFields.includes(key) || typeof value !== 'boolean')) {
-    return res.status(400).json({ error: 'Provide one or more valid boolean notification preferences' });
+  if (
+    entries.length === 0 ||
+    entries.some(([key, value]) => !preferenceFields.includes(key) || typeof value !== 'boolean')
+  ) {
+    return res
+      .status(400)
+      .json({ error: 'Provide one or more valid boolean notification preferences' });
   }
 
   try {
@@ -804,7 +943,7 @@ router.patch('/preferences', authenticate, async (req, res) => {
     const currentResult = await pool.query(
       `SELECT booking_updates, game_reminders, maintenance_alerts
        FROM user_notification_preferences WHERE user_id = $1`,
-      [req.user.id]
+      [req.user.id],
     );
     const preferences = {
       booking_updates: currentResult.rows[0]?.booking_updates ?? true,
@@ -822,7 +961,12 @@ router.patch('/preferences', authenticate, async (req, res) => {
          maintenance_alerts = EXCLUDED.maintenance_alerts,
          updated_at = now()
        RETURNING booking_updates, game_reminders, maintenance_alerts`,
-      [req.user.id, preferences.booking_updates, preferences.game_reminders, preferences.maintenance_alerts]
+      [
+        req.user.id,
+        preferences.booking_updates,
+        preferences.game_reminders,
+        preferences.maintenance_alerts,
+      ],
     );
     res.json({ preferences: result.rows[0] });
   } catch (err) {

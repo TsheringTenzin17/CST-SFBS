@@ -78,18 +78,31 @@ function AdminDashboard() {
         ) : activeTab === 'Dashboard' ? (
           <AdminOverview bookingList={bookings} user={user} onReload={loadBookings} />
         ) : activeTab === 'Facilities Status' ? (
-          /^\/admin\/facilities\/new\/?$/.test(pathname) ? <AdminFacilityForm /> : <AdminFacilities />
+          /^\/admin\/facilities\/new\/?$/.test(pathname) ? (
+            <AdminFacilityForm />
+          ) : (
+            <AdminFacilities />
+          )
         ) : activeTab === 'System Settings' ? (
           <AdminSettings />
-        ) : userDetail || ['Bookings', 'Maintenance Blocks', 'Reports'].includes(activeTab) ? null : (
+        ) : userDetail ||
+          ['Bookings', 'Maintenance Blocks', 'Reports'].includes(activeTab) ? null : (
           <header className="admin-page-header">
             <h1>{current.label}</h1>
-            <p>Welcome back{user?.full_name ? `, ${user.full_name}` : ''}. Here’s the latest on your sports facilities.</p>
+            <p>
+              Welcome back{user?.full_name ? `, ${user.full_name}` : ''}. Here’s the latest on your
+              sports facilities.
+            </p>
           </header>
         )}
 
         {activeTab === 'Bookings' && (
-          <AdminBookings bookingList={bookings} loading={loading} error={error} onReload={loadBookings} />
+          <AdminBookings
+            bookingList={bookings}
+            loading={loading}
+            error={error}
+            onReload={loadBookings}
+          />
         )}
 
         {activeTab === 'Maintenance Blocks' && <AdminMaintenance />}
@@ -100,7 +113,9 @@ function AdminDashboard() {
 
         {simple && (
           <section className="admin-panel">
-            <div className="admin-panel-heading"><h2>{simple.title}</h2></div>
+            <div className="admin-panel-heading">
+              <h2>{simple.title}</h2>
+            </div>
             <simple.Component />
           </section>
         )}

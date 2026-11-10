@@ -27,12 +27,19 @@ function BookingConfirmation() {
   const { state } = useLocation();
 
   if (!state) {
-    return <main className="main"><p>No booking to show. <Link to="/my-bookings">View My Bookings</Link></p></main>;
+    return (
+      <main className="main">
+        <p>
+          No booking to show. <Link to="/my-bookings">View My Bookings</Link>
+        </p>
+      </main>
+    );
   }
 
   const isOutsider = state.role === 'outsider';
   const requiresApproval = state.status === 'pending' || isOutsider;
-  const isPaidFootballBooking = (state.commercialSlot || isOutsider) && state.facility === 'Football Ground';
+  const isPaidFootballBooking =
+    (state.commercialSlot || isOutsider) && state.facility === 'Football Ground';
 
   return (
     <main className="main">
@@ -52,14 +59,28 @@ function BookingConfirmation() {
             <h2>Reservation Summary</h2>
             {requiresApproval && <span className="confirm-status">Pending Approval</span>}
           </div>
-          <div className="confirm-row"><span>Facility</span><strong>{state.facility}</strong></div>
-          <div className="confirm-row"><span>Date</span><strong>{prettyDate(state.date)}</strong></div>
+          <div className="confirm-row">
+            <span>Facility</span>
+            <strong>{state.facility}</strong>
+          </div>
+          <div className="confirm-row">
+            <span>Date</span>
+            <strong>{prettyDate(state.date)}</strong>
+          </div>
           <div className="confirm-row confirm-time-row">
             <span>Time Slot</span>
-            <strong>{formatTime(state.start)} – {formatTime(state.end)}</strong>
+            <strong>
+              {formatTime(state.start)} – {formatTime(state.end)}
+            </strong>
           </div>
-          <div className="confirm-row"><span>Booking ID</span><strong>B-{state.bookingId}</strong></div>
-          <div className="confirm-row"><span>Requester Role</span><strong>{roleLabel(state.role)}</strong></div>
+          <div className="confirm-row">
+            <span>Booking ID</span>
+            <strong>B-{state.bookingId}</strong>
+          </div>
+          <div className="confirm-row">
+            <span>Requester Role</span>
+            <strong>{roleLabel(state.role)}</strong>
+          </div>
           {isPaidFootballBooking && state.footballFee != null && (
             <>
               <div className="confirm-row">
@@ -78,7 +99,9 @@ function BookingConfirmation() {
           )}
           {requiresApproval ? (
             <div className="confirm-note confirm-note-payment" role="alert">
-              <strong className="confirm-payment-heading">Payment required before booking confirmation</strong>
+              <strong className="confirm-payment-heading">
+                Payment required before booking confirmation
+              </strong>
               <p>
                 {isPaidFootballBooking
                   ? `Pay Nu. ${Number(state.footballFee || 0).toLocaleString()} at the DSA office before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.`
@@ -89,14 +112,19 @@ function BookingConfirmation() {
             </div>
           ) : (
             <div className="confirm-note confirm-note-free">
-              Please Note: No approval or payment is required for students and staff. Your reservation is active.
+              Please Note: No approval or payment is required for students and staff. Your
+              reservation is active.
             </div>
           )}
         </div>
 
         <div className="confirm-actions">
-          <Link to="/facilities" className="btn-secondary">Book Another Facility</Link>
-          <Link to="/my-bookings" className="btn-primary btn-link">View My Bookings</Link>
+          <Link to="/facilities" className="btn-secondary">
+            Book Another Facility
+          </Link>
+          <Link to="/my-bookings" className="btn-primary btn-link">
+            View My Bookings
+          </Link>
         </div>
       </div>
     </main>

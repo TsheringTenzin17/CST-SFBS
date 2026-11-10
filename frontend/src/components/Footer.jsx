@@ -14,20 +14,26 @@ function Footer({ links, heading = 'Your next game' }) {
           </div>
           <h3>CST Sports Facility Booking System</h3>
           <p>
-            The home of campus sport. Sports facility scheduling for students, staff,
-            and general patrons of the College of Science and Technology, Bhutan.
+            The home of campus sport. Sports facility scheduling for students, staff, and general
+            patrons of the College of Science and Technology, Bhutan.
           </p>
         </div>
 
         <nav className="footer-col" aria-label="Footer navigation">
           <h4>{heading}</h4>
-          {(links || [
-            { to: '/facilities', label: 'Browse Facilities' },
-            { to: '/my-bookings', label: 'My Bookings' },
-            { to: '/rules', label: 'Booking rules' },
-            { to: '/fees', label: 'Fee structure' },
-            { to: '/help', label: 'Help & contact' },
-          ]).map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
+          {(
+            links || [
+              { to: '/facilities', label: 'Browse Facilities' },
+              { to: '/my-bookings', label: 'My Bookings' },
+              { to: '/rules', label: 'Booking rules' },
+              { to: '/fees', label: 'Fee structure' },
+              { to: '/help', label: 'Help & contact' },
+            ]
+          ).map((l) => (
+            <Link key={l.to} to={l.to}>
+              {l.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="footer-col footer-contact">

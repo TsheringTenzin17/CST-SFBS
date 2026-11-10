@@ -11,9 +11,12 @@ function nextSlotText(slot, today) {
   if (!slot) return 'N/A';
   const tomorrow = new Date(`${today}T00:00:00Z`);
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const day = slot.date === today ? 'Today'
-    : slot.date === tomorrow.toISOString().slice(0, 10) ? 'Tomorrow'
-    : shortDay(slot.date);
+  const day =
+    slot.date === today
+      ? 'Today'
+      : slot.date === tomorrow.toISOString().slice(0, 10)
+        ? 'Tomorrow'
+        : shortDay(slot.date);
   return `${day}, ${clock(slot.start_time)}`;
 }
 
@@ -31,9 +34,18 @@ function FacilityCard({ f, today, busy, onToggle }) {
   return (
     <article className="fac-card">
       {image ? (
-        <img className="fac-img" src={image} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+        <img
+          className="fac-img"
+          src={image}
+          alt=""
+          onError={(e) => {
+            e.currentTarget.style.visibility = 'hidden';
+          }}
+        />
       ) : (
-        <div className="fac-img fac-img-empty" aria-hidden="true">{f.name.charAt(0)}</div>
+        <div className="fac-img fac-img-empty" aria-hidden="true">
+          {f.name.charAt(0)}
+        </div>
       )}
       <div className="fac-body">
         <div className="fac-title-row">
@@ -41,15 +53,38 @@ function FacilityCard({ f, today, busy, onToggle }) {
           <span className={`fac-badge fac-${f.status}`}>{STATUS_LABEL[f.status]}</span>
         </div>
         <dl className="fac-stats">
-          <div><dt>Today&apos;s Bookings</dt><dd className="fac-big">{f.today_bookings}</dd></div>
-          <div><dt>Next Available Slot</dt><dd className="fac-next">{nextSlotText(f.next_slot, today)}</dd></div>
+          <div>
+            <dt>Today&apos;s Bookings</dt>
+            <dd className="fac-big">{f.today_bookings}</dd>
+          </div>
+          <div>
+            <dt>Next Available Slot</dt>
+            <dd className="fac-next">{nextSlotText(f.next_slot, today)}</dd>
+          </div>
         </dl>
         <div className="fac-toggle-row">
           <span id={`fac-allow-${f.id}`}>Allow Reservations</span>
-          <button type="button" role="switch" aria-checked={f.is_active} aria-labelledby={`fac-allow-${f.id}`}
-            className={`fac-switch ${f.is_active ? 'on' : ''}`} disabled={busy}
-            style={isMobile ? { width: 64, height: 14, minWidth: 64, maxWidth: 64, flex: '0 0 64px', padding: 0 } : undefined}
-            onClick={() => onToggle(f)}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={f.is_active}
+            aria-labelledby={`fac-allow-${f.id}`}
+            className={`fac-switch ${f.is_active ? 'on' : ''}`}
+            disabled={busy}
+            style={
+              isMobile
+                ? {
+                    width: 64,
+                    height: 14,
+                    minWidth: 64,
+                    maxWidth: 64,
+                    flex: '0 0 64px',
+                    padding: 0,
+                  }
+                : undefined
+            }
+            onClick={() => onToggle(f)}
+          >
             <span style={isMobile ? { top: '50%', left: 2, width: 12, height: 12 } : undefined} />
           </button>
         </div>
@@ -74,20 +109,29 @@ export default function AdminFacilities() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const facilities = data?.facilities || [];
-  const arenaCount = useMemo(() => new Set(facilities.map((f) => f.group_name || f.name)).size, [facilities]);
+  const arenaCount = useMemo(
+    () => new Set(facilities.map((f) => f.group_name || f.name)).size,
+    [facilities],
+  );
 
   async function toggle(f) {
     setBusyId(f.id);
     setMessage('');
     setError('');
     try {
-      const result = await apiCall(`/admin/facilities/${f.id}`, 'PATCH', { is_active: !f.is_active });
+      const result = await apiCall(`/admin/facilities/${f.id}`, 'PATCH', {
+        is_active: !f.is_active,
+      });
       if (f.is_active) {
         const n = result.upcoming_bookings;
-        setMessage(`${f.name} is closed for new reservations.${n ? ` ${n} existing upcoming booking${n === 1 ? '' : 's'} were kept — cancel or move them from Manage Bookings if needed.` : ''}`);
+        setMessage(
+          `${f.name} is closed for new reservations.${n ? ` ${n} existing upcoming booking${n === 1 ? '' : 's'} were kept — cancel or move them from Manage Bookings if needed.` : ''}`,
+        );
       } else {
         setMessage(`${f.name} is open for reservations again.`);
       }
@@ -109,12 +153,23 @@ export default function AdminFacilities() {
             {data ? ` ${arenaCount}` : ''} sports arenas.
           </p>
         </div>
-        <Link to="/admin/facilities/new" className="adm-btn-solid fac-add-btn">+ Add new sport</Link>
+        <Link to="/admin/facilities/new" className="adm-btn-solid fac-add-btn">
+          + Add new sport
+        </Link>
       </header>
 
-      {message && <p className="admin-support-notice" role="status">{message}</p>}
+      {message && (
+        <p className="admin-support-notice" role="status">
+          {message}
+        </p>
+      )}
       {error && (
-        <div className="admin-error" role="alert"><span>{error}</span><button type="button" onClick={load}>Try again</button></div>
+        <div className="admin-error" role="alert">
+          <span>{error}</span>
+          <button type="button" onClick={load}>
+            Try again
+          </button>
+        </div>
       )}
 
       {!data && !error && <AdminLoading label="Loading facilities" rows={3} />}
@@ -122,7 +177,13 @@ export default function AdminFacilities() {
       {data && (
         <section className="fac-grid" aria-label="Facilities">
           {facilities.map((f) => (
-            <FacilityCard key={f.id} f={f} today={data.today} busy={busyId === f.id} onToggle={toggle} />
+            <FacilityCard
+              key={f.id}
+              f={f}
+              today={data.today}
+              busy={busyId === f.id}
+              onToggle={toggle}
+            />
           ))}
         </section>
       )}
@@ -141,13 +202,20 @@ export default function AdminFacilities() {
                 <li key={d.id}>
                   <span className={`fac-dot fac-dot-${d.state}`} aria-hidden="true" />
                   <div>
-                    <b>{d.facility_name}{d.reason ? ` — ${d.reason}` : ''}</b>
+                    <b>
+                      {d.facility_name}
+                      {d.reason ? ` — ${d.reason}` : ''}
+                    </b>
                     <small>
-                      {d.start_date === d.end_date ? shortDay(d.start_date) : `${shortDay(d.start_date)} - ${shortDay(d.end_date)}`}
+                      {d.start_date === d.end_date
+                        ? shortDay(d.start_date)
+                        : `${shortDay(d.start_date)} - ${shortDay(d.end_date)}`}
                       {d.state === 'active' ? ' (In Progress)' : ''}
                     </small>
                   </div>
-                  <span className={`fac-state fac-state-${d.state}`}>{d.state === 'active' ? 'Active' : 'Upcoming'}</span>
+                  <span className={`fac-state fac-state-${d.state}`}>
+                    {d.state === 'active' ? 'Active' : 'Upcoming'}
+                  </span>
                 </li>
               ))}
             </ul>

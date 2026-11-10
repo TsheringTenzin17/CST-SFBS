@@ -75,7 +75,7 @@ function mergeRanges(ranges) {
 export function buildPolicy(rules, view = 'standard') {
   return DAYS.map(({ dow, name }) => {
     const dayRules = rules.filter(
-      (r) => r.day_of_week === dow && ['all', view].includes(r.timetable || 'all')
+      (r) => r.day_of_week === dow && ['all', view].includes(r.timetable || 'all'),
     );
     const cells = { students: emptyCell(), staff: emptyCell(), commercial: emptyCell() };
     let maintenance = null;
@@ -93,12 +93,16 @@ export function buildPolicy(rules, view = 'standard') {
         if (rule.day_booking_cap) cells[col].cap = rule.day_booking_cap;
       }
       // Wednesday football: the slot opens to another group shortly before it starts
-      if (rule.fallback_role && ['auto_release', 'day_start_release', 'weekly_release'].includes(rule.fallback_type)) {
-        const note = rule.fallback_type === 'day_start_release'
-          ? 'opens 12:05 AM that day (paid)'
-          : rule.fallback_type === 'weekly_release'
-            ? 'opens Wednesday 8:00 PM (paid)'
-            : 'opens 1 hour before (paid)';
+      if (
+        rule.fallback_role &&
+        ['auto_release', 'day_start_release', 'weekly_release'].includes(rule.fallback_type)
+      ) {
+        const note =
+          rule.fallback_type === 'day_start_release'
+            ? 'opens 12:05 AM that day (paid)'
+            : rule.fallback_type === 'weekly_release'
+              ? 'opens Wednesday 8:00 PM (paid)'
+              : 'opens 1 hour before (paid)';
         for (const col of columnsFor(rule.fallback_role)) {
           cells[col].ranges.push({ start, end, note });
         }
@@ -111,12 +115,22 @@ export function buildPolicy(rules, view = 'standard') {
 }
 
 // True when the facility has rules that differ between standard and tournament dates.
-export const hasTournamentTimetable = (rules) => rules.some((r) => (r.timetable || 'all') !== 'all');
+export const hasTournamentTimetable = (rules) =>
+  rules.some((r) => (r.timetable || 'all') !== 'all');
 
 // Two courts with the same rules (Badminton 1 and 2) are shown as one table.
 export const rulesSignature = (rules) =>
   JSON.stringify(
     rules
-      .map((r) => [r.day_of_week, r.start_time, r.end_time, r.primary_role, r.fallback_role || '', r.fallback_type || '', r.timetable, r.day_booking_cap || 0])
-      .sort()
+      .map((r) => [
+        r.day_of_week,
+        r.start_time,
+        r.end_time,
+        r.primary_role,
+        r.fallback_role || '',
+        r.fallback_type || '',
+        r.timetable,
+        r.day_booking_cap || 0,
+      ])
+      .sort(),
   );

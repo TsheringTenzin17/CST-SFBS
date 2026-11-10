@@ -1,3 +1,4 @@
+/* Account summary, profile form, and notification preference controls. */
 .profile-settings-page.main {
   width: min(100%, 1120px);
   min-height: 0;
@@ -264,9 +265,17 @@
   cursor: pointer;
 }
 
-.profile-delete-button:hover:not(:disabled) { background: #861d1d; }
-.profile-delete-button:disabled { opacity: 0.65; cursor: not-allowed; }
-.profile-delete-button:focus-visible { outline: 3px solid #a12626; outline-offset: 3px; }
+.profile-delete-button:hover:not(:disabled) {
+  background: #861d1d;
+}
+.profile-delete-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.profile-delete-button:focus-visible {
+  outline: 3px solid #a12626;
+  outline-offset: 3px;
+}
 
 /* Notification toggles */
 .profile-preferences {

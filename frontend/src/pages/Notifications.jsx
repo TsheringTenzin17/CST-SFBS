@@ -16,15 +16,57 @@ function notificationCategory(type = '') {
 }
 
 // Each type gets its own colour and icon. Unknown types fall back to a neutral info style.
-const ICON_PROPS = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+const ICON_PROPS = {
+  width: 20,
+  height: 20,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2.2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+};
 const ICONS = {
-  check: <svg {...ICON_PROPS}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>,
-  star: <svg {...ICON_PROPS} fill="currentColor" strokeWidth="1.2"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z" /></svg>,
-  warning: <svg {...ICON_PROPS}><path d="M12 4l9 16H3L12 4z" /><path d="M12 10v4M12 17.2v.1" /></svg>,
-  alarm: <svg {...ICON_PROPS}><circle cx="12" cy="13" r="7" /><path d="M12 9.5V13l2.3 1.5M4.5 5.5L7 3.5M19.5 5.5L17 3.5" /></svg>,
-  clock: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
-  cross: <svg {...ICON_PROPS}><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg>,
-  info: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 7.8v.1" /></svg>,
+  check: (
+    <svg {...ICON_PROPS}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  ),
+  star: (
+    <svg {...ICON_PROPS} fill="currentColor" strokeWidth="1.2">
+      <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z" />
+    </svg>
+  ),
+  warning: (
+    <svg {...ICON_PROPS}>
+      <path d="M12 4l9 16H3L12 4z" />
+      <path d="M12 10v4M12 17.2v.1" />
+    </svg>
+  ),
+  alarm: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="13" r="7" />
+      <path d="M12 9.5V13l2.3 1.5M4.5 5.5L7 3.5M19.5 5.5L17 3.5" />
+    </svg>
+  ),
+  clock: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  ),
+  cross: (
+    <svg {...ICON_PROPS}>
+      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
+    </svg>
+  ),
+  info: (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5M12 7.8v.1" />
+    </svg>
+  ),
 };
 
 function notificationAppearance(type = '') {
@@ -32,7 +74,8 @@ function notificationAppearance(type = '') {
   if (type.includes('maintenance')) return { icon: ICONS.warning, className: 'maintenance' };
   if (type.includes('pending')) return { icon: ICONS.clock, className: 'pending' };
   if (type.includes('reminder')) return { icon: ICONS.alarm, className: 'reminder' };
-  if (type.includes('rescheduled') || type.includes('approved')) return { icon: ICONS.star, className: 'update' };
+  if (type.includes('rescheduled') || type.includes('approved'))
+    return { icon: ICONS.star, className: 'update' };
   if (type.includes('confirmed')) return { icon: ICONS.check, className: 'confirmed' };
   return { icon: ICONS.info, className: 'info' };
 }
@@ -50,12 +93,13 @@ function notificationTitle(type = '') {
 }
 
 // Bold the facility names and dates/times inside a message (plain React text, no raw HTML).
-const HIGHLIGHT = /(Football Ground|Basketball Court|Volleyball Court(?: \((?:Male|Female)\))?|Badminton Courts?(?: [12])?|Table Tennis Table(?: [12])?|Archery Range|\d{4}-\d{2}-\d{2}(?: \(\d{2}:\d{2}-\d{2}:\d{2}\))?)/g;
+const HIGHLIGHT =
+  /(Football Ground|Basketball Court|Volleyball Court(?: \((?:Male|Female)\))?|Badminton Courts?(?: [12])?|Table Tennis Table(?: [12])?|Archery Range|\d{4}-\d{2}-\d{2}(?: \(\d{2}:\d{2}-\d{2}:\d{2}\))?)/g;
 
 function highlightedMessage(message = '') {
-  return message.split(HIGHLIGHT).map((part, index) => (
-    index % 2 === 1 ? <strong key={index}>{part}</strong> : part
-  ));
+  return message
+    .split(HIGHLIGHT)
+    .map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
 }
 
 function timeAgo(timestamp) {
@@ -107,11 +151,15 @@ function Notifications() {
   }, [loadNotifications]);
 
   const unreadCount = notifications.filter((notification) => !notification.is_read).length;
-  const visibleNotifications = useMemo(() => notifications.filter((notification) => {
-    if (filter === 'unread') return !notification.is_read;
-    if (filter === 'all') return true;
-    return notificationCategory(notification.type) === filter;
-  }), [filter, notifications]);
+  const visibleNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => {
+        if (filter === 'unread') return !notification.is_read;
+        if (filter === 'all') return true;
+        return notificationCategory(notification.type) === filter;
+      }),
+    [filter, notifications],
+  );
 
   async function markAllAsRead() {
     setError(null);
@@ -119,7 +167,9 @@ function Notifications() {
     try {
       // Update the server first; only reflect success in the UI after it confirms the change.
       await apiCall('/notifications/read-all', 'PATCH');
-      setNotifications((current) => current.map((notification) => ({ ...notification, is_read: true })));
+      setNotifications((current) =>
+        current.map((notification) => ({ ...notification, is_read: true })),
+      );
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -133,9 +183,9 @@ function Notifications() {
     setMarkingId(notification.id);
     try {
       const result = await apiCall(`/notifications/${notification.id}/read`, 'PATCH');
-      setNotifications((current) => current.map((item) => (
-        item.id === notification.id ? result.notification : item
-      )));
+      setNotifications((current) =>
+        current.map((item) => (item.id === notification.id ? result.notification : item)),
+      );
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -159,7 +209,11 @@ function Notifications() {
   }
 
   async function clearAllNotifications() {
-    if (notifications.length === 0 || !window.confirm('Clear all notifications? This cannot be undone.')) return;
+    if (
+      notifications.length === 0 ||
+      !window.confirm('Clear all notifications? This cannot be undone.')
+    )
+      return;
 
     setError(null);
     setDeletingId('all');
@@ -179,7 +233,10 @@ function Notifications() {
       <div className="notifications-heading">
         <div>
           <h1 className="title">Notifications</h1>
-          <p className="subtitle">Keep track of bookings, schedule updates, and alerts. Notifications are automatically removed after 7 days; swipe a notification left to reveal its delete action.</p>
+          <p className="subtitle">
+            Keep track of bookings, schedule updates, and alerts. Notifications are automatically
+            removed after 7 days; swipe a notification left to reveal its delete action.
+          </p>
         </div>
         <div className="notifications-heading-actions">
           <button
@@ -196,13 +253,19 @@ function Notifications() {
             onClick={clearAllNotifications}
             disabled={notifications.length === 0 || deletingId === 'all'}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" />
+            </svg>
             {deletingId === 'all' ? 'Clearing…' : 'Clear all'}
           </button>
         </div>
       </div>
 
-      {error && <p className="notifications-error" role="alert">{error}</p>}
+      {error && (
+        <p className="notifications-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="notifications-layout">
         <nav className="notifications-filters" aria-label="Filter notifications">
@@ -223,9 +286,17 @@ function Notifications() {
 
         <section className="notifications-list" aria-label="Your notifications" aria-live="polite">
           {loading && (
-            <div className="notifications-skeleton-list" role="status" aria-label="Loading notifications">
+            <div
+              className="notifications-skeleton-list"
+              role="status"
+              aria-label="Loading notifications"
+            >
               {Array.from({ length: 4 }, (_, index) => (
-                <article className="notification-card notifications-skeleton-card" key={index} aria-hidden="true">
+                <article
+                  className="notification-card notifications-skeleton-card"
+                  key={index}
+                  aria-hidden="true"
+                >
                   <Skeleton className="notifications-skeleton-icon" />
                   <div className="notification-content">
                     <Skeleton className="skeleton-line notifications-skeleton-title" />
@@ -238,67 +309,80 @@ function Notifications() {
           )}
           {!loading && visibleNotifications.length === 0 && (
             <p className="notifications-empty">
-              {filter === 'unread' ? 'You have no unread notifications.' : 'There are no notifications in this category yet.'}
+              {filter === 'unread'
+                ? 'You have no unread notifications.'
+                : 'There are no notifications in this category yet.'}
             </p>
           )}
-          {!loading && visibleNotifications.map((notification) => {
-            const appearance = notificationAppearance(notification.type);
-            return (
-              <article
-                className={`notification-card ${appearance.className}${notification.is_read ? ' read' : ' unread'}${swipedId === notification.id ? ' swiped' : ''}`}
-                key={notification.id}
-                onTouchStart={(event) => { touchStartX.current = event.changedTouches[0].clientX; }}
-                onTouchEnd={(event) => {
-                  if (touchStartX.current === null) return;
-                  const deltaX = event.changedTouches[0].clientX - touchStartX.current;
-                  if (deltaX < -40) setSwipedId(notification.id);
-                  if (deltaX > 40) setSwipedId(null);
-                  touchStartX.current = null;
-                }}
-              >
-                <span className="notification-icon" aria-hidden="true">{appearance.icon}</span>
-                <div className="notification-content">
-                  <div className="notification-top">
-                    <h2>
-                      {notificationTitle(notification.type)}
-                      {!notification.is_read && <span className="notification-dot" aria-label="Unread" />}
-                    </h2>
-                    <div className="notification-meta">
-                      <time className="notification-time" dateTime={notification.created_at}>
-                        {timeAgo(notification.created_at)}
-                      </time>
-                      <button
-                        className="notification-delete"
-                        type="button"
-                        onClick={() => deleteNotification(notification)}
-                        disabled={deletingId === notification.id}
-                        aria-label={`Delete ${notificationTitle(notification.type).toLowerCase()} notification`}
-                        title="Delete notification"
-                      >
-                        {deletingId === notification.id ? 'Deleting…' : (
-                          <>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
-                            <span>Delete</span>
-                          </>
+          {!loading &&
+            visibleNotifications.map((notification) => {
+              const appearance = notificationAppearance(notification.type);
+              return (
+                <article
+                  className={`notification-card ${appearance.className}${notification.is_read ? ' read' : ' unread'}${swipedId === notification.id ? ' swiped' : ''}`}
+                  key={notification.id}
+                  onTouchStart={(event) => {
+                    touchStartX.current = event.changedTouches[0].clientX;
+                  }}
+                  onTouchEnd={(event) => {
+                    if (touchStartX.current === null) return;
+                    const deltaX = event.changedTouches[0].clientX - touchStartX.current;
+                    if (deltaX < -40) setSwipedId(notification.id);
+                    if (deltaX > 40) setSwipedId(null);
+                    touchStartX.current = null;
+                  }}
+                >
+                  <span className="notification-icon" aria-hidden="true">
+                    {appearance.icon}
+                  </span>
+                  <div className="notification-content">
+                    <div className="notification-top">
+                      <h2>
+                        {notificationTitle(notification.type)}
+                        {!notification.is_read && (
+                          <span className="notification-dot" aria-label="Unread" />
                         )}
-                      </button>
+                      </h2>
+                      <div className="notification-meta">
+                        <time className="notification-time" dateTime={notification.created_at}>
+                          {timeAgo(notification.created_at)}
+                        </time>
+                        <button
+                          className="notification-delete"
+                          type="button"
+                          onClick={() => deleteNotification(notification)}
+                          disabled={deletingId === notification.id}
+                          aria-label={`Delete ${notificationTitle(notification.type).toLowerCase()} notification`}
+                          title="Delete notification"
+                        >
+                          {deletingId === notification.id ? (
+                            'Deleting…'
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" />
+                              </svg>
+                              <span>Delete</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
+                    <p>{highlightedMessage(notification.message)}</p>
+                    {!notification.is_read && (
+                      <button
+                        className="notification-mark-read"
+                        type="button"
+                        onClick={() => markAsRead(notification)}
+                        disabled={markingId === notification.id}
+                      >
+                        {markingId === notification.id ? 'Saving…' : 'Mark as read'}
+                      </button>
+                    )}
                   </div>
-                  <p>{highlightedMessage(notification.message)}</p>
-                  {!notification.is_read && (
-                    <button
-                      className="notification-mark-read"
-                      type="button"
-                      onClick={() => markAsRead(notification)}
-                      disabled={markingId === notification.id}
-                    >
-                      {markingId === notification.id ? 'Saving…' : 'Mark as read'}
-                    </button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
         </section>
       </div>
     </main>

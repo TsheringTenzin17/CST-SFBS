@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
        WHERE user_id = $1
          AND created_at >= now() - INTERVAL '7 days'
        ORDER BY created_at DESC, id DESC`,
-      [req.user.id]
+      [req.user.id],
     );
     res.json(result.rows);
   } catch (error) {
@@ -30,7 +30,7 @@ router.patch('/read-all', async (req, res) => {
     const result = await pool.query(
       `UPDATE notifications SET is_read = true
        WHERE user_id = $1 AND is_read = false`,
-      [req.user.id]
+      [req.user.id],
     );
     res.json({ updated: result.rowCount });
   } catch (error) {
@@ -41,10 +41,7 @@ router.patch('/read-all', async (req, res) => {
 
 router.delete('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'DELETE FROM notifications WHERE user_id = $1',
-      [req.user.id]
-    );
+    const result = await pool.query('DELETE FROM notifications WHERE user_id = $1', [req.user.id]);
     res.json({ deleted: result.rowCount });
   } catch (error) {
     console.error(error);
@@ -64,7 +61,7 @@ router.patch('/:id/read', async (req, res) => {
       `UPDATE notifications SET is_read = true
        WHERE id = $1 AND user_id = $2
        RETURNING id, type, message, is_read, created_at`,
-      [notificationId, req.user.id]
+      [notificationId, req.user.id],
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Notification not found' });
@@ -87,7 +84,7 @@ router.delete('/:id', async (req, res) => {
       `DELETE FROM notifications
        WHERE id = $1 AND user_id = $2
        RETURNING id`,
-      [notificationId, req.user.id]
+      [notificationId, req.user.id],
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Notification not found' });

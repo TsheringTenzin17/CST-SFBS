@@ -5,7 +5,7 @@ async function expirePastPendingBookings() {
     `UPDATE bookings
      SET status = 'expired'
      WHERE status = 'pending'
-       AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`
+       AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`,
   );
   if (result.rowCount > 0) {
     console.log(`Marked ${result.rowCount} past pending booking(s) as expired.`);
@@ -75,7 +75,7 @@ async function processDueReminders() {
 async function deleteExpiredNotifications() {
   const result = await pool.query(
     `DELETE FROM notifications
-     WHERE created_at < now() - INTERVAL '7 days'`
+     WHERE created_at < now() - INTERVAL '7 days'`,
   );
   if (result.rowCount > 0) {
     console.log(`Deleted ${result.rowCount} expired notification(s).`);

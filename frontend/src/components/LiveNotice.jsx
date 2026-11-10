@@ -56,8 +56,11 @@ export default function LiveNotice() {
               {notices.map((notice, index) => (
                 <span key={notice.id || `${notice.type}-${index}`}>
                   <strong>
-                    {noticeKind(notice.type) === 'maintenance' ? 'Maintenance:'
-                      : noticeKind(notice.type) === 'facility' ? 'Facility status:' : 'Announcement:'}
+                    {noticeKind(notice.type) === 'maintenance'
+                      ? 'Maintenance:'
+                      : noticeKind(notice.type) === 'facility'
+                        ? 'Facility status:'
+                        : 'Announcement:'}
                   </strong>{' '}
                   {notice.message}
                   <i aria-hidden="true">◆</i>
@@ -76,8 +79,17 @@ export default function LiveNotice() {
       >
         {paused ? '▶' : 'Ⅱ'}
       </button>
-      <Link className="live-notice-details" to="/notifications">Details</Link>
-      <button className="live-notice-close" type="button" aria-label="Dismiss notices" onClick={() => setDismissed(true)}>×</button>
+      <Link className="live-notice-details" to="/notifications">
+        Details
+      </Link>
+      <button
+        className="live-notice-close"
+        type="button"
+        aria-label="Dismiss notices"
+        onClick={() => setDismissed(true)}
+      >
+        ×
+      </button>
       <span className="sr-only">{combinedText}</span>
     </aside>
   );

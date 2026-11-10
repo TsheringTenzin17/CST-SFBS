@@ -10,14 +10,19 @@ const PORTAL_TITLES = { student: 'Student Booking Portal', faculty: 'Faculty Boo
 
 function bookingStatus(booking, today) {
   if (booking.status === 'cancelled') return 'Cancelled';
-  if (booking.status === 'approved') return booking.booking_date < today ? 'Completed' : 'Confirmed';
+  if (booking.status === 'approved')
+    return booking.booking_date < today ? 'Completed' : 'Confirmed';
   if (booking.status === 'pending') return 'Pending approval';
   return booking.status;
 }
 
 // '2026-10-25' -> '25 Oct 2026'
 function shortDate(value) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 // '15:00' -> '03:00 PM'
@@ -90,14 +95,22 @@ function MyBookings() {
   }
 
   async function handleArchive(booking) {
-    if (!window.confirm(`Remove completed booking B-${booking.id} from your history? The official booking record will be kept.`)) return;
+    if (
+      !window.confirm(
+        `Remove completed booking B-${booking.id} from your history? The official booking record will be kept.`,
+      )
+    )
+      return;
 
     setArchivingId(booking.id);
     setMessage(null);
     try {
       await apiCall(`/bookings/${booking.id}/archive`, 'DELETE');
       setBookings((current) => current.filter((item) => item.id !== booking.id));
-      setMessage({ type: 'success', text: `Booking B-${booking.id} was removed from your history. The official record is unchanged.` });
+      setMessage({
+        type: 'success',
+        text: `Booking B-${booking.id} was removed from your history. The official record is unchanged.`,
+      });
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -120,13 +133,21 @@ function MyBookings() {
       <div className="my-bookings-heading">
         <div>
           <h1 className="title">{PORTAL_TITLES[user?.role] || 'Booking Portal'}</h1>
-          <p className="subtitle">View schedules, cancellations, and your reservation history. Completed bookings leave this list after 7 days; swipe left to remove one sooner. Official records are retained.</p>
+          <p className="subtitle">
+            View schedules, cancellations, and your reservation history. Completed bookings leave
+            this list after 7 days; swipe left to remove one sooner. Official records are retained.
+          </p>
         </div>
-        <Link className="my-bookings-book-button" to="/facilities">+ Book New Session</Link>
+        <Link className="my-bookings-book-button" to="/facilities">
+          + Book New Session
+        </Link>
       </div>
 
       {message && (
-        <div className={`my-bookings-message ${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>
+        <div
+          className={`my-bookings-message ${message.type}`}
+          role={message.type === 'error' ? 'alert' : 'status'}
+        >
           {message.text}
         </div>
       )}
@@ -142,7 +163,9 @@ function MyBookings() {
         </article>
         <article className="my-bookings-stat">
           <span>Confirmed Bookings</span>
-          <strong>{confirmedCount} {confirmedCount === 1 ? 'Game' : 'Games'}</strong>
+          <strong>
+            {confirmedCount} {confirmedCount === 1 ? 'Game' : 'Games'}
+          </strong>
         </article>
       </section>
 
@@ -177,7 +200,8 @@ function MyBookings() {
         )}
         {!loading && bookings.length === 0 && (
           <p className="my-bookings-empty">
-            No bookings to display. <Link to="/facilities">Browse facilities to book a session.</Link>
+            No bookings to display.{' '}
+            <Link to="/facilities">Browse facilities to book a session.</Link>
           </p>
         )}
         {!loading && bookings.length > 0 && visibleBookings.length === 0 && (
@@ -192,7 +216,9 @@ function MyBookings() {
                   <th scope="col">Facility</th>
                   <th scope="col">Date &amp; Time</th>
                   <th scope="col">Status</th>
-                  <th scope="col" className="my-bookings-actions-head">Actions</th>
+                  <th scope="col" className="my-bookings-actions-head">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -217,16 +243,27 @@ function MyBookings() {
                         touchStartX.current = null;
                       }}
                     >
-                      <td className="my-bookings-id" data-label="Booking ID">B-{booking.id}</td>
-                      <td className="my-bookings-facility" data-label="Facility">{booking.facility_name}</td>
+                      <td className="my-bookings-id" data-label="Booking ID">
+                        B-{booking.id}
+                      </td>
+                      <td className="my-bookings-facility" data-label="Facility">
+                        {booking.facility_name}
+                      </td>
                       <td data-label="Date & Time">
                         <span className="my-bookings-date">{shortDate(booking.booking_date)}</span>
-                        <span className="my-bookings-time">{time12(booking.start_time)} – {time12(booking.end_time)}</span>
+                        <span className="my-bookings-time">
+                          {time12(booking.start_time)} – {time12(booking.end_time)}
+                        </span>
                       </td>
-                      <td data-label="Status"><span className={`my-bookings-status ${statusClass}`}>{status}</span></td>
+                      <td data-label="Status">
+                        <span className={`my-bookings-status ${statusClass}`}>{status}</span>
+                      </td>
                       <td className="my-bookings-actions">
                         {canCancel && (
-                          <Link className="my-bookings-reschedule" to={`/my-bookings/${booking.id}/reschedule`}>
+                          <Link
+                            className="my-bookings-reschedule"
+                            to={`/my-bookings/${booking.id}/reschedule`}
+                          >
                             Reschedule
                           </Link>
                         )}
@@ -248,9 +285,13 @@ function MyBookings() {
                             disabled={archivingId === booking.id}
                             aria-label={`Remove completed booking B-${booking.id} from history`}
                           >
-                            {archivingId === booking.id ? 'Removing…' : (
+                            {archivingId === booking.id ? (
+                              'Removing…'
+                            ) : (
                               <>
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" /></svg>
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                  <path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m3.5 3v6m5-6v6" />
+                                </svg>
                                 <span>Remove from history</span>
                               </>
                             )}

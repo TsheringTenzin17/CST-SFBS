@@ -40,10 +40,18 @@ function ConfirmEmailChange() {
       chips={SPORTS}
     >
       <h1>{error ? 'Email change failed' : 'Email address updated'}</h1>
-      <p className={error ? 'auth-error' : 'auth-note'} role="status">{message}</p>
-      {user
-        ? <Link className="auth-link" to="/settings">Back to settings</Link>
-        : <Link className="auth-link" to="/login">Continue to sign in</Link>}
+      <p className={error ? 'auth-error' : 'auth-note'} role="status">
+        {message}
+      </p>
+      {user ? (
+        <Link className="auth-link" to="/settings">
+          Back to settings
+        </Link>
+      ) : (
+        <Link className="auth-link" to="/login">
+          Continue to sign in
+        </Link>
+      )}
     </AuthLayout>
   );
 }

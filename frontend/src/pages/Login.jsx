@@ -7,7 +7,15 @@ import { Spinner } from '../components/Loading';
 
 function EyeIcon({ off }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {off ? (
         <>
           <path d="M17.9 17.9A10.9 10.9 0 0112 19C5.5 19 1.5 12 1.5 12a19.3 19.3 0 014.6-5.4M9.9 5.2A10 10 0 0112 5c6.5 0 10.5 7 10.5 7a19.5 19.5 0 01-2.2 3.2M1 1l22 22" />
@@ -75,7 +83,9 @@ function Login() {
     setResending(true);
     setInfo('');
     try {
-      const result = await apiCall('/auth/resend-verification', 'POST', { email: identifier.trim() });
+      const result = await apiCall('/auth/resend-verification', 'POST', {
+        email: identifier.trim(),
+      });
       setInfo(result.message);
     } catch (requestError) {
       setInfo(requestError.message);
@@ -85,16 +95,22 @@ function Login() {
   }
 
   return (
-      <AuthLayout
-        headline={['Book your court.', 'Play your game.']}
-        tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
-        chips={SPORTS}
-      >
+    <AuthLayout
+      headline={['Book your court.', 'Play your game.']}
+      tagline="Nurturing sporting excellence, teamwork and healthy campus life. Reserve campus facilities in a few taps, without conflicts."
+      chips={SPORTS}
+    >
       <h1>Sign in</h1>
       <p className="auth-sub">Students, staff and outsiders use the same sign-in.</p>
-      <p className="auth-home-link"><Link to="/">← Return to home</Link></p>
+      <p className="auth-home-link">
+        <Link to="/">← Return to home</Link>
+      </p>
 
-      {justRegistered && <div className="auth-success">Verify your email before signing in. Your account is created after verification.</div>}
+      {justRegistered && (
+        <div className="auth-success">
+          Verify your email before signing in. Your account is created after verification.
+        </div>
+      )}
       {error && <div className="auth-error">{error}</div>}
       {info && <div className="auth-note">{info}</div>}
 
@@ -113,7 +129,9 @@ function Login() {
         <div className="auth-field">
           <div className="auth-label-row">
             <span className="auth-label">Password</span>
-            <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
+            <Link to="/forgot-password" className="auth-link">
+              Forgot password?
+            </Link>
           </div>
           <div className="auth-input-wrap">
             <input
@@ -138,10 +156,21 @@ function Login() {
 
         <button className="auth-submit" type="submit" disabled={loading}>
           <span className="auth-submit-label">
-            {loading ? <Spinner label="Signing in…" /> : (
+            {loading ? (
+              <Spinner label="Signing in…" />
+            ) : (
               <>
                 Access Booking System
-                <svg className="auth-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  className="auth-arrow"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </>
@@ -151,12 +180,20 @@ function Login() {
       </form>
 
       {verificationPending && identifier.includes('@') && (
-        <button className="auth-link" disabled={resending} onClick={resendVerification} type="button">
+        <button
+          className="auth-link"
+          disabled={resending}
+          onClick={resendVerification}
+          type="button"
+        >
           {resending ? 'Sending…' : 'Resend verification email'}
         </button>
       )}
       <p className="auth-switch">
-        New here? <Link to="/register" className="auth-link">Create an account</Link>
+        New here?{' '}
+        <Link to="/register" className="auth-link">
+          Create an account
+        </Link>
       </p>
     </AuthLayout>
   );

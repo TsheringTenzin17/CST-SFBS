@@ -41,7 +41,11 @@ async function main() {
   r = await book(student, football, tuesday, '10:00', '12:00');
   check('football on a weekday 8am-4pm is unavailable', r.status === 400, `got ${r.status}`);
   r = await book(student, football, tuesday, '06:00', '08:00');
-  check('football 6-8am free student slot still works on a weekday', r.status === 201, `got ${r.status}`);
+  check(
+    'football 6-8am free student slot still works on a weekday',
+    r.status === 201,
+    `got ${r.status}`,
+  );
   r = await book(student, football, saturday, '08:00', '10:00');
   check('student can book Saturday morning (before 4pm)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, saturday, '16:00', '18:00');
@@ -52,7 +56,11 @@ async function main() {
   r = await book(outsider, football, tuesday, '20:00', '22:00');
   check('standard: outsider can book Tue 8-10pm (hiring)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, wednesday, '16:00', '18:00');
-  check('standard: Wed 4-6pm is reserved for female students (student blocked until gender exists)', r.status === 403, `got ${r.status}`);
+  check(
+    'standard: Wed 4-6pm is reserved for female students (student blocked until gender exists)',
+    r.status === 403,
+    `got ${r.status}`,
+  );
   r = await book(student, football, saturday, '12:00', '14:00');
   check('football Saturday 12-4pm is not bookable', r.status === 400, `got ${r.status}`);
   // Sunday: 4 slots listed but only 3 bookings, then the day closes
@@ -63,17 +71,33 @@ async function main() {
   r = await book(student, football, sunday, '10:00', '12:00');
   check('Sunday student match 3 of 3', r.status === 201, `got ${r.status}`);
   r = await book(student, football, sunday, '14:00', '16:00');
-  check('Sunday 4th student booking is refused (daily cap of 3)', r.status === 409, `got ${r.status}`);
+  check(
+    'Sunday 4th student booking is refused (daily cap of 3)',
+    r.status === 409,
+    `got ${r.status}`,
+  );
 
   console.log('Other sports (weekdays 4-10pm; weekends 8am-10pm)');
   r = await book(student, basketball, tuesday, '10:00', '11:00');
   check('outside operating hours (4-10pm) is rejected', r.status === 400, `got ${r.status}`);
   r = await book(outsider, basketball, thursday, '09:00', '10:00');
-  check('weekday morning (8am-4pm) is unavailable for everyone', r.status === 400, `got ${r.status}`);
+  check(
+    'weekday morning (8am-4pm) is unavailable for everyone',
+    r.status === 400,
+    `got ${r.status}`,
+  );
   r = await book(student, basketball, tuesday, '17:00', '19:00');
-  check('2-hour booking on basketball is rejected (1-hour limit)', r.status === 400, `got ${r.status}`);
+  check(
+    '2-hour booking on basketball is rejected (1-hour limit)',
+    r.status === 400,
+    `got ${r.status}`,
+  );
   r = await book(faculty, basketball, tuesday, '17:00', '18:00');
-  check('faculty cannot book basketball (DSA: students + commercial)', r.status === 403, `got ${r.status}`);
+  check(
+    'faculty cannot book basketball (DSA: students + commercial)',
+    r.status === 403,
+    `got ${r.status}`,
+  );
   r = await book(faculty, basketball, saturday, '08:00', '09:00');
   check('faculty can book basketball Saturday morning', r.status === 201, `got ${r.status}`);
   r = await book(student, volleyball, saturday, '08:00', '09:00');

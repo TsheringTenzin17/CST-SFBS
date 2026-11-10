@@ -38,7 +38,7 @@ function isEmailConfigured() {
   return Boolean(
     (process.env.BREVO_API_KEY && process.env.BREVO_SENDER) ||
     (process.env.RESEND_API_KEY && process.env.RESEND_FROM) ||
-    (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)
+    (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
   );
 }
 
@@ -69,7 +69,7 @@ function sendWithResend({ to, subject, text }) {
     RESEND_API_URL,
     { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
     { from: process.env.RESEND_FROM, to: [to], subject, text },
-    'Resend'
+    'Resend',
   );
 }
 
@@ -83,7 +83,7 @@ function sendWithBrevo({ to, subject, text }) {
       subject,
       textContent: text,
     },
-    'Brevo'
+    'Brevo',
   );
 }
 
@@ -98,7 +98,7 @@ async function sendEmail({ to, subject, text }) {
     return sendWithGmail({ to, subject, text });
   }
   throw new Error(
-    'Email is not configured. Set BREVO_API_KEY and BREVO_SENDER (or RESEND_API_KEY and RESEND_FROM, or GMAIL_USER and GMAIL_APP_PASSWORD).'
+    'Email is not configured. Set BREVO_API_KEY and BREVO_SENDER (or RESEND_API_KEY and RESEND_FROM, or GMAIL_USER and GMAIL_APP_PASSWORD).',
   );
 }
 

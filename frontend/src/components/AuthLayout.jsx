@@ -23,41 +23,61 @@ function AuthLayout({
     if (!canvas || reducedMotion) return;
     const ctx = canvas.getContext('2d');
     const mouse = { x: -999, y: -999 };
-    let W, H, pts = [], raf;
-    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
+    let W,
+      H,
+      pts = [],
+      raf;
+    const lowPowerDevice =
+      window.matchMedia('(max-width: 760px)').matches ||
       window.matchMedia('(pointer: coarse)').matches;
 
     function size() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      const count = lowPowerDevice ? Math.min(32, Math.floor(W / 34)) : Math.min(70, Math.floor(W / 20));
+      const count = lowPowerDevice
+        ? Math.min(32, Math.floor(W / 34))
+        : Math.min(70, Math.floor(W / 20));
       pts = Array.from({ length: count }, () => ({
-        x: Math.random() * W, y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
       }));
     }
-    function onMove(e) { mouse.x = e.clientX; mouse.y = e.clientY; }
+    function onMove(e) {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    }
 
     function loop() {
       ctx.clearRect(0, 0, W, H);
       pts.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy;
+        p.x += p.vx;
+        p.y += p.vy;
         if (p.x < 0 || p.x > W) p.vx *= -1;
         if (p.y < 0 || p.y > H) p.vy *= -1;
         ctx.fillStyle = 'rgba(124,240,201,.7)';
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 6.28); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.6, 0, 6.28);
+        ctx.fill();
         for (let j = i + 1; j < pts.length; j++) {
           const q = pts[j];
           const d = Math.hypot(p.x - q.x, p.y - q.y);
           if (d < 130) {
             ctx.strokeStyle = `rgba(124,240,201,${0.18 * (1 - d / 130)})`;
-            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.stroke();
           }
         }
         const md = Math.hypot(p.x - mouse.x, p.y - mouse.y);
         if (md < 160) {
           ctx.strokeStyle = `rgba(79,216,255,${0.5 * (1 - md / 160)})`;
-          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.stroke();
         }
       });
       raf = requestAnimationFrame(loop);
@@ -78,7 +98,8 @@ function AuthLayout({
   useEffect(() => {
     const card = cardRef.current;
     const canHover = window.matchMedia('(hover: hover)').matches;
-    const lowPowerDevice = window.matchMedia('(max-width: 760px)').matches ||
+    const lowPowerDevice =
+      window.matchMedia('(max-width: 760px)').matches ||
       window.matchMedia('(pointer: coarse)').matches;
     if (!card || !canHover || lowPowerDevice) return;
     function onMove(e) {
@@ -94,9 +115,16 @@ function AuthLayout({
   return (
     <div className="auth-page">
       {/* animated background */}
-      <div className="auth-aurora" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="auth-aurora" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
       <canvas className="auth-net" ref={netRef} aria-hidden="true" />
-      <div className="auth-floor-wrap" aria-hidden="true"><div className="auth-floor" /></div>
+      <div className="auth-floor-wrap" aria-hidden="true">
+        <div className="auth-floor" />
+      </div>
       <div className="auth-grain" aria-hidden="true" />
 
       {/* left side */}
@@ -123,7 +151,9 @@ function AuthLayout({
             <p className="auth-lead">{tagline}</p>
             {chips && (
               <ul className="auth-chips">
-                {chips.map((s) => <li key={s}>{s}</li>)}
+                {chips.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
               </ul>
             )}
           </div>

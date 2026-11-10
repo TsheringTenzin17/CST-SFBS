@@ -18,12 +18,20 @@ const ROLE_OPTIONS = [
 const ROLE_LABEL = Object.fromEntries(ROLE_OPTIONS.map((r) => [r.value, r.label]));
 
 function initials(name = '') {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join('') || '?'
+  );
 }
 
 function dayName(dateStr) {
-  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' })
-    .format(new Date(`${dateStr}T00:00:00Z`));
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(
+    new Date(`${dateStr}T00:00:00Z`),
+  );
 }
 
 function bookingState(b) {
@@ -59,7 +67,9 @@ function AdminUserDetail({ userId }) {
     }
   }, [userId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -84,9 +94,11 @@ function AdminUserDetail({ userId }) {
 
   function toggleAccount() {
     const next = !form.is_active;
-    const ok = window.confirm(next
-      ? `Reactivate ${data.user.full_name}?`
-      : `Deactivate ${data.user.full_name}? They will not be able to sign in or book until reactivated.`);
+    const ok = window.confirm(
+      next
+        ? `Reactivate ${data.user.full_name}?`
+        : `Deactivate ${data.user.full_name}? They will not be able to sign in or book until reactivated.`,
+    );
     if (ok) save({ is_active: next });
   }
 
@@ -94,7 +106,9 @@ function AdminUserDetail({ userId }) {
     return (
       <section className="admin-panel">
         <div className="error">{loadError}</div>
-        <Link to="/admin/users" className="usr-back">← Back to Registered Users</Link>
+        <Link to="/admin/users" className="usr-back">
+          ← Back to Registered Users
+        </Link>
       </section>
     );
   }
@@ -105,7 +119,9 @@ function AdminUserDetail({ userId }) {
 
   return (
     <div className="ud-page">
-      <Link to="/admin/users" className="usr-back">← Back to Registered Users</Link>
+      <Link to="/admin/users" className="usr-back">
+        ← Back to Registered Users
+      </Link>
 
       <header className="ud-head">
         <div>
@@ -117,38 +133,65 @@ function AdminUserDetail({ userId }) {
         </button>
       </header>
 
-      {message && <div className={message.type === 'error' ? 'error' : 'success-box'}>{message.text}</div>}
+      {message && (
+        <div className={message.type === 'error' ? 'error' : 'success-box'}>{message.text}</div>
+      )}
 
       <section className="ud-card ud-identity">
-        <div className="ud-avatar" aria-hidden="true">{initials(user.full_name)}</div>
+        <div className="ud-avatar" aria-hidden="true">
+          {initials(user.full_name)}
+        </div>
         <h2>{user.full_name}</h2>
-        <p className="ud-sub">USR-{String(user.id).padStart(4, '0')} · {ROLE_LABEL[user.role] || user.role} account</p>
-        <span className={`ud-badge ${active ? 'is-active' : 'is-suspended'}`}>{active ? 'Active' : 'Suspended'}</span>
+        <p className="ud-sub">
+          USR-{String(user.id).padStart(4, '0')} · {ROLE_LABEL[user.role] || user.role} account
+        </p>
+        <span className={`ud-badge ${active ? 'is-active' : 'is-suspended'}`}>
+          {active ? 'Active' : 'Suspended'}
+        </span>
       </section>
 
       <section className="ud-card ud-personal">
         <h2>Personal Information</h2>
         <div className="ud-grid">
-          <label>Full Name
+          <label>
+            Full Name
             <input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} />
           </label>
-          <label>Email Address
-            <input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
+          <label>
+            Email Address
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => update('email', e.target.value)}
+            />
           </label>
-          <label>Contact Number
-            <input value={form.contact_number} onChange={(e) => update('contact_number', e.target.value)} />
+          <label>
+            Contact Number
+            <input
+              value={form.contact_number}
+              onChange={(e) => update('contact_number', e.target.value)}
+            />
           </label>
-          <label>Student Number
-            <input value={form.student_staff_id} onChange={(e) => update('student_staff_id', e.target.value)} />
+          <label>
+            Student Number
+            <input
+              value={form.student_staff_id}
+              onChange={(e) => update('student_staff_id', e.target.value)}
+            />
           </label>
         </div>
       </section>
 
       <section className="ud-card ud-access">
         <h2>Role &amp; Account Status</h2>
-        <label className="ud-field">User Role
+        <label className="ud-field">
+          User Role
           <select value={form.role} onChange={(e) => update('role', e.target.value)}>
-            {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
           </select>
         </label>
         <p className="ud-hint">Student · Faculty / Staff · Outsider · Admin</p>
@@ -167,7 +210,12 @@ function AdminUserDetail({ userId }) {
             onClick={() => update('is_active', !form.is_active)}
           />
         </div>
-        <button type="button" className={`ud-deactivate ${active ? '' : 'is-reactivate'}`} onClick={toggleAccount} disabled={saving}>
+        <button
+          type="button"
+          className={`ud-deactivate ${active ? '' : 'is-reactivate'}`}
+          onClick={toggleAccount}
+          disabled={saving}
+        >
           {active ? 'Deactivate Account' : 'Reactivate Account'}
         </button>
       </section>
@@ -175,10 +223,22 @@ function AdminUserDetail({ userId }) {
       <section className="ud-card ud-history">
         <h2>Booking History Summary</h2>
         <div className="ud-stats">
-          <div><span>Total bookings</span><strong>{summary.total}</strong></div>
-          <div><span>Completed</span><strong>{summary.completed}</strong></div>
-          <div><span>Cancelled</span><strong>{summary.cancelled}</strong></div>
-          <div><span>Upcoming</span><strong>{summary.upcoming}</strong></div>
+          <div>
+            <span>Total bookings</span>
+            <strong>{summary.total}</strong>
+          </div>
+          <div>
+            <span>Completed</span>
+            <strong>{summary.completed}</strong>
+          </div>
+          <div>
+            <span>Cancelled</span>
+            <strong>{summary.cancelled}</strong>
+          </div>
+          <div>
+            <span>Upcoming</span>
+            <strong>{summary.upcoming}</strong>
+          </div>
         </div>
         {bookings.length === 0 ? (
           <p className="admin-empty-state">This user has no bookings yet.</p>
@@ -190,7 +250,10 @@ function AdminUserDetail({ userId }) {
                 <div className="ud-booking-row" key={b.id}>
                   <strong>BKG-{String(b.id).padStart(4, '0')}</strong>
                   <span>{b.facility_name}</span>
-                  <span className="ud-when">{dayName(b.booking_date)} {b.booking_date.slice(5)}, {clock(b.start_time)} – {clock(b.end_time)}</span>
+                  <span className="ud-when">
+                    {dayName(b.booking_date)} {b.booking_date.slice(5)}, {clock(b.start_time)} –{' '}
+                    {clock(b.end_time)}
+                  </span>
                   <span className={`ud-state ${state.cls}`}>{state.label}</span>
                 </div>
               );

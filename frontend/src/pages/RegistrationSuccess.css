@@ -1,3 +1,4 @@
+/* Registration result card, verification state, and available next actions. */
 .registration-success {
   text-align: center;
 }
@@ -37,9 +38,9 @@
   display: grid;
   gap: 6px;
   padding: 15px 16px;
-  border: 1px solid rgba(143, 196, 208, .32);
+  border: 1px solid rgba(143, 196, 208, 0.32);
   border-radius: 10px;
-  background: rgba(143, 196, 208, .08);
+  background: rgba(143, 196, 208, 0.08);
 }
 
 .registration-success-email span {
@@ -90,7 +91,9 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color .18s ease, transform .18s ease;
+  transition:
+    background-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .registration-success-button:hover {
@@ -122,16 +125,21 @@
   border-radius: 8px;
   background: #cf3f38;
   color: #fff;
-  font: 600 14px Barlow, sans-serif;
+  font:
+    600 14px Barlow,
+    sans-serif;
   cursor: pointer;
-  transition: background-color .18s ease;
+  transition: background-color 0.18s ease;
 }
 
 .registration-success-cancel:hover:not(:disabled) {
   background: #a9302a;
 }
 
-.registration-success-cancel:disabled { cursor: wait; opacity: .7; }
+.registration-success-cancel:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
 .registration-success-cancel:focus-visible {
   outline: 2px solid #ff9999;
   outline-offset: 3px;
@@ -146,7 +154,9 @@
   margin-top: 12px;
 }
 
-.registration-success-actions .registration-success-button { width: 100%; }
+.registration-success-actions .registration-success-button {
+  width: 100%;
+}
 
 .registration-success-secondary {
   display: inline-flex;
@@ -163,12 +173,14 @@
 
 .registration-success-secondary:hover {
   color: var(--a-text, #eef5f6);
-  background: rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, 0.07);
   text-decoration: underline;
 }
 
 @media (max-width: 520px) {
-  .registration-success-description { font-size: 13px; }
+  .registration-success-description {
+    font-size: 13px;
+  }
   .registration-success-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -178,8 +190,8 @@
     min-width: 0;
     min-height: 44px;
     padding: 8px 4px;
-    border: 1px solid rgba(143, 196, 208, .28);
-    background: rgba(143, 196, 208, .06);
+    border: 1px solid rgba(143, 196, 208, 0.28);
+    background: rgba(143, 196, 208, 0.06);
     font-size: 12px;
     line-height: 1.25;
     text-align: center;

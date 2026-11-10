@@ -15,10 +15,18 @@ export default function useSummary(date) {
     let cancelled = false; // ignore the answer if the page was left meanwhile
     setLoading(true);
     apiCall(`/facilities/summary?date=${date}`)
-      .then((data) => { if (!cancelled) setSummary(groupSummary(data.facilities)); })
-      .catch(() => { if (!cancelled) setSummary({}); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then((data) => {
+        if (!cancelled) setSummary(groupSummary(data.facilities));
+      })
+      .catch(() => {
+        if (!cancelled) setSummary({});
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [date]);
 
   return { summary, loading };

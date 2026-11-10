@@ -24,7 +24,7 @@ router.get('/support-requests', requireAdmin, async (req, res) => {
               to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
        FROM support_requests
        ORDER BY created_at DESC, id DESC
-       LIMIT 250`
+       LIMIT 250`,
     );
     res.json(result.rows);
   } catch (err) {
@@ -54,9 +54,10 @@ router.patch('/support-requests/:id', requireAdmin, async (req, res) => {
        SELECT id, user_id, name, email, message, status, previous_status,
               to_char(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
        FROM updated`,
-      [status, req.params.id]
+      [status, req.params.id],
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Support request not found' });
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: 'Support request not found' });
     const { previous_status, ...request } = result.rows[0];
     res.json({ request });
   } catch (err) {
@@ -69,12 +70,15 @@ router.post('/support-requests/:id/notify-resolution', requireAdmin, async (req,
   try {
     const result = await pool.query(
       `SELECT id, name, email, status FROM support_requests WHERE id = $1`,
-      [req.params.id]
+      [req.params.id],
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Support request not found' });
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: 'Support request not found' });
     const request = result.rows[0];
     if (request.status !== 'resolved') {
-      return res.status(400).json({ error: 'Mark the support request resolved before sending an update' });
+      return res
+        .status(400)
+        .json({ error: 'Mark the support request resolved before sending an update' });
     }
     await sendEmail({
       to: request.email,
@@ -84,7 +88,10 @@ router.post('/support-requests/:id/notify-resolution', requireAdmin, async (req,
     res.json({ message: 'Resolution update email sent' });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ error: 'Could not send the resolution email. Check the email service configuration and try again.' });
+    res.status(503).json({
+      error:
+        'Could not send the resolution email. Check the email service configuration and try again.',
+    });
   }
 });
 
@@ -94,7 +101,7 @@ router.get('/users', requireAdmin, async (req, res) => {
     const result = await pool.query(
       `SELECT id, full_name, email, role, student_staff_id, contact_number, is_active,
               to_char(created_at, 'YYYY-MM-DD') AS joined
-       FROM users ORDER BY id`
+       FROM users ORDER BY id`,
     );
     res.json(result.rows);
   } catch (err) {
@@ -106,13 +113,14 @@ router.get('/users', requireAdmin, async (req, res) => {
 // ---- one account, for the "User Account Detail" page ----------------------
 router.get('/users/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid user id' });
+  if (!Number.isSafeInteger(id) || id <= 0)
+    return res.status(400).json({ error: 'Invalid user id' });
   try {
     const found = await pool.query(
       `SELECT id, full_name, email, role, student_staff_id, contact_number, is_active,
               to_char(created_at, 'YYYY-MM-DD') AS joined
        FROM users WHERE id = $1`,
-      [id]
+      [id],
     );
     if (found.rows.length === 0) return res.status(404).json({ error: 'User not found' });
 
@@ -128,7 +136,7 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
                 COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'expired')
                   AND (booking_date > $2::date OR (booking_date = $2::date AND end_time > $3::time)))::int AS upcoming
          FROM bookings WHERE user_id = $1`,
-        [id, now.date, nowTime]
+        [id, now.date, nowTime],
       ),
       pool.query(
         `SELECT b.id, b.status, f.name AS facility_name,
@@ -140,7 +148,7 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
          FROM bookings b JOIN facilities f ON f.id = b.facility_id
          WHERE b.user_id = $1
          ORDER BY b.booking_date DESC, b.start_time DESC LIMIT 10`,
-        [id, now.date, nowTime]
+        [id, now.date, nowTime],
       ),
     ]);
     res.json({ user: found.rows[0], summary: summary.rows[0], bookings: recent.rows });
@@ -153,12 +161,16 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
 // ---- edit an account: any subset of the fields below ---------------------
 router.patch('/users/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Invalid user id' });
+  if (!Number.isSafeInteger(id) || id <= 0)
+    return res.status(400).json({ error: 'Invalid user id' });
   const { full_name, email, contact_number, student_staff_id, role, is_active } = req.body;
 
   const sets = [];
   const values = [];
-  const add = (column, value) => { values.push(value); sets.push(`${column} = $${values.length}`); };
+  const add = (column, value) => {
+    values.push(value);
+    sets.push(`${column} = $${values.length}`);
+  };
 
   if (full_name !== undefined) {
     if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 120) {
@@ -184,14 +196,18 @@ router.patch('/users/:id', requireAdmin, async (req, res) => {
     add('student_staff_id', clean || null);
   }
   if (role !== undefined) {
-    if (!ROLES.includes(role)) return res.status(400).json({ error: `role must be one of: ${ROLES.join(', ')}` });
+    if (!ROLES.includes(role))
+      return res.status(400).json({ error: `role must be one of: ${ROLES.join(', ')}` });
     if (id === req.user.id && role !== 'admin') {
-      return res.status(400).json({ error: 'You cannot remove your own admin role (you would lock yourself out)' });
+      return res
+        .status(400)
+        .json({ error: 'You cannot remove your own admin role (you would lock yourself out)' });
     }
     add('role', role);
   }
   if (is_active !== undefined) {
-    if (typeof is_active !== 'boolean') return res.status(400).json({ error: 'is_active must be true or false' });
+    if (typeof is_active !== 'boolean')
+      return res.status(400).json({ error: 'is_active must be true or false' });
     if (id === req.user.id && !is_active) {
       return res.status(400).json({ error: 'You cannot suspend your own account' });
     }
@@ -205,12 +221,13 @@ router.patch('/users/:id', requireAdmin, async (req, res) => {
       `UPDATE users SET ${sets.join(', ')} WHERE id = $${values.length}
        RETURNING id, full_name, email, role, student_staff_id, contact_number, is_active,
                  to_char(created_at, 'YYYY-MM-DD') AS joined`,
-      values
+      values,
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json({ user: result.rows[0] });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'That email is already used by another account' });
+    if (err.code === '23505')
+      return res.status(409).json({ error: 'That email is already used by another account' });
     console.error(err);
     res.status(500).json({ error: 'Failed to update user' });
   }
@@ -220,14 +237,17 @@ router.patch('/users/:id', requireAdmin, async (req, res) => {
 // admin promotes an account that has already registered.
 router.patch('/users/:id/role', requireAdmin, async (req, res) => {
   const { role } = req.body;
-  if (!ROLES.includes(role)) return res.status(400).json({ error: `role must be one of: ${ROLES.join(', ')}` });
+  if (!ROLES.includes(role))
+    return res.status(400).json({ error: `role must be one of: ${ROLES.join(', ')}` });
   try {
     if (Number(req.params.id) === req.user.id && role !== 'admin') {
-      return res.status(400).json({ error: 'You cannot remove your own admin role (you would lock yourself out)' });
+      return res
+        .status(400)
+        .json({ error: 'You cannot remove your own admin role (you would lock yourself out)' });
     }
     const result = await pool.query(
       'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, full_name, email, role',
-      [role, req.params.id]
+      [role, req.params.id],
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json({ user: result.rows[0] });
@@ -261,15 +281,18 @@ router.get('/reports', requireAdmin, async (req, res) => {
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'expired'))::int AS confirmed,
                 COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled
-         FROM bookings`),
+         FROM bookings`,
+      ),
       pool.query(
         `SELECT f.group_name AS name, COUNT(*)::int AS bookings
          FROM bookings b JOIN facilities f ON f.id = b.facility_id
-         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY f.group_name ORDER BY bookings DESC`),
+         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY f.group_name ORDER BY bookings DESC`,
+      ),
       pool.query(
         `SELECT u.role, COUNT(*)::int AS bookings
          FROM bookings b JOIN users u ON u.id = b.user_id
-         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY u.role ORDER BY bookings DESC`),
+         WHERE b.status NOT IN ('cancelled', 'expired') GROUP BY u.role ORDER BY bookings DESC`,
+      ),
       pool.query('SELECT COUNT(*)::int AS n FROM users'),
       // this month vs last month, by booking date
       pool.query(
@@ -277,12 +300,14 @@ router.get('/reports', requireAdmin, async (req, res) => {
                 COUNT(*) FILTER (WHERE booking_date >= $1 AND booking_date < $2 AND status = 'cancelled')::int AS this_cancelled,
                 COUNT(*) FILTER (WHERE booking_date >= $3 AND booking_date < $1)::int AS last_total
          FROM bookings`,
-        [w.monthStart, w.nextMonthStart, w.prevMonthStart]),
+        [w.monthStart, w.nextMonthStart, w.prevMonthStart],
+      ),
       // people who held at least one live booking in the last 30 days
       pool.query(
         `SELECT COUNT(DISTINCT user_id)::int AS n FROM bookings
          WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2`,
-        [w.thirtyDaysAgo, w.today]),
+        [w.thirtyDaysAgo, w.today],
+      ),
       // booked hours vs. open hours (from the standard weekly schedule rules) over the same 30 days
       pool.query(
         `WITH days AS (
@@ -299,7 +324,8 @@ router.get('/reports', requireAdmin, async (req, res) => {
            WHERE status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $1 AND $2
          )
          SELECT open_h.hours::float AS open_hours, booked.hours::float AS booked_hours FROM open_h, booked`,
-        [w.thirtyDaysAgo, w.today]),
+        [w.thirtyDaysAgo, w.today],
+      ),
       // latest 5 events we can date: new bookings and new maintenance blocks
       pool.query(
         `SELECT * FROM (
@@ -321,7 +347,8 @@ router.get('/reports', requireAdmin, async (req, res) => {
          WHERE happened_at IS NOT NULL
          ORDER BY happened_at DESC
          LIMIT 5`,
-        [w.today]),
+        [w.today],
+      ),
     ]);
 
     res.json({

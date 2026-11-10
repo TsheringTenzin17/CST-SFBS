@@ -12,7 +12,11 @@ function bookingWindow() {
   const today = bhutanNow().date;
   const d = new Date(`${today}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // this Monday
-  const add = (n) => { const x = new Date(d); x.setUTCDate(d.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const add = (n) => {
+    const x = new Date(d);
+    x.setUTCDate(d.getUTCDate() + n);
+    return x.toISOString().slice(0, 10);
+  };
   const isSunday = bhutanNow().minutes >= 0 && new Date(`${today}T00:00:00Z`).getUTCDay() === 0;
   const to = isSunday ? add(13) : add(6);
   return { from: today, to, nextOpens: add(7) }; // Next week opens on Sunday at Bhutan midnight.
@@ -22,8 +26,12 @@ function bookingWindow() {
 function bhutanNow() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: TZ,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   }).formatToParts(new Date());
 
   const get = (type) => parts.find((p) => p.type === type).value;
@@ -67,11 +75,11 @@ function isPastWeeklyRelease(bookingDate, now = bhutanNow()) {
   const releaseDate = new Date(`${bookingDate}T00:00:00Z`);
   releaseDate.setUTCDate(releaseDate.getUTCDate() - 1);
   const releaseDateString = releaseDate.toISOString().slice(0, 10);
-  return now.date > releaseDateString ||
-    (now.date === releaseDateString && now.minutes >= 20 * 60);
+  return now.date > releaseDateString || (now.date === releaseDateString && now.minutes >= 20 * 60);
 }
 
-const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s)) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
+const isValidDate = (s) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(String(s)) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 const isValidTime = (s) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(String(s));
 
 module.exports = {

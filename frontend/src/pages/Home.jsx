@@ -70,17 +70,35 @@ function Home() {
             <strong>Your Game.</strong>
           </h1>
           <p>
-            Less waiting. More playing. Find your court, check available slots
-            and book your next game at CST.
+            Less waiting. More playing. Find your court, check available slots and book your next
+            game at CST.
           </p>
           <small>For students, staff &amp; our sporting community.</small>
         </div>
         <div className="hero-buttons">
-          <Link to="/facilities" className="btn-green">Browse Facilities</Link>
-          <Link to="/my-bookings" className="btn-outline-white">My Bookings</Link>
+          <Link to="/facilities" className="btn-green">
+            Browse Facilities
+          </Link>
+          <Link to="/my-bookings" className="btn-outline-white">
+            My Bookings
+          </Link>
         </div>
-        <button className="hero-arrow hero-arrow-prev" type="button" aria-label="Previous banner" onClick={() => setHeroSlide(0)}>&#8249;</button>
-        <button className="hero-arrow hero-arrow-next" type="button" aria-label="Next banner" onClick={() => setHeroSlide(1)}>&#8250;</button>
+        <button
+          className="hero-arrow hero-arrow-prev"
+          type="button"
+          aria-label="Previous banner"
+          onClick={() => setHeroSlide(0)}
+        >
+          &#8249;
+        </button>
+        <button
+          className="hero-arrow hero-arrow-next"
+          type="button"
+          aria-label="Next banner"
+          onClick={() => setHeroSlide(1)}
+        >
+          &#8250;
+        </button>
         <div className="hero-dots" aria-label="Choose banner">
           {[0, 1].map((slide) => (
             <button
@@ -114,7 +132,9 @@ function Home() {
               key={sport}
               title={`View ${sport} slots`}
             >
-              <span className="sport-category-icon" aria-hidden="true">{icon}</span>
+              <span className="sport-category-icon" aria-hidden="true">
+                {icon}
+              </span>
               <span>{sport}</span>
             </Link>
           );
@@ -124,7 +144,11 @@ function Home() {
       <section className="availability-finder" aria-label="Find available sports slots">
         <div className="availability-heading">
           <span>Make time to play</span>
-          <h2>Find your next<br />slot</h2>
+          <h2>
+            Find your next
+            <br />
+            slot
+          </h2>
         </div>
         <div className="availability-fields">
           <label>
@@ -151,7 +175,11 @@ function Home() {
           <button
             className="availability-check"
             type="button"
-            onClick={() => navigate(`/facilities?sport=${encodeURIComponent(finderSport)}&date=${encodeURIComponent(finderDate)}`)}
+            onClick={() =>
+              navigate(
+                `/facilities?sport=${encodeURIComponent(finderSport)}&date=${encodeURIComponent(finderDate)}`,
+              )
+            }
           >
             Check availability <span aria-hidden="true">↗</span>
           </button>
@@ -162,11 +190,13 @@ function Home() {
       <section className="main">
         <h2 className="title">Our Sports Arenas</h2>
         <p className="subtitle">
-          Choose a facility below to view details, time-slot allocation rules, and make your reservations.
+          Choose a facility below to view details, time-slot allocation rules, and make your
+          reservations.
         </p>
 
         <div className="grid" aria-busy={facilitiesLoading}>
-          {facilitiesLoading && Array.from({ length: 6 }, (_, index) => <FacilityCardSkeleton key={index} />)}
+          {facilitiesLoading &&
+            Array.from({ length: 6 }, (_, index) => <FacilityCardSkeleton key={index} />)}
           {cards.map((f) => {
             const badge = badgeFor(summary[f.group_name]);
             return (
@@ -181,15 +211,21 @@ function Home() {
                   className="card-img"
                   src={f.image_url || IMAGES[f.type]}
                   alt={f.displayName}
-                  onError={(e) => { e.target.style.visibility = 'hidden'; }}
+                  onError={(e) => {
+                    e.target.style.visibility = 'hidden';
+                  }}
                 />
                 <div className="card-body">
                   <div className="card-title-row">
                     <h3 className="card-title">
                       {f.displayName}
-                      {f.courtCount > 1 && <span className="court-count"> ({f.courtCount} courts)</span>}
+                      {f.courtCount > 1 && (
+                        <span className="court-count"> ({f.courtCount} courts)</span>
+                      )}
                     </h3>
-                    {badge.label && <span className={`badge badge-${badge.variant}`}>{badge.label}</span>}
+                    {badge.label && (
+                      <span className={`badge badge-${badge.variant}`}>{badge.label}</span>
+                    )}
                   </div>
                   <p className="card-desc">{f.description || DESCRIPTIONS[f.type] || ''}</p>
                 </div>
@@ -201,7 +237,10 @@ function Home() {
         <aside className="booking-guidance" aria-label="Booking guidance">
           <div>
             <strong>Good games start with a fair booking.</strong>
-            <p>Check allocation rules before reserving. Community booking payments are handled offline.</p>
+            <p>
+              Check allocation rules before reserving. Community booking payments are handled
+              offline.
+            </p>
           </div>
           <Link to="/rules" className="booking-guidance-link">
             Booking rules <span aria-hidden="true">↗</span>

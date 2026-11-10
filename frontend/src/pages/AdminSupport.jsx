@@ -31,7 +31,9 @@ function AdminSupport() {
     }
   }, []);
 
-  useEffect(() => { loadRequests(); }, [loadRequests]);
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
 
   async function updateStatus(request, status) {
     setSavingId(request.id);
@@ -39,8 +41,11 @@ function AdminSupport() {
     setNotice('');
     try {
       const result = await apiCall(`/admin/support-requests/${request.id}`, 'PATCH', { status });
-      setRequests((current) => current.map((item) => item.id === request.id ? result.request : item));
-      if (status === 'resolved') setNotice('Request resolved. You can now email the requester an update.');
+      setRequests((current) =>
+        current.map((item) => (item.id === request.id ? result.request : item)),
+      );
+      if (status === 'resolved')
+        setNotice('Request resolved. You can now email the requester an update.');
     } catch (requestError) {
       setError(requestError.message);
       await loadRequests();
@@ -54,7 +59,10 @@ function AdminSupport() {
     setError('');
     setNotice('');
     try {
-      const result = await apiCall(`/admin/support-requests/${request.id}/notify-resolution`, 'POST');
+      const result = await apiCall(
+        `/admin/support-requests/${request.id}/notify-resolution`,
+        'POST',
+      );
       setNotice(result.message);
     } catch (requestError) {
       setError(requestError.message);
@@ -77,14 +85,28 @@ function AdminSupport() {
   return (
     <section className="admin-support">
       <div className="sup-toolbar">
-        <p>Review submitted requests and update their status. After resolving, use the email button on the ticket to notify the requester.</p>
-        <button className="admin-primary-button" onClick={loadRequests} type="button">Refresh</button>
+        <p>
+          Review submitted requests and update their status. After resolving, use the email button
+          on the ticket to notify the requester.
+        </p>
+        <button className="admin-primary-button" onClick={loadRequests} type="button">
+          Refresh
+        </button>
       </div>
 
       <div className="admin-stats" aria-label="Ticket summary">
-        <article className="admin-stat-card"><span>Pending review</span><strong className="sup-num-warn">{count('pending_review')}</strong></article>
-        <article className="admin-stat-card"><span>In progress</span><strong className="admin-stat-blue">{count('in_progress')}</strong></article>
-        <article className="admin-stat-card"><span>Resolved</span><strong className="admin-stat-green">{count('resolved')}</strong></article>
+        <article className="admin-stat-card">
+          <span>Pending review</span>
+          <strong className="sup-num-warn">{count('pending_review')}</strong>
+        </article>
+        <article className="admin-stat-card">
+          <span>In progress</span>
+          <strong className="admin-stat-blue">{count('in_progress')}</strong>
+        </article>
+        <article className="admin-stat-card">
+          <span>Resolved</span>
+          <strong className="admin-stat-green">{count('resolved')}</strong>
+        </article>
       </div>
 
       <div className="sup-tabs" role="tablist" aria-label="Filter tickets">
@@ -102,55 +124,79 @@ function AdminSupport() {
         ))}
       </div>
 
-      {error && <p className="admin-error" role="alert">{error}</p>}
-      {notice && <p className="admin-support-notice" role="status">{notice}</p>}
+      {error && (
+        <p className="admin-error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="admin-support-notice" role="status">
+          {notice}
+        </p>
+      )}
 
-      {loading ? <AdminLoading label="Loading support requests" rows={4} />
-        : visible.length === 0 ? <p className="admin-state-message">{list.length ? 'No tickets in this view.' : 'No support requests yet.'}</p>
-          : (
-            <div className="sup-list">
-              {visible.map((request) => (
-                <article className={`sup-card sup-${request.status}`} key={request.id}>
-                  <header className="sup-head">
-                    <div>
-                      <strong>Ticket #{request.id} · {request.name}</strong>
-                      <a href={`mailto:${request.email}`}>{request.email}</a>
-                    </div>
-                    <div className="sup-meta">
-                      <span className={`sup-badge sup-${request.status}`}>{statusLabel(request.status)}</span>
-                      <time>{request.created_at}</time>
-                    </div>
-                  </header>
+      {loading ? (
+        <AdminLoading label="Loading support requests" rows={4} />
+      ) : visible.length === 0 ? (
+        <p className="admin-state-message">
+          {list.length ? 'No tickets in this view.' : 'No support requests yet.'}
+        </p>
+      ) : (
+        <div className="sup-list">
+          {visible.map((request) => (
+            <article className={`sup-card sup-${request.status}`} key={request.id}>
+              <header className="sup-head">
+                <div>
+                  <strong>
+                    Ticket #{request.id} · {request.name}
+                  </strong>
+                  <a href={`mailto:${request.email}`}>{request.email}</a>
+                </div>
+                <div className="sup-meta">
+                  <span className={`sup-badge sup-${request.status}`}>
+                    {statusLabel(request.status)}
+                  </span>
+                  <time>{request.created_at}</time>
+                </div>
+              </header>
 
-                  <p className="sup-message">{request.message}</p>
+              <p className="sup-message">{request.message}</p>
 
-                  <footer className="sup-foot">
-                    <label className="sup-status">
-                      Status
-                      <select
-                        className={`sup-select sup-${request.status}`}
-                        value={request.status}
-                        disabled={savingId === request.id}
-                        onChange={(event) => updateStatus(request, event.target.value)}
-                      >
-                        {STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                      </select>
-                    </label>
-                    {request.status === 'resolved' && (
-                      <button
-                        className="admin-secondary-button"
-                        disabled={emailingId === request.id}
-                        onClick={() => sendResolutionEmail(request)}
-                        type="button"
-                      >
-                        {emailingId === request.id ? <Spinner label="Sending resolution email…" /> : 'Email resolution update'}
-                      </button>
+              <footer className="sup-foot">
+                <label className="sup-status">
+                  Status
+                  <select
+                    className={`sup-select sup-${request.status}`}
+                    value={request.status}
+                    disabled={savingId === request.id}
+                    onChange={(event) => updateStatus(request, event.target.value)}
+                  >
+                    {STATUSES.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {request.status === 'resolved' && (
+                  <button
+                    className="admin-secondary-button"
+                    disabled={emailingId === request.id}
+                    onClick={() => sendResolutionEmail(request)}
+                    type="button"
+                  >
+                    {emailingId === request.id ? (
+                      <Spinner label="Sending resolution email…" />
+                    ) : (
+                      'Email resolution update'
                     )}
-                  </footer>
-                </article>
-              ))}
-            </div>
-          )}
+                  </button>
+                )}
+              </footer>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

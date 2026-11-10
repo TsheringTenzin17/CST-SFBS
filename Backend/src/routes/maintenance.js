@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
               to_char(m.start_date, 'YYYY-MM-DD') AS start_date,
               to_char(m.end_date, 'YYYY-MM-DD') AS end_date
        FROM maintenance_blocks m JOIN facilities f ON f.id = m.facility_id
-       ORDER BY m.start_date DESC`
+       ORDER BY m.start_date DESC`,
     );
     res.json(result.rows);
   } catch (err) {
@@ -32,9 +32,12 @@ router.get('/', async (req, res) => {
 router.post('/', requireAdmin, async (req, res) => {
   const { facility_id, start_date, end_date, reason } = req.body;
   if (!facility_id || !isValidDate(start_date) || !isValidDate(end_date)) {
-    return res.status(400).json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
+    return res
+      .status(400)
+      .json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
   }
-  if (end_date < start_date) return res.status(400).json({ error: 'End date cannot be before start date' });
+  if (end_date < start_date)
+    return res.status(400).json({ error: 'End date cannot be before start date' });
   if (reason != null && (typeof reason !== 'string' || reason.trim().length > 500)) {
     return res.status(400).json({ error: 'Reason must be 500 characters or fewer' });
   }
@@ -49,14 +52,14 @@ router.post('/', requireAdmin, async (req, res) => {
     const inserted = await client.query(
       `INSERT INTO maintenance_blocks (facility_id, start_date, end_date, reason, created_by)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [facility_id, start_date, end_date, cleanReason || null, req.user.id]
+      [facility_id, start_date, end_date, cleanReason || null, req.user.id],
     );
 
     // Count affected reservations and notify each affected account once, respecting saved preferences.
     const affected = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings
        WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $2 AND $3`,
-      [facility_id, start_date, end_date]
+      [facility_id, start_date, end_date],
     );
     const recipients = await client.query(
       `SELECT b.user_id, COUNT(*)::int AS booking_count, f.name AS facility_name
@@ -68,7 +71,7 @@ router.post('/', requireAdmin, async (req, res) => {
          AND b.booking_date BETWEEN $2 AND $3
          AND COALESCE(p.maintenance_alerts, true) = true
        GROUP BY b.user_id, f.name`,
-      [facility_id, start_date, end_date]
+      [facility_id, start_date, end_date],
     );
 
     for (const recipient of recipients.rows) {
@@ -80,7 +83,7 @@ router.post('/', requireAdmin, async (req, res) => {
           recipient.user_id,
           `Maintenance has been scheduled for ${recipient.facility_name} from ${start_date} to ${end_date}. ` +
             `${recipient.booking_count} of your active booking(s) may be affected.${reasonText}`,
-        ]
+        ],
       );
     }
 
@@ -102,12 +105,16 @@ router.post('/', requireAdmin, async (req, res) => {
 
 router.patch('/:id', requireAdmin, async (req, res) => {
   const blockId = Number(req.params.id);
-  if (!Number.isSafeInteger(blockId) || blockId <= 0) return res.status(400).json({ error: 'Invalid block id' });
+  if (!Number.isSafeInteger(blockId) || blockId <= 0)
+    return res.status(400).json({ error: 'Invalid block id' });
   const { facility_id, start_date, end_date, reason } = req.body;
   if (!facility_id || !isValidDate(start_date) || !isValidDate(end_date)) {
-    return res.status(400).json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
+    return res
+      .status(400)
+      .json({ error: 'facility_id, start_date and end_date (YYYY-MM-DD) are required' });
   }
-  if (end_date < start_date) return res.status(400).json({ error: 'End date cannot be before start date' });
+  if (end_date < start_date)
+    return res.status(400).json({ error: 'End date cannot be before start date' });
   if (reason != null && (typeof reason !== 'string' || reason.trim().length > 500)) {
     return res.status(400).json({ error: 'Reason must be 500 characters or fewer' });
   }
@@ -122,7 +129,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     const updated = await client.query(
       `UPDATE maintenance_blocks SET facility_id = $1, start_date = $2, end_date = $3, reason = $4
        WHERE id = $5 RETURNING id`,
-      [facility_id, start_date, end_date, cleanReason || null, blockId]
+      [facility_id, start_date, end_date, cleanReason || null, blockId],
     );
     if (updated.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -134,7 +141,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     const affected = await client.query(
       `SELECT COUNT(*)::int AS n FROM bookings
        WHERE facility_id = $1 AND status NOT IN ('cancelled', 'expired') AND booking_date BETWEEN $2 AND $3`,
-      [facility_id, start_date, end_date]
+      [facility_id, start_date, end_date],
     );
     const recipients = await client.query(
       `SELECT b.user_id, COUNT(*)::int AS booking_count, f.name AS facility_name
@@ -146,7 +153,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
          AND b.booking_date BETWEEN $2 AND $3
          AND COALESCE(p.maintenance_alerts, true) = true
        GROUP BY b.user_id, f.name`,
-      [facility_id, start_date, end_date]
+      [facility_id, start_date, end_date],
     );
     for (const recipient of recipients.rows) {
       const reasonText = cleanReason ? ` Reason: ${cleanReason}` : '';
@@ -157,13 +164,17 @@ router.patch('/:id', requireAdmin, async (req, res) => {
           recipient.user_id,
           `Maintenance for ${recipient.facility_name} has been updated to ${start_date} - ${end_date}. ` +
             `${recipient.booking_count} of your active booking(s) may be affected.${reasonText}`,
-        ]
+        ],
       );
     }
 
     await client.query('COMMIT');
     transactionStarted = false;
-    res.json({ id: blockId, affected_bookings: affected.rows[0].n, notified_users: recipients.rows.length });
+    res.json({
+      id: blockId,
+      affected_bookings: affected.rows[0].n,
+      notified_users: recipients.rows.length,
+    });
   } catch (err) {
     if (transactionStarted) await client.query('ROLLBACK');
     console.error(err);

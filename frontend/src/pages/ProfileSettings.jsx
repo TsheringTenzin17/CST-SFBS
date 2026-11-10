@@ -11,12 +11,29 @@ const DEFAULT_PREFERENCES = {
 };
 
 const PREFERENCE_OPTIONS = [
-  ['booking_updates', 'Booking status updates', 'Updates when a booking is confirmed, cancelled, or changed.'],
-  ['game_reminders', 'Game reminders', 'Reminders 24 hours and 2 hours before your scheduled booking.'],
-  ['maintenance_alerts', 'Maintenance alerts', 'Notices about maintenance affecting facilities you have booked.'],
+  [
+    'booking_updates',
+    'Booking status updates',
+    'Updates when a booking is confirmed, cancelled, or changed.',
+  ],
+  [
+    'game_reminders',
+    'Game reminders',
+    'Reminders 24 hours and 2 hours before your scheduled booking.',
+  ],
+  [
+    'maintenance_alerts',
+    'Maintenance alerts',
+    'Notices about maintenance affecting facilities you have booked.',
+  ],
 ];
 
-const ROLE_LABELS = { student: 'Student', faculty: 'Faculty / Staff', outsider: 'Outsider', admin: 'Admin' };
+const ROLE_LABELS = {
+  student: 'Student',
+  faculty: 'Faculty / Staff',
+  outsider: 'Outsider',
+  admin: 'Admin',
+};
 const GENDER_LABELS = { female: 'Female', male: 'Male' };
 
 function ProfileSettings() {
@@ -58,7 +75,9 @@ function ProfileSettings() {
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   const initials = (profile?.full_name || user?.full_name || '?')
@@ -69,7 +88,10 @@ function ProfileSettings() {
     .join('')
     .toUpperCase();
   const joined = profile?.joined
-    ? new Date(`${profile.joined}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    ? new Date(`${profile.joined}T00:00:00`).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+      })
     : '—';
   const isOutsider = profile?.role === 'outsider';
   const genderLocked = Boolean(user?.gender);
@@ -92,7 +114,10 @@ function ProfileSettings() {
 
       const preferenceResult = await apiCall('/auth/preferences', 'PATCH', preferences);
       setPreferences(preferenceResult.preferences);
-      setMessage({ type: 'success', text: 'Your profile and notification preferences have been saved.' });
+      setMessage({
+        type: 'success',
+        text: 'Your profile and notification preferences have been saved.',
+      });
     } catch (error) {
       setMessage({
         type: 'error',
@@ -130,7 +155,10 @@ function ProfileSettings() {
     event.preventDefault();
     setPasswordMessage(null);
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'The new password and confirmation do not match.' });
+      setPasswordMessage({
+        type: 'error',
+        text: 'The new password and confirmation do not match.',
+      });
       return;
     }
 
@@ -172,15 +200,28 @@ function ProfileSettings() {
   }
 
   if (loading) {
-    return <main className="main profile-settings-page" role="status">Loading profile settings…</main>;
+    return (
+      <main className="main profile-settings-page" role="status">
+        Loading profile settings…
+      </main>
+    );
   }
 
   return (
     <main className="main profile-settings-page">
       <h1 className="title">Profile &amp; Settings</h1>
-      <p className="subtitle">Manage your account details, security, and notification preferences.</p>
+      <p className="subtitle">
+        Manage your account details, security, and notification preferences.
+      </p>
 
-      {message && <p className={`profile-message ${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>{message.text}</p>}
+      {message && (
+        <p
+          className={`profile-message ${message.type}`}
+          role={message.type === 'error' ? 'alert' : 'status'}
+        >
+          {message.text}
+        </p>
+      )}
       {!profile && (
         <p className="profile-message error">
           Profile could not be loaded. <Link to="/settings">Reload settings</Link>
@@ -190,16 +231,40 @@ function ProfileSettings() {
       {profile && (
         <div className="profile-settings-grid">
           <aside className="profile-card">
-            <div className="profile-avatar" aria-hidden="true">{initials}</div>
+            <div className="profile-avatar" aria-hidden="true">
+              {initials}
+            </div>
             <h2>{profile.full_name}</h2>
             <span className="profile-role">{ROLE_LABELS[profile.role] || profile.role}</span>
             <dl className="profile-details">
-              {!isOutsider && <div><dt>Student / Staff ID</dt><dd>{profile.student_staff_id || 'Not provided'}</dd></div>}
-              {isOutsider && <div><dt>Organization</dt><dd>{profile.organization || 'Not provided'}</dd></div>}
-              <div><dt>{isOutsider ? 'Email' : 'Campus email'}</dt><dd>{profile.email}</dd></div>
-              <div><dt>Phone number</dt><dd>{profile.contact_number || 'Not provided'}</dd></div>
-              <div><dt>Gender</dt><dd>{GENDER_LABELS[profile.gender] || 'Not set'}</dd></div>
-              <div><dt>Member since</dt><dd>{joined}</dd></div>
+              {!isOutsider && (
+                <div>
+                  <dt>Student / Staff ID</dt>
+                  <dd>{profile.student_staff_id || 'Not provided'}</dd>
+                </div>
+              )}
+              {isOutsider && (
+                <div>
+                  <dt>Organization</dt>
+                  <dd>{profile.organization || 'Not provided'}</dd>
+                </div>
+              )}
+              <div>
+                <dt>{isOutsider ? 'Email' : 'Campus email'}</dt>
+                <dd>{profile.email}</dd>
+              </div>
+              <div>
+                <dt>Phone number</dt>
+                <dd>{profile.contact_number || 'Not provided'}</dd>
+              </div>
+              <div>
+                <dt>Gender</dt>
+                <dd>{GENDER_LABELS[profile.gender] || 'Not set'}</dd>
+              </div>
+              <div>
+                <dt>Member since</dt>
+                <dd>{joined}</dd>
+              </div>
             </dl>
           </aside>
 
@@ -225,7 +290,9 @@ function ProfileSettings() {
                     maxLength={20}
                     pattern="\+?[\d\s()\-]{7,20}"
                     title="Digits, spaces, + - ( ) only, 7 to 20 characters"
-                    onChange={(event) => setProfile({ ...profile, contact_number: event.target.value })}
+                    onChange={(event) =>
+                      setProfile({ ...profile, contact_number: event.target.value })
+                    }
                     placeholder="e.g. 77682600"
                   />
                 </label>
@@ -249,7 +316,11 @@ function ProfileSettings() {
                 {!isOutsider && (
                   <label className="profile-field-wide">
                     Student / Staff ID
-                    <input value={profile.student_staff_id || ''} readOnly placeholder="Not provided" />
+                    <input
+                      value={profile.student_staff_id || ''}
+                      readOnly
+                      placeholder="Not provided"
+                    />
                     <small>Assigned by the college and cannot be edited.</small>
                   </label>
                 )}
@@ -260,7 +331,10 @@ function ProfileSettings() {
               <div className="profile-preferences">
                 {PREFERENCE_OPTIONS.map(([name, title, description]) => (
                   <label className="profile-preference" key={name}>
-                    <span className="profile-preference-text"><strong>{title}</strong><small>{description}</small></span>
+                    <span className="profile-preference-text">
+                      <strong>{title}</strong>
+                      <small>{description}</small>
+                    </span>
                     <span className="switch">
                       <input
                         type="checkbox"
@@ -284,17 +358,29 @@ function ProfileSettings() {
             <section className="profile-form-card" aria-labelledby="email-heading">
               <h2 id="email-heading">Email Address</h2>
               {emailMessage && (
-                <p className={`profile-message ${emailMessage.type}`} role={emailMessage.type === 'error' ? 'alert' : 'status'}>
+                <p
+                  className={`profile-message ${emailMessage.type}`}
+                  role={emailMessage.type === 'error' ? 'alert' : 'status'}
+                >
                   {emailMessage.text}
                 </p>
               )}
               <div className="profile-email-row">
                 <div>
-                  <span className="profile-email-label">{isOutsider ? 'Current email' : 'Campus email'}</span>
+                  <span className="profile-email-label">
+                    {isOutsider ? 'Current email' : 'Campus email'}
+                  </span>
                   <strong className="profile-email-value">{profile.email}</strong>
                 </div>
                 {isOutsider && !showEmailForm && (
-                  <button type="button" className="btn-secondary" onClick={() => { setShowEmailForm(true); setEmailMessage(null); }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      setShowEmailForm(true);
+                      setEmailMessage(null);
+                    }}
+                  >
                     Change email
                   </button>
                 )}
@@ -302,8 +388,9 @@ function ProfileSettings() {
 
               {profile.pending_email && (
                 <p className="profile-message info" role="status">
-                  Waiting for confirmation: open the link we sent to <strong>{profile.pending_email}</strong> to finish the change.
-                  Until then you keep signing in with {profile.email}.
+                  Waiting for confirmation: open the link we sent to{' '}
+                  <strong>{profile.pending_email}</strong> to finish the change. Until then you keep
+                  signing in with {profile.email}.
                 </p>
               )}
 
@@ -342,9 +429,20 @@ function ProfileSettings() {
                       />
                     </label>
                   </div>
-                  <p className="profile-hint">We will email a confirmation link to the new address. Your email only changes once you open it.</p>
+                  <p className="profile-hint">
+                    We will email a confirmation link to the new address. Your email only changes
+                    once you open it.
+                  </p>
                   <div className="profile-form-actions">
-                    <button type="button" className="btn-secondary" onClick={() => { setShowEmailForm(false); setNewEmail(''); setEmailPassword(''); }}>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        setShowEmailForm(false);
+                        setNewEmail('');
+                        setEmailPassword('');
+                      }}
+                    >
                       Cancel
                     </button>
                     <button className="btn-primary" type="submit" disabled={sendingEmail}>
@@ -358,22 +456,47 @@ function ProfileSettings() {
             <form className="profile-form-card" onSubmit={changePassword}>
               <h2>Update Security Credentials</h2>
               {passwordMessage && (
-                <p className={`profile-message ${passwordMessage.type}`} role={passwordMessage.type === 'error' ? 'alert' : 'status'}>
+                <p
+                  className={`profile-message ${passwordMessage.type}`}
+                  role={passwordMessage.type === 'error' ? 'alert' : 'status'}
+                >
                   {passwordMessage.text}
                 </p>
               )}
               <div className="profile-fields password-fields">
                 <label className="profile-field-wide">
                   Current password
-                  <input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    required
+                  />
                 </label>
                 <label>
                   New password
-                  <input type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="At least 8 characters" required />
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="At least 8 characters"
+                    required
+                  />
                 </label>
                 <label>
                   Confirm new password
-                  <input type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-type new password" required />
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Re-type new password"
+                    required
+                  />
                 </label>
               </div>
               <div className="profile-form-actions">
@@ -388,12 +511,15 @@ function ProfileSettings() {
                 <h2>Delete Account</h2>
                 <p>
                   This permanently disables sign-in and removes your personal profile details.
-                  Upcoming bookings are cancelled and past booking records are retained with identifying
-                  details removed. Notification preferences, notifications, and support-request details
-                  are deleted or anonymized.
+                  Upcoming bookings are cancelled and past booking records are retained with
+                  identifying details removed. Notification preferences, notifications, and
+                  support-request details are deleted or anonymized.
                 </p>
                 {deleteMessage && (
-                  <p className={`profile-message ${deleteMessage.type}`} role={deleteMessage.type === 'error' ? 'alert' : 'status'}>
+                  <p
+                    className={`profile-message ${deleteMessage.type}`}
+                    role={deleteMessage.type === 'error' ? 'alert' : 'status'}
+                  >
                     {deleteMessage.text}
                   </p>
                 )}
@@ -417,7 +543,11 @@ function ProfileSettings() {
                   <span>I understand this action cannot be undone.</span>
                 </label>
                 <div className="profile-form-actions">
-                  <button className="profile-delete-button" type="submit" disabled={deletingAccount}>
+                  <button
+                    className="profile-delete-button"
+                    type="submit"
+                    disabled={deletingAccount}
+                  >
                     {deletingAccount ? 'Deleting…' : 'Delete my account'}
                   </button>
                 </div>

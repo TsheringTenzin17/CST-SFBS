@@ -18,7 +18,8 @@ const TABS = [
 function localPart(email) {
   return email.trim().toLowerCase().split('.cst@')[0];
 }
-const isStudentEmail = (email) => COLLEGE_EMAIL.test(email.trim()) && /^\d+$/.test(localPart(email));
+const isStudentEmail = (email) =>
+  COLLEGE_EMAIL.test(email.trim()) && /^\d+$/.test(localPart(email));
 const isStaffEmail = (email) => COLLEGE_EMAIL.test(email.trim()) && !/^\d+$/.test(localPart(email));
 
 function Field({ label, hint, hintClass, error, errorId, fieldRef, children }) {
@@ -26,7 +27,11 @@ function Field({ label, hint, hintClass, error, errorId, fieldRef, children }) {
     <label ref={fieldRef} className={`auth-field${error ? ' has-error' : ''}`}>
       <span className="auth-label">{label}</span>
       {children}
-      {error && <span id={errorId} className="auth-field-error">{error}</span>}
+      {error && (
+        <span id={errorId} className="auth-field-error">
+          {error}
+        </span>
+      )}
       {hint && <span className={hintClass ? `auth-hint ${hintClass}` : 'auth-hint'}>{hint}</span>}
     </label>
   );
@@ -34,7 +39,15 @@ function Field({ label, hint, hintClass, error, errorId, fieldRef, children }) {
 
 function EyeIcon({ off }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {off ? (
         <>
           <path d="M17.9 17.9A10.9 10.9 0 0112 19C5.5 19 1.5 12 1.5 12a19.3 19.3 0 014.6-5.4M9.9 5.2A10 10 0 0112 5c6.5 0 10.5 7 10.5 7a19.5 19.5 0 01-2.2 3.2M1 1l22 22" />
@@ -51,8 +64,14 @@ function EyeIcon({ off }) {
 }
 
 const EMPTY = {
-  full_name: '', email: '', phone: '', gender: '',
-  organization: '', purpose: '', password: '', confirm: '',
+  full_name: '',
+  email: '',
+  phone: '',
+  gender: '',
+  organization: '',
+  purpose: '',
+  password: '',
+  confirm: '',
 };
 
 function Register() {
@@ -116,8 +135,10 @@ function Register() {
 
   function fieldFromMessage(message) {
     const text = message.toLowerCase();
-    if (/name/.test(text) && /full_name|full name|required|120 characters/.test(text)) return 'full_name';
-    if (/email|student email|staff email|college email|gmail|student.*staff id/.test(text)) return 'email';
+    if (/name/.test(text) && /full_name|full name|required|120 characters/.test(text))
+      return 'full_name';
+    if (/email|student email|staff email|college email|gmail|student.*staff id/.test(text))
+      return 'email';
     if (/phone|mobile|contact number/.test(text)) return 'phone';
     if (/gender/.test(text)) return 'gender';
     if (/password/.test(text)) return text.includes('match') ? 'confirm' : 'password';
@@ -126,9 +147,7 @@ function Register() {
   }
 
   function inputErrorProps(field) {
-    return fieldErrors[field]
-      ? { 'aria-invalid': true, 'aria-describedby': `${field}-error` }
-      : {};
+    return fieldErrors[field] ? { 'aria-invalid': true, 'aria-describedby': `${field}-error` } : {};
   }
 
   function switchTab(next) {
@@ -147,13 +166,21 @@ function Register() {
   let emailHint;
   let emailHintClass;
   if (isStudent) {
-    if (emailOk) { emailHint = 'You will be registered as: Student'; emailHintClass = 'ok'; }
-    else if (isStaffEmail(email)) { emailHint = 'This looks like a staff email. Pick the Staff option.'; emailHintClass = 'bad'; }
-    else emailHint = 'Use your student email: 02xxxxxx.cst@rub.edu.bt';
+    if (emailOk) {
+      emailHint = 'You will be registered as: Student';
+      emailHintClass = 'ok';
+    } else if (isStaffEmail(email)) {
+      emailHint = 'This looks like a staff email. Pick the Staff option.';
+      emailHintClass = 'bad';
+    } else emailHint = 'Use your student email: 02xxxxxx.cst@rub.edu.bt';
   } else if (isStaff) {
-    if (emailOk) { emailHint = 'You will be registered as: Staff. No ID needed, you sign in with this email.'; emailHintClass = 'ok'; }
-    else if (isStudentEmail(email)) { emailHint = 'This looks like a student email. Pick the Student option.'; emailHintClass = 'bad'; }
-    else emailHint = 'Use your staff email: yourname.cst@rub.edu.bt';
+    if (emailOk) {
+      emailHint = 'You will be registered as: Staff. No ID needed, you sign in with this email.';
+      emailHintClass = 'ok';
+    } else if (isStudentEmail(email)) {
+      emailHint = 'This looks like a student email. Pick the Student option.';
+      emailHintClass = 'bad';
+    } else emailHint = 'Use your staff email: yourname.cst@rub.edu.bt';
   }
 
   async function handleSubmit(e) {
@@ -205,8 +232,10 @@ function Register() {
     };
     let payload;
     if (isStudent) payload = { ...base, student_staff_id: studentId };
-    else if (isStaff) payload = base; // staff have no ID
-    else payload = { ...base, organization: form.organization.trim(), purpose: form.purpose.trim() };
+    else if (isStaff)
+      payload = base; // staff have no ID
+    else
+      payload = { ...base, organization: form.organization.trim(), purpose: form.purpose.trim() };
 
     setLoading(true);
     try {
@@ -286,24 +315,55 @@ function Register() {
         ))}
       </div>
 
-      {error && <div ref={formErrorRef} className="auth-error" role="alert" tabIndex={-1}>{error}</div>}
+      {error && (
+        <div ref={formErrorRef} className="auth-error" role="alert" tabIndex={-1}>
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="auth-form" noValidate>
         <Field label="Full name" error={fieldErrors.full_name} errorId="full_name-error">
-          <input value={form.full_name} onChange={set('full_name')} placeholder="Tshering Dorji" autoComplete="name" {...inputErrorProps('full_name')} />
+          <input
+            value={form.full_name}
+            onChange={set('full_name')}
+            placeholder="Tshering Dorji"
+            autoComplete="name"
+            {...inputErrorProps('full_name')}
+          />
         </Field>
 
         {isStudent && (
           <>
-            <Field label="Student email" hint={emailHint} hintClass={emailHintClass} error={fieldErrors.email} errorId="email-error">
-              <input type="email" value={form.email} onChange={set('email')} placeholder="02210145.cst@rub.edu.bt" autoComplete="email" {...inputErrorProps('email')} />
+            <Field
+              label="Student email"
+              hint={emailHint}
+              hintClass={emailHintClass}
+              error={fieldErrors.email}
+              errorId="email-error"
+            >
+              <input
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="02210145.cst@rub.edu.bt"
+                autoComplete="email"
+                {...inputErrorProps('email')}
+              />
             </Field>
             <div className="auth-row">
               <Field label="Student ID" hint="Taken from your email.">
                 <input value={studentId} readOnly placeholder="02210145" />
               </Field>
               <Field label="Phone number" error={fieldErrors.phone} errorId="phone-error">
-                <input type="tel" inputMode="numeric" value={form.phone} onChange={setPhone} placeholder="xxxxxxxx" autoComplete="tel-national" {...inputErrorProps('phone')} />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={form.phone}
+                  onChange={setPhone}
+                  placeholder="xxxxxxxx"
+                  autoComplete="tel-national"
+                  {...inputErrorProps('phone')}
+                />
               </Field>
             </div>
           </>
@@ -311,36 +371,96 @@ function Register() {
 
         {isStaff && (
           <>
-            <Field label="Staff email" hint={emailHint} hintClass={emailHintClass} error={fieldErrors.email} errorId="email-error">
-              <input type="email" value={form.email} onChange={set('email')} placeholder="yourname.cst@rub.edu.bt" autoComplete="email" {...inputErrorProps('email')} />
+            <Field
+              label="Staff email"
+              hint={emailHint}
+              hintClass={emailHintClass}
+              error={fieldErrors.email}
+              errorId="email-error"
+            >
+              <input
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="yourname.cst@rub.edu.bt"
+                autoComplete="email"
+                {...inputErrorProps('email')}
+              />
             </Field>
             <Field label="Phone number" error={fieldErrors.phone} errorId="phone-error">
-              <input type="tel" inputMode="numeric" value={form.phone} onChange={setPhone} placeholder="xxxxxxxx" autoComplete="tel-national" {...inputErrorProps('phone')} />
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={form.phone}
+                onChange={setPhone}
+                placeholder="xxxxxxxx"
+                autoComplete="tel-national"
+                {...inputErrorProps('phone')}
+              />
             </Field>
           </>
         )}
 
         {isOutsider && (
           <>
-            <Field label="Email" hint="Use a Gmail address (@gmail.com)." error={fieldErrors.email} errorId="email-error">
-              <input type="email" value={form.email} onChange={set('email')} placeholder="karma@gmail.com" autoComplete="email" {...inputErrorProps('email')} />
+            <Field
+              label="Email"
+              hint="Use a Gmail address (@gmail.com)."
+              error={fieldErrors.email}
+              errorId="email-error"
+            >
+              <input
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="karma@gmail.com"
+                autoComplete="email"
+                {...inputErrorProps('email')}
+              />
             </Field>
             <div className="auth-row">
               <Field label="Phone number" error={fieldErrors.phone} errorId="phone-error">
-                <input type="tel" inputMode="numeric" value={form.phone} onChange={setPhone} placeholder="xxxxxxxx" autoComplete="tel-national" {...inputErrorProps('phone')} />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={form.phone}
+                  onChange={setPhone}
+                  placeholder="xxxxxxxx"
+                  autoComplete="tel-national"
+                  {...inputErrorProps('phone')}
+                />
               </Field>
-              <Field label="Organization or team name" error={fieldErrors.organization} errorId="organization-error">
-                <input value={form.organization} onChange={set('organization')} placeholder="e.g. Druk United FC" maxLength={120} {...inputErrorProps('organization')} />
+              <Field
+                label="Organization or team name"
+                error={fieldErrors.organization}
+                errorId="organization-error"
+              >
+                <input
+                  value={form.organization}
+                  onChange={set('organization')}
+                  placeholder="e.g. Druk United FC"
+                  maxLength={120}
+                  {...inputErrorProps('organization')}
+                />
               </Field>
             </div>
             <p className="auth-hint">Not with an organization? Enter the name of your team.</p>
             <Field label="Purpose of booking">
-              <input value={form.purpose} onChange={set('purpose')} placeholder="e.g. weekend football match" />
+              <input
+                value={form.purpose}
+                onChange={set('purpose')}
+                placeholder="e.g. weekend football match"
+              />
             </Field>
           </>
         )}
 
-        <Field label="Gender" hint="Used for gender-specific slots, like the female-student football slot." error={fieldErrors.gender} errorId="gender-error">
+        <Field
+          label="Gender"
+          hint="Used for gender-specific slots, like the female-student football slot."
+          error={fieldErrors.gender}
+          errorId="gender-error"
+        >
           <select value={form.gender} onChange={set('gender')} {...inputErrorProps('gender')}>
             <option value="">Select…</option>
             <option value="female">Female</option>
@@ -349,9 +469,21 @@ function Register() {
         </Field>
 
         <div className="auth-row">
-          <Field label="Password" hint="At least 8 characters." error={fieldErrors.password} errorId="password-error">
+          <Field
+            label="Password"
+            hint="At least 8 characters."
+            error={fieldErrors.password}
+            errorId="password-error"
+          >
             <div className="auth-input-wrap">
-              <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={set('password')} placeholder="••••••••" autoComplete="new-password" {...inputErrorProps('password')} />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={set('password')}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                {...inputErrorProps('password')}
+              />
               <button
                 type="button"
                 className="auth-eye"
@@ -365,7 +497,14 @@ function Register() {
           </Field>
           <Field label="Confirm password" error={fieldErrors.confirm} errorId="confirm-error">
             <div className="auth-input-wrap">
-              <input type={showConfirmPassword ? 'text' : 'password'} value={form.confirm} onChange={set('confirm')} placeholder="••••••••" autoComplete="new-password" {...inputErrorProps('confirm')} />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={form.confirm}
+                onChange={set('confirm')}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                {...inputErrorProps('confirm')}
+              />
               <button
                 type="button"
                 className="auth-eye"
@@ -386,12 +525,17 @@ function Register() {
         </div>
 
         <button className="auth-submit" type="submit" disabled={loading}>
-          <span className="auth-submit-label">{loading ? <Spinner label="Creating account…" /> : 'Create Account'}</span>
+          <span className="auth-submit-label">
+            {loading ? <Spinner label="Creating account…" /> : 'Create Account'}
+          </span>
         </button>
       </form>
 
       <p className="auth-switch">
-        Already registered? <Link to="/login" className="auth-link">Sign in</Link>
+        Already registered?{' '}
+        <Link to="/login" className="auth-link">
+          Sign in
+        </Link>
       </p>
     </AuthLayout>
   );

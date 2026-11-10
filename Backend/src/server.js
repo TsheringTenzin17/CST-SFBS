@@ -17,11 +17,16 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? allowedOrigins
-    : (allowedOrigins.length > 0 ? allowedOrigins : true),
-}));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? allowedOrigins
+        : allowedOrigins.length > 0
+          ? allowedOrigins
+          : true,
+  }),
+);
 app.use(express.json({ limit: '2mb' })); // facility photos arrive as compressed data URLs
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -42,7 +47,9 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`CST-SFBS backend running on port ${PORT}`);
     if (!isEmailConfigured()) {
-      console.warn('Email notifications are disabled: configure a supported email provider in the backend environment.');
+      console.warn(
+        'Email notifications are disabled: configure a supported email provider in the backend environment.',
+      );
     }
     require('./reminders').startReminderScheduler();
   });

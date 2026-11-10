@@ -4,8 +4,19 @@ import { clock, shortDay } from '../utils/adminHelpers';
 import { AdminLoading, Spinner } from '../components/Loading';
 
 const PAGE_SIZE = 6;
-const ROLE_LABEL = { student: 'Student', faculty: 'Faculty', outsider: 'Commercial', admin: 'Admin' };
-const STATUS_LABEL = { approved: 'Approved', pending: 'Pending', cancelled: 'Cancelled', expired: 'Expired', completed: 'Completed' };
+const ROLE_LABEL = {
+  student: 'Student',
+  faculty: 'Faculty',
+  outsider: 'Commercial',
+  admin: 'Admin',
+};
+const STATUS_LABEL = {
+  approved: 'Approved',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
+  completed: 'Completed',
+};
 
 // All booking times are Bhutan time (UTC+6), whatever the admin's browser timezone is.
 const BT_OFFSET_MS = 6 * 60 * 60 * 1000;
@@ -18,13 +29,19 @@ function addDays(dateStr, n) {
 
 // "Completed" is an approved booking whose end time has already passed.
 function displayStatus(b) {
-  const finished = b.status === 'approved' && new Date(`${b.booking_date}T${b.end_time}:00+06:00`) < new Date();
+  const finished =
+    b.status === 'approved' && new Date(`${b.booking_date}T${b.end_time}:00+06:00`) < new Date();
   return finished ? 'completed' : b.status;
 }
 
 function slotLabel(b) {
   const today = bhutanToday();
-  const day = b.booking_date === today ? 'Today' : b.booking_date === addDays(today, 1) ? 'Tomorrow' : shortDay(b.booking_date);
+  const day =
+    b.booking_date === today
+      ? 'Today'
+      : b.booking_date === addDays(today, 1)
+        ? 'Tomorrow'
+        : shortDay(b.booking_date);
   return `${day}, ${clock(b.start_time)} - ${clock(b.end_time)}`;
 }
 
@@ -60,7 +77,9 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
     const status = displayStatus(b);
     const statusOk =
       !statusFilter ||
-      (statusFilter === 'active' ? status === 'pending' || status === 'approved' : status === statusFilter);
+      (statusFilter === 'active'
+        ? status === 'pending' || status === 'approved'
+        : status === statusFilter);
     return (
       statusOk &&
       (!facilityFilter || b.facility_name === facilityFilter) &&
@@ -127,7 +146,10 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
 
   function saveReschedule(event) {
     event.preventDefault();
-    runAction(() => apiCall(`/bookings/${modal.booking.id}/reschedule`, 'PATCH', modal.reschedule), true);
+    runAction(
+      () => apiCall(`/bookings/${modal.booking.id}/reschedule`, 'PATCH', modal.reschedule),
+      true,
+    );
   }
 
   // Used by both the Reject button (pending) and the Cancel section of Manage (approved)
@@ -138,8 +160,12 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
       return;
     }
     runAction(
-      () => apiCall(`/bookings/${modal.booking.id}`, 'PATCH', { status: 'cancelled', reason: modal.reason.trim() }),
-      true
+      () =>
+        apiCall(`/bookings/${modal.booking.id}`, 'PATCH', {
+          status: 'cancelled',
+          reason: modal.reason.trim(),
+        }),
+      true,
     );
   }
 
@@ -156,32 +182,47 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
           <h1>Manage Facility Bookings</h1>
           <p>Review, approve, reschedule or cancel campus facility reservations.</p>
         </div>
-        <button className="bk-refresh" onClick={onReload} type="button">Refresh</button>
+        <button className="bk-refresh" onClick={onReload} type="button">
+          Refresh
+        </button>
       </header>
 
       {error && (
         <div className="admin-error" role="alert">
           <span>{error}</span>
-          <button type="button" onClick={onReload}>Try again</button>
+          <button type="button" onClick={onReload}>
+            Try again
+          </button>
         </div>
       )}
 
       <section className="bk-card bk-filters" aria-label="Filter reservations">
         <h2>Filter Reservations</h2>
         <div className="bk-filter-grid">
-          <label>Facility
+          <label>
+            Facility
             <select value={facilityFilter} onChange={onFilter(setFacilityFilter)}>
               <option value="">All Facilities</option>
-              {unique(bookingList, 'facility_name').map((name) => <option key={name} value={name}>{name}</option>)}
+              {unique(bookingList, 'facility_name').map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
             </select>
           </label>
-          <label>Role Type
+          <label>
+            Role Type
             <select value={roleFilter} onChange={onFilter(setRoleFilter)}>
               <option value="">All Roles</option>
-              {unique(bookingList, 'user_role').map((r) => <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>)}
+              {unique(bookingList, 'user_role').map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABEL[r] || r}
+                </option>
+              ))}
             </select>
           </label>
-          <label>Status
+          <label>
+            Status
             <select value={statusFilter} onChange={onFilter(setStatusFilter)}>
               <option value="active">Active &amp; Pending</option>
               <option value="">All Statuses</option>
@@ -195,8 +236,20 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
           <div className="bk-field">
             <span>Date Range</span>
             <div className="bk-daterange">
-              <input aria-label="From date" type="date" value={fromDate} max={toDate || undefined} onChange={onFilter(setFromDate)} />
-              <input aria-label="To date" type="date" value={toDate} min={fromDate || undefined} onChange={onFilter(setToDate)} />
+              <input
+                aria-label="From date"
+                type="date"
+                value={fromDate}
+                max={toDate || undefined}
+                onChange={onFilter(setFromDate)}
+              />
+              <input
+                aria-label="To date"
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={onFilter(setToDate)}
+              />
             </div>
           </div>
         </div>
@@ -205,7 +258,11 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
       <section className="bk-card bk-directory">
         <h2>Booking Directory</h2>
 
-        {actionError && !modal && <div className="admin-error" role="alert">{actionError}</div>}
+        {actionError && !modal && (
+          <div className="admin-error" role="alert">
+            {actionError}
+          </div>
+        )}
 
         {loading ? (
           <AdminLoading label="Loading bookings" rows={5} />
@@ -216,8 +273,13 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
             <table className="bk-table">
               <thead>
                 <tr>
-                  <th>Booking ID</th><th>Requester</th><th>Facility</th><th>Date &amp; Time Slot</th>
-                  <th>Role</th><th>Status</th><th className="bk-th-actions">Actions</th>
+                  <th>Booking ID</th>
+                  <th>Requester</th>
+                  <th>Facility</th>
+                  <th>Date &amp; Time Slot</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th className="bk-th-actions">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,25 +294,57 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                     const status = displayStatus(b);
                     return (
                       <tr key={b.id}>
-                        <td className="bk-id" data-label="Booking ID">BK-{b.id}</td>
-                        <td className="bk-name" data-label="Requester">{b.user_name || '—'}</td>
-                        <td className="bk-facility" data-label="Facility">{b.facility_name || '—'}</td>
-                        <td className="bk-slot" data-label="Date & time">{slotLabel(b)}</td>
+                        <td className="bk-id" data-label="Booking ID">
+                          BK-{b.id}
+                        </td>
+                        <td className="bk-name" data-label="Requester">
+                          {b.user_name || '—'}
+                        </td>
+                        <td className="bk-facility" data-label="Facility">
+                          {b.facility_name || '—'}
+                        </td>
+                        <td className="bk-slot" data-label="Date & time">
+                          {slotLabel(b)}
+                        </td>
                         <td data-label="Role">
-                          <span className={`bk-badge bk-role-${b.user_role}`}>{ROLE_LABEL[b.user_role] || b.user_role || '—'}</span>
+                          <span className={`bk-badge bk-role-${b.user_role}`}>
+                            {ROLE_LABEL[b.user_role] || b.user_role || '—'}
+                          </span>
                         </td>
                         <td data-label="Status">
-                          <span className={`bk-badge bk-status-${status}`}>{STATUS_LABEL[status] || status}</span>
+                          <span className={`bk-badge bk-status-${status}`}>
+                            {STATUS_LABEL[status] || status}
+                          </span>
                         </td>
                         <td data-label="Actions">
                           <div className="bk-actions">
                             {status === 'pending' ? (
                               <>
-                                <button className="adm-approve" disabled={saving} onClick={() => approve(b)} type="button">Approve</button>
-                                <button className="adm-reject" disabled={saving} onClick={() => openReject(b)} type="button">Reject</button>
+                                <button
+                                  className="adm-approve"
+                                  disabled={saving}
+                                  onClick={() => approve(b)}
+                                  type="button"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className="adm-reject"
+                                  disabled={saving}
+                                  onClick={() => openReject(b)}
+                                  type="button"
+                                >
+                                  Reject
+                                </button>
                               </>
                             ) : (
-                              <button className="bk-manage" onClick={() => openManage(b)} type="button">Manage</button>
+                              <button
+                                className="bk-manage"
+                                onClick={() => openManage(b)}
+                                type="button"
+                              >
+                                Manage
+                              </button>
                             )}
                           </div>
                         </td>
@@ -265,13 +359,23 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
 
         <div className="bk-footer">
           <span className="bk-count">
-            Showing {visibleBookings.length ? firstIndex + 1 : 0}-{Math.min(firstIndex + PAGE_SIZE, visibleBookings.length)} of {visibleBookings.length} bookings
+            Showing {visibleBookings.length ? firstIndex + 1 : 0}-
+            {Math.min(firstIndex + PAGE_SIZE, visibleBookings.length)} of {visibleBookings.length}{' '}
+            bookings
           </span>
           <nav className="bk-pager" aria-label="Pagination">
-            <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button>
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              Previous
+            </button>
             {pageList(totalPages, currentPage).map((p, i) =>
               p === '…' ? (
-                <span key={`gap-${i}`} className="bk-gap">…</span>
+                <span key={`gap-${i}`} className="bk-gap">
+                  …
+                </span>
               ) : (
                 <button
                   key={p}
@@ -282,62 +386,142 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                 >
                   {p}
                 </button>
-              )
+              ),
             )}
-            <button type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              Next
+            </button>
           </nav>
         </div>
       </section>
 
       {modal && (
         <div className="bk-backdrop" onClick={closeModal}>
-          <div className="bk-modal" role="dialog" aria-modal="true" aria-labelledby="bk-modal-title" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bk-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bk-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 id="bk-modal-title">
               {modal.type === 'reject' ? 'Reject' : 'Manage'} booking BK-{modalBooking.id}
             </h3>
             <dl className="bk-summary">
-              <div><dt>Requester</dt><dd>{modalBooking.user_name || '—'}</dd></div>
-              <div><dt>Facility</dt><dd>{modalBooking.facility_name || '—'}</dd></div>
-              <div><dt>Slot</dt><dd>{slotLabel(modalBooking)}</dd></div>
-              <div><dt>Status</dt><dd>{STATUS_LABEL[modalStatus] || modalStatus}</dd></div>
+              <div>
+                <dt>Requester</dt>
+                <dd>{modalBooking.user_name || '—'}</dd>
+              </div>
+              <div>
+                <dt>Facility</dt>
+                <dd>{modalBooking.facility_name || '—'}</dd>
+              </div>
+              <div>
+                <dt>Slot</dt>
+                <dd>{slotLabel(modalBooking)}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{STATUS_LABEL[modalStatus] || modalStatus}</dd>
+              </div>
             </dl>
 
-            {actionError && <div className="admin-error" role="alert">{actionError}</div>}
-
-            {modal.type === 'manage' && (modalStatus === 'cancelled' || modalStatus === 'completed') && (
-              <p className="bk-note">This booking is {modalStatus}, so there is nothing left to change.</p>
+            {actionError && (
+              <div className="admin-error" role="alert">
+                {actionError}
+              </div>
             )}
+
+            {modal.type === 'manage' &&
+              (modalStatus === 'cancelled' || modalStatus === 'completed') && (
+                <p className="bk-note">
+                  This booking is {modalStatus}, so there is nothing left to change.
+                </p>
+              )}
 
             {modal.type === 'manage' && modalStatus === 'approved' && (
               <form className="bk-form" onSubmit={saveReschedule}>
                 <h4>Reschedule</h4>
                 <div className="bk-form-row">
-                  <label>Date<input required type="date" value={modal.reschedule.booking_date} onChange={setReschedule('booking_date')} /></label>
-                  <label>Start time<input required type="time" value={modal.reschedule.start_time} onChange={setReschedule('start_time')} /></label>
-                  <label>End time<input required type="time" value={modal.reschedule.end_time} onChange={setReschedule('end_time')} /></label>
+                  <label>
+                    Date
+                    <input
+                      required
+                      type="date"
+                      value={modal.reschedule.booking_date}
+                      onChange={setReschedule('booking_date')}
+                    />
+                  </label>
+                  <label>
+                    Start time
+                    <input
+                      required
+                      type="time"
+                      value={modal.reschedule.start_time}
+                      onChange={setReschedule('start_time')}
+                    />
+                  </label>
+                  <label>
+                    End time
+                    <input
+                      required
+                      type="time"
+                      value={modal.reschedule.end_time}
+                      onChange={setReschedule('end_time')}
+                    />
+                  </label>
                 </div>
-                <button className="admin-primary-button" disabled={saving} type="submit">{saving ? <Spinner label="Saving reschedule…" /> : 'Save reschedule'}</button>
+                <button className="admin-primary-button" disabled={saving} type="submit">
+                  {saving ? <Spinner label="Saving reschedule…" /> : 'Save reschedule'}
+                </button>
               </form>
             )}
 
-            {(modal.type === 'reject' || (modal.type === 'manage' && modalStatus === 'approved')) && (
+            {(modal.type === 'reject' ||
+              (modal.type === 'manage' && modalStatus === 'approved')) && (
               <form className="bk-form" onSubmit={saveCancellation}>
                 <h4>{modal.type === 'reject' ? 'Reason for rejection' : 'Cancel booking'}</h4>
-                <label>Reason (sent to the requester)
-                  <textarea required value={modal.reason} onChange={(e) => setModal({ ...modal, reason: e.target.value })} />
+                <label>
+                  Reason (sent to the requester)
+                  <textarea
+                    required
+                    value={modal.reason}
+                    onChange={(e) => setModal({ ...modal, reason: e.target.value })}
+                  />
                 </label>
                 <div className="bk-modal-actions">
                   <button className="admin-cancel-button" disabled={saving} type="submit">
-                    {saving ? <Spinner label={modal.type === 'reject' ? 'Rejecting booking…' : 'Cancelling booking…'} /> : modal.type === 'reject' ? 'Confirm rejection' : 'Confirm cancellation'}
+                    {saving ? (
+                      <Spinner
+                        label={
+                          modal.type === 'reject' ? 'Rejecting booking…' : 'Cancelling booking…'
+                        }
+                      />
+                    ) : modal.type === 'reject' ? (
+                      'Confirm rejection'
+                    ) : (
+                      'Confirm cancellation'
+                    )}
                   </button>
-                  <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
+                  <button className="admin-secondary-button" onClick={closeModal} type="button">
+                    Close
+                  </button>
                 </div>
               </form>
             )}
 
-            {!(modal.type === 'reject' || (modal.type === 'manage' && modalStatus === 'approved')) && (
+            {!(
+              modal.type === 'reject' ||
+              (modal.type === 'manage' && modalStatus === 'approved')
+            ) && (
               <div className="bk-modal-footer">
-                <button className="admin-secondary-button" onClick={closeModal} type="button">Close</button>
+                <button className="admin-secondary-button" onClick={closeModal} type="button">
+                  Close
+                </button>
               </div>
             )}
           </div>
