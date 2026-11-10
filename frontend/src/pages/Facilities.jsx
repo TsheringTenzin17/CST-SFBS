@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
-import { FacilityCardSkeletons } from '../components/Loading';
+import { FacilityCardSkeletons, Skeleton } from '../components/Loading';
 import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities, slotsText } from '../utils/availability';
 import { todayString } from '../utils/slots';
@@ -21,7 +21,7 @@ function Facilities() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all | available | indoor
   const [sortOrder, setSortOrder] = useState('desc');
-  const { summary } = useSummary(todayString());
+  const { summary, loading: summaryLoading } = useSummary(todayString());
 
   useEffect(() => {
     apiCall('/facilities')
@@ -93,9 +93,11 @@ function Facilities() {
       </div>
 
       {error && <p className="error">{error}</p>}
-      {!loading && !error && visible.length === 0 && <p>No facilities match this filter.</p>}
+      {!loading && !summaryLoading && !error && visible.length === 0 && (
+        <p>No facilities match this filter.</p>
+      )}
 
-      {loading ? (
+      {loading || summaryLoading ? (
         <FacilityCardSkeletons />
       ) : (
         <div className="grid">

@@ -130,8 +130,9 @@ function Rules() {
           <ul>
             <li>Open 4:00 PM – 10:00 PM only.</li>
             <li>
-              Free for students. Outsiders pay the commercial rate (handled offline with the DSA
-              office).
+              Eligible student bookings are free. Commercial bookings, including outsider bookings,
+              cost Nu. 1,500 per booking. Submit the payment screenshot and journal number when
+              booking; an administrator verifies payment before approval.
             </li>
             <li>
               Maximum booking: <strong>1 hour</strong>.

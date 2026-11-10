@@ -9,7 +9,7 @@ import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities } from '../utils/availability';
 import { todayString } from '../utils/slots';
 import useSummary from '../hooks/useSummary';
-import { FacilityCardSkeleton } from '../components/Loading';
+import { FacilityCardSkeleton, Skeleton } from '../components/Loading';
 
 function Home() {
   // ---------- 1. data ----------
@@ -19,7 +19,7 @@ function Home() {
   const [heroSlide, setHeroSlide] = useState(0);
   const [finderSport, setFinderSport] = useState('all');
   const [finderDate, setFinderDate] = useState(todayString());
-  const { summary } = useSummary(todayString()); // real counts for today
+  const { summary, loading: summaryLoading } = useSummary(todayString()); // real counts for today
 
   useEffect(() => {
     apiCall('/facilities')
@@ -194,7 +194,7 @@ function Home() {
           reservations.
         </p>
 
-        <div className="grid" aria-busy={facilitiesLoading}>
+        <div className="grid" aria-busy={facilitiesLoading || summaryLoading}>
           {facilitiesLoading &&
             Array.from({ length: 6 }, (_, index) => <FacilityCardSkeleton key={index} />)}
           {cards.map((f) => {
@@ -223,9 +223,11 @@ function Home() {
                         <span className="court-count"> ({f.courtCount} courts)</span>
                       )}
                     </h3>
-                    {badge.label && (
+                    {summaryLoading ? (
+                      <Skeleton className="skeleton-pill" />
+                    ) : badge.label ? (
                       <span className={`badge badge-${badge.variant}`}>{badge.label}</span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="card-desc">{f.description || DESCRIPTIONS[f.type] || ''}</p>
                 </div>

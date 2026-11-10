@@ -6,20 +6,29 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiCall } from '../utils/api';
+import { AdminLoading } from '../components/Loading';
 
 const ROLES = ['student', 'faculty', 'outsider', 'admin'];
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState(null);
 
-  function load() {
-    apiCall('/admin/users')
-      .then(setUsers)
-      .catch((e) => setMessage({ type: 'error', text: e.message }));
+  async function load() {
+    setLoading(true);
+    try {
+      setUsers(await apiCall('/admin/users'));
+    } catch (e) {
+      setMessage({ type: 'error', text: e.message });
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function changeRole(id, role) {
     try {
@@ -61,19 +70,23 @@ function AdminUsers() {
       {message && (
         <div className={message.type === 'error' ? 'error' : 'success-box'}>{message.text}</div>
       )}
-      <div className="usr-toolbar">
-        <div className="filter-row">
-          <input
-            aria-label="Search users"
-            placeholder="Search name, email or ID"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <span className="usr-count">
-          {shown.length} {shown.length === 1 ? 'user' : 'users'}
-        </span>
-      </div>
+      {loading ? (
+        <AdminLoading label="Loading users" rows={5} />
+      ) : (
+        <>
+          <div className="usr-toolbar">
+            <div className="filter-row">
+              <input
+                aria-label="Search users"
+                placeholder="Search name, email or ID"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <span className="usr-count">
+              {shown.length} {shown.length === 1 ? 'user' : 'users'}
+            </span>
+          </div>
       <div className="usr-mobile-list">
         {shown.map((u) => (
           <article
@@ -201,7 +214,9 @@ function AdminUsers() {
           </tbody>
         </table>
       </div>
-      {shown.length === 0 && <p>No users found.</p>}
+          {shown.length === 0 && message?.type !== 'error' && <p>No users found.</p>}
+        </>
+      )}
     </>
   );
 }

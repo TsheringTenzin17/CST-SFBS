@@ -196,6 +196,72 @@
   line-height: 1.55;
 }
 
+.payment-proof-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #e8c67f;
+  border-radius: 12px;
+  background: #fffaf0;
+}
+.payment-proof-form h3 {
+  margin: 0;
+  color: #713f12;
+  font-size: 20px;
+}
+.payment-proof-form p {
+  margin: 0;
+  color: #713f12;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.payment-proof-form .form-field {
+  margin-top: 4px;
+}
+.payment-proof-form input[type='file'] {
+  height: auto;
+  padding: 10px;
+}
+.payment-proof-form .form-field small {
+  display: block;
+  margin-top: 5px;
+  color: #5b6b73;
+  font-size: 12px;
+  font-weight: 400;
+}
+.payment-proof-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.payment-proof-preview img {
+  width: 96px;
+  height: 72px;
+  flex: none;
+  border: 1px solid #d6dfe2;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.payment-proof-preview > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.payment-proof-remove {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #a32121;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* Booking form */
 .form-card {
   background: #fff;

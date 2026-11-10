@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { apiCall } from '../utils/api';
 import { clock, shortDay } from '../utils/adminHelpers';
 import { AdminLoading, Spinner } from '../components/Loading';
@@ -61,6 +62,8 @@ function pageList(total, current) {
 const unique = (list, key) => [...new Set(list.map((b) => b[key]).filter(Boolean))].sort();
 
 export default function AdminBookings({ bookingList, loading, error, onReload }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [facilityFilter, setFacilityFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
@@ -68,17 +71,21 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
 
-  // modal = { type: 'manage' | 'reject', booking, reschedule?, reason }
+  // modal = { type: 'manage' | 'reject' | 'payment', booking, reschedule?, reason }
   const [modal, setModal] = useState(null);
   const [actionError, setActionError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [paymentProof, setPaymentProof] = useState(null);
+  const [paymentProofLoading, setPaymentProofLoading] = useState(false);
 
   const visibleBookings = bookingList.filter((b) => {
     const status = displayStatus(b);
+    const needsPaymentResolution =
+      status === 'expired' && b.payment_amount > 0 && !b.payment_resolution_completed_at;
     const statusOk =
       !statusFilter ||
       (statusFilter === 'active'
-        ? status === 'pending' || status === 'approved'
+        ? status === 'pending' || status === 'approved' || needsPaymentResolution
         : status === statusFilter);
     return (
       statusOk &&
@@ -112,6 +119,31 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
     return () => window.removeEventListener('keydown', onKey);
   }, [modal]);
 
+  useEffect(() => {
+    if (modal?.type !== 'payment') {
+      setPaymentProof(null);
+      setPaymentProofLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+    setPaymentProof(null);
+    setPaymentProofLoading(true);
+    apiCall(`/bookings/${modal.booking.id}/payment-proof`)
+      .then((proof) => {
+        if (active) setPaymentProof(proof);
+      })
+      .catch((e) => {
+        if (active) setActionError(e.message);
+      })
+      .finally(() => {
+        if (active) setPaymentProofLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [modal?.type, modal?.booking?.id]);
+
   function openManage(b) {
     setActionError('');
     setModal({
@@ -127,6 +159,24 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
     setModal({ type: 'reject', booking: b, reason: '' });
   }
 
+  function openPaymentReview(b) {
+    setActionError('');
+    setModal({ type: 'payment', booking: b });
+  }
+
+  useEffect(() => {
+    const bookingId = location.state?.paymentReviewBookingId;
+    if (loading || !bookingId) return;
+    const pendingBookings = bookingList.filter((booking) => booking.status === 'pending');
+    const bookingIndex = pendingBookings.findIndex((booking) => booking.id === bookingId);
+    if (bookingIndex < 0) return;
+
+    setStatusFilter('pending');
+    setPage(Math.floor(bookingIndex / PAGE_SIZE) + 1);
+    openPaymentReview(pendingBookings[bookingIndex]);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [bookingList, loading, location.pathname, location.state, navigate]);
+
   async function runAction(request, closeAfter) {
     setActionError('');
     setSaving(true);
@@ -141,8 +191,14 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
     }
   }
 
-  const approve = (b) =>
-    runAction(() => apiCall(`/bookings/${b.id}`, 'PATCH', { status: 'approved' }), false);
+  const approve = (b, closeAfter = false) =>
+    runAction(() => apiCall(`/bookings/${b.id}`, 'PATCH', { status: 'approved' }), closeAfter);
+
+  const completePaymentResolution = (b) =>
+    runAction(
+      () => apiCall(`/bookings/${b.id}/payment-resolution`, 'PATCH', { completed: true }),
+      true,
+    );
 
   function saveReschedule(event) {
     event.preventDefault();
@@ -224,7 +280,7 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
           <label>
             Status
             <select value={statusFilter} onChange={onFilter(setStatusFilter)}>
-              <option value="active">Active &amp; Pending</option>
+              <option value="active">Active, Pending &amp; Remedies</option>
               <option value="">All Statuses</option>
               <option value="approved">Approved</option>
               <option value="pending">Pending</option>
@@ -266,8 +322,6 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
 
         {loading ? (
           <AdminLoading label="Loading bookings" rows={5} />
-        ) : status === 'expired' ? (
-          <span aria-label="Expired booking">—</span>
         ) : (
           <div className="admin-table-scroll">
             <table className="bk-table">
@@ -315,6 +369,15 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                           <span className={`bk-badge bk-status-${status}`}>
                             {STATUS_LABEL[status] || status}
                           </span>
+                          {status === 'expired' && b.payment_amount > 0 && (
+                            <small className="bk-resolution-status">
+                              {b.payment_resolution_completed_at
+                                ? `${b.payment_resolution === 'refund' ? 'Refund' : 'Credit'} processed`
+                                : b.payment_resolution
+                                  ? `${b.payment_resolution === 'refund' ? 'Refund' : 'Credit'} requested`
+                                  : 'Waiting for user choice'}
+                            </small>
+                          )}
                         </td>
                         <td data-label="Actions">
                           <div className="bk-actions">
@@ -323,10 +386,10 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                                 <button
                                   className="adm-approve"
                                   disabled={saving}
-                                  onClick={() => approve(b)}
+                                  onClick={() => openPaymentReview(b)}
                                   type="button"
                                 >
-                                  Approve
+                                  Review payment
                                 </button>
                                 <button
                                   className="adm-reject"
@@ -337,6 +400,16 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
                                   Reject
                                 </button>
                               </>
+                            ) : status === 'expired' &&
+                              b.payment_amount > 0 &&
+                              !b.payment_resolution_completed_at ? (
+                              <button
+                                className="bk-manage"
+                                onClick={() => openPaymentReview(b)}
+                                type="button"
+                              >
+                                Review remedy
+                              </button>
                             ) : (
                               <button
                                 className="bk-manage"
@@ -409,7 +482,12 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
             onClick={(e) => e.stopPropagation()}
           >
             <h3 id="bk-modal-title">
-              {modal.type === 'reject' ? 'Reject' : 'Manage'} booking BK-{modalBooking.id}
+              {modal.type === 'reject'
+                ? 'Reject'
+                : modal.type === 'payment'
+                  ? 'Review payment'
+                  : 'Manage'}{' '}
+              booking BK-{modalBooking.id}
             </h3>
             <dl className="bk-summary">
               <div>
@@ -434,6 +512,106 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
               <div className="admin-error" role="alert">
                 {actionError}
               </div>
+            )}
+
+            {modal.type === 'payment' && (
+              <section className="bk-payment-review" aria-busy={paymentProofLoading}>
+                {paymentProofLoading ? (
+                  <AdminLoading label="Loading payment proof" rows={1} />
+                ) : paymentProof ? (
+                  <>
+                    <dl className="bk-summary">
+                      <div>
+                        <dt>Amount</dt>
+                        <dd>Nu. {Number(paymentProof.payment_amount).toLocaleString()}</dd>
+                      </div>
+                      <div>
+                        <dt>Journal number</dt>
+                        <dd>{paymentProof.payment_journal_number}</dd>
+                      </div>
+                      <div>
+                        <dt>Payment status</dt>
+                        <dd>
+                          {paymentProof.payment_verified_at ? 'Verified' : 'Awaiting verification'}
+                        </dd>
+                      </div>
+                    </dl>
+                    <a
+                      className="bk-payment-image-link"
+                      href={paymentProof.payment_screenshot}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <img
+                        className="bk-payment-image"
+                        src={paymentProof.payment_screenshot}
+                        alt={`Payment screenshot for booking BK-${modalBooking.id}`}
+                      />
+                      <span>Open full-size payment screenshot</span>
+                    </a>
+                    {modalStatus === 'pending' && (
+                      <div className="bk-modal-actions">
+                        <button
+                          className="admin-primary-button"
+                          disabled={saving}
+                          onClick={() => approve(modalBooking, true)}
+                          type="button"
+                        >
+                          {saving ? <Spinner label="Approving booking…" /> : 'Verify & approve'}
+                        </button>
+                        <button
+                          className="admin-secondary-button"
+                          onClick={closeModal}
+                          type="button"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
+                    {modalStatus === 'expired' && (
+                      <div className="bk-resolution-review">
+                        <h4>Late-review payment remedy</h4>
+                        <p>
+                          The booking expired because it was not approved before its start time. The
+                          DSA arranges the user’s selected full refund or booking credit manually.
+                        </p>
+                        {modalBooking.payment_resolution ? (
+                          <>
+                            <p>
+                              User choice:{' '}
+                              <strong>
+                                {modalBooking.payment_resolution === 'refund'
+                                  ? 'Full refund'
+                                  : 'Booking credit'}
+                              </strong>
+                            </p>
+                            {modalBooking.payment_resolution_completed_at ? (
+                              <p className="bk-note">This remedy has been marked as processed.</p>
+                            ) : (
+                              <button
+                                className="admin-primary-button"
+                                disabled={saving}
+                                onClick={() => completePaymentResolution(modalBooking)}
+                                type="button"
+                              >
+                                {saving ? (
+                                  <Spinner label="Saving payment remedy…" />
+                                ) : (
+                                  'Mark remedy processed'
+                                )}
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="bk-note">Waiting for the user to choose a remedy.</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="bk-note">Payment proof is unavailable for this booking.</p>
+                )}
+              </section>
             )}
 
             {modal.type === 'manage' &&
@@ -514,9 +692,17 @@ export default function AdminBookings({ bookingList, loading, error, onReload })
               </form>
             )}
 
+            {modal.type === 'payment' && modalStatus !== 'pending' && (
+              <div className="bk-modal-footer">
+                <button className="admin-secondary-button" onClick={closeModal} type="button">
+                  Close
+                </button>
+              </div>
+            )}
             {!(
               modal.type === 'reject' ||
-              (modal.type === 'manage' && modalStatus === 'approved')
+              (modal.type === 'manage' && modalStatus === 'approved') ||
+              modal.type === 'payment'
             ) && (
               <div className="bk-modal-footer">
                 <button className="admin-secondary-button" onClick={closeModal} type="button">

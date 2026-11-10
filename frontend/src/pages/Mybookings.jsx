@@ -13,6 +13,15 @@ function bookingStatus(booking, today) {
   if (booking.status === 'approved')
     return booking.booking_date < today ? 'Completed' : 'Confirmed';
   if (booking.status === 'pending') return 'Pending approval';
+  if (booking.status === 'expired' && booking.payment_amount) {
+    if (booking.payment_resolution_completed_at) {
+      return booking.payment_resolution === 'refund' ? 'Refund processed' : 'Booking credit issued';
+    }
+    if (booking.payment_resolution) {
+      return booking.payment_resolution === 'refund' ? 'Refund requested' : 'Credit requested';
+    }
+    return 'Payment remedy needed';
+  }
   return booking.status;
 }
 
@@ -46,6 +55,7 @@ function MyBookings() {
   const [archivingId, setArchivingId] = useState(null);
   const [swipedId, setSwipedId] = useState(null);
   const [message, setMessage] = useState(null);
+  const [resolvingPaymentId, setResolvingPaymentId] = useState(null);
   const [filter, setFilter] = useState('all');
   const touchStartX = useRef(null);
 
@@ -115,6 +125,34 @@ function MyBookings() {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setArchivingId(null);
+    }
+  }
+
+  async function choosePaymentResolution(booking, resolution) {
+    setResolvingPaymentId(booking.id);
+    setMessage(null);
+    try {
+      const result = await apiCall(`/bookings/${booking.id}/payment-resolution`, 'PATCH', {
+        resolution,
+      });
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === booking.id
+            ? { ...item, payment_resolution: result.booking.payment_resolution }
+            : item,
+        ),
+      );
+      setMessage({
+        type: 'success',
+        text:
+          resolution === 'refund'
+            ? `Your full-refund request for booking B-${booking.id} was sent to the DSA.`
+            : `Your booking-credit request for booking B-${booking.id} was sent to the DSA.`,
+      });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setResolvingPaymentId(null);
     }
   }
 
@@ -257,6 +295,54 @@ function MyBookings() {
                       </td>
                       <td data-label="Status">
                         <span className={`my-bookings-status ${statusClass}`}>{status}</span>
+                        {booking.status === 'expired' && booking.payment_amount > 0 && (
+                          <div className="my-bookings-payment-resolution">
+                            {booking.payment_resolution_completed_at ? (
+                              <p>
+                                The DSA marked your{' '}
+                                {booking.payment_resolution === 'refund'
+                                  ? 'refund'
+                                  : 'booking credit'}{' '}
+                                as processed.
+                              </p>
+                            ) : (
+                              <>
+                                <p>
+                                  This paid booking was not approved before it started. Choose a
+                                  full refund or booking credit; the DSA will arrange your choice.
+                                  {booking.payment_resolution && (
+                                    <>
+                                      {' '}
+                                      Your current choice:{' '}
+                                      {booking.payment_resolution === 'refund'
+                                        ? 'full refund'
+                                        : 'booking credit'}
+                                      .
+                                    </>
+                                  )}
+                                </p>
+                                <div className="my-bookings-remedy-actions">
+                                  <button
+                                    type="button"
+                                    disabled={resolvingPaymentId === booking.id}
+                                    onClick={() => choosePaymentResolution(booking, 'refund')}
+                                  >
+                                    {resolvingPaymentId === booking.id ? 'Saving…' : 'Full refund'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={resolvingPaymentId === booking.id}
+                                    onClick={() => choosePaymentResolution(booking, 'credit')}
+                                  >
+                                    {resolvingPaymentId === booking.id
+                                      ? 'Saving…'
+                                      : 'Booking credit'}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="my-bookings-actions">
                         {canCancel && (

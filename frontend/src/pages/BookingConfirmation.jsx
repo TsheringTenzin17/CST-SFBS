@@ -36,10 +36,9 @@ function BookingConfirmation() {
     );
   }
 
-  const isOutsider = state.role === 'outsider';
-  const requiresApproval = state.status === 'pending' || isOutsider;
-  const isPaidFootballBooking =
-    (state.commercialSlot || isOutsider) && state.facility === 'Football Ground';
+  const requiresApproval = state.status === 'pending';
+  const requiresPayment = Number(state.paymentAmount) > 0;
+  const isPaidFootballBooking = requiresPayment && state.facility === 'Football Ground';
 
   return (
     <main className="main">
@@ -81,34 +80,47 @@ function BookingConfirmation() {
             <span>Requester Role</span>
             <strong>{roleLabel(state.role)}</strong>
           </div>
-          {isPaidFootballBooking && state.footballFee != null && (
+          {requiresPayment && (
             <>
               <div className="confirm-row">
-                <span>Referee Service</span>
-                <strong>{state.refereeService}</strong>
+                <span>Payment Amount</span>
+                <strong>Nu. {Number(state.paymentAmount).toLocaleString()}</strong>
+              </div>
+              {isPaidFootballBooking && (
+                <div className="confirm-row">
+                  <span>Referee Service</span>
+                  <strong>{state.refereeService}</strong>
+                </div>
+              )}
+              <div className="confirm-row">
+                <span>Account Number</span>
+                <strong>{state.paymentAccountNumber}</strong>
               </div>
               <div className="confirm-row">
-                <span>Facility Fee</span>
-                <strong>Nu. {Number(state.footballFee).toLocaleString()}</strong>
+                <span>Journal Number</span>
+                <strong>{state.paymentJournalNumber}</strong>
               </div>
               <div className="confirm-row">
-                <span>Payment Method</span>
-                <strong>Offline Payment Required</strong>
+                <span>Payment Screenshot</span>
+                <strong>{state.hasPaymentScreenshot ? 'Submitted' : 'Not required'}</strong>
               </div>
             </>
           )}
           {requiresApproval ? (
             <div className="confirm-note confirm-note-payment" role="alert">
               <strong className="confirm-payment-heading">
-                Payment required before booking confirmation
+                Payment submitted — awaiting verification
               </strong>
               <p>
-                {isPaidFootballBooking
-                  ? `Pay Nu. ${Number(state.footballFee || 0).toLocaleString()} at the DSA office before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.`
-                  : isOutsider
-                    ? 'Outsider bookings require payment. Confirm the facility fee with the DSA office, then pay before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.'
-                    : 'Pay the facility fee at the DSA office before your booking can be confirmed. Your booking stays pending until an admin verifies your payment.'}
+                Your booking will be confirmed after an administrator checks the payment screenshot
+                and journal number.
               </p>
+              {requiresPayment && (
+                <p>
+                  If it is not approved by the booking start time, the request will expire. You can
+                  then choose a full refund or booking credit, and the DSA will arrange your choice.
+                </p>
+              )}
             </div>
           ) : (
             <div className="confirm-note confirm-note-free">

@@ -1,7 +1,15 @@
 // =============================================================
 // Backend/tests/rules-test.js  —  the DSA booking rules are enforced
 // =============================================================
-const { post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
+const {
+  post,
+  postWithoutPayment,
+  createUser,
+  facilityId,
+  dateOnWeekday,
+  check,
+  finish,
+} = require('./helpers');
 
 async function main() {
   const student = await createUser('student');
@@ -108,6 +116,26 @@ async function main() {
   check('faculty can book table tennis Sunday evening', r.status === 201, `got ${r.status}`);
 
   console.log('Archery (all roles, weekdays 4-10pm, weekends 8am-10pm)');
+  r = await postWithoutPayment({
+    user_id: outsider,
+    facility_id: archery,
+    booking_date: wednesday,
+    start_time: '20:00',
+    end_time: '21:00',
+  });
+  check(
+    'paid booking requires a payment journal and screenshot',
+    r.status === 400,
+    `got ${r.status}`,
+  );
+  r = await book(outsider, archery, wednesday, '20:00', '21:00');
+  check(
+    'paid non-football booking stores the Nu. 1,500 amount and journal number',
+    r.status === 201 &&
+      r.body.booking.payment_amount === 1500 &&
+      r.body.booking.payment_journal_number === 'TEST-JOURNAL-001',
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
   r = await book(student, archery, monday, '16:00', '18:00');
   check('student can book archery 4-6pm', r.status === 201, `got ${r.status}`);
   r = await book(faculty, archery, tuesday, '16:00', '18:00');

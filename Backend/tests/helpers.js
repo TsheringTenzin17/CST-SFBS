@@ -37,7 +37,16 @@ async function api(method, path, body) {
   });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
-const post = (body) => api('POST', '/bookings', { ...body, test_user_id: body.user_id });
+const TEST_PAYMENT_SCREENSHOT = 'data:image/png;base64,iVBORw0KGgo=';
+const post = (body) =>
+  api('POST', '/bookings', {
+    ...body,
+    payment_screenshot: body.payment_screenshot || TEST_PAYMENT_SCREENSHOT,
+    payment_journal_number: body.payment_journal_number || 'TEST-JOURNAL-001',
+    test_user_id: body.user_id,
+  });
+const postWithoutPayment = (body) =>
+  api('POST', '/bookings', { ...body, test_user_id: body.user_id });
 
 async function sessionToken(userId) {
   const numericUserId = Number(userId);
@@ -123,6 +132,7 @@ async function finish() {
 module.exports = {
   api,
   post,
+  postWithoutPayment,
   createUser,
   testCredentials,
   facilityId,

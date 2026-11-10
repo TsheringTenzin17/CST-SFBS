@@ -27,7 +27,7 @@ app.use(
           : true,
   }),
 );
-app.use(express.json({ limit: '2mb' })); // facility photos arrive as compressed data URLs
+app.use(express.json({ limit: '3mb' })); // compressed facility photos and booking payment screenshots
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

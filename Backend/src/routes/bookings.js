@@ -1,7 +1,7 @@
 // =============================================================
 // Backend/src/routes/bookings.js  —  EVERYTHING about bookings
 // =============================================================
-// POST   /bookings                  make a booking (instant confirmation)
+// POST   /bookings                  make a booking
 // GET    /bookings/user/:userId     one user's own bookings        (My Bookings page)
 // PATCH  /bookings/:id/cancel       a user cancels their own booking
 // GET    /bookings                  all bookings                   (admin only)
@@ -28,6 +28,36 @@ const {
 const { timetableForDate } = require('../timetable');
 const { sendEmail } = require('../email');
 const router = express.Router();
+
+const PAYMENT_ACCOUNT_NUMBER = '221758633';
+const NON_FOOTBALL_COMMERCIAL_FEE = 1500;
+const MAX_PAYMENT_SCREENSHOT_BYTES = 1.5 * 1024 * 1024;
+
+function paymentScreenshotError(value) {
+  if (typeof value !== 'string') return 'A payment screenshot is required.';
+  const match = value.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+  if (!match) return 'Upload a JPEG, PNG or WEBP payment screenshot.';
+  const format = match[1];
+  const bytes = Buffer.from(match[2], 'base64');
+  if (bytes.length === 0 || bytes.length > MAX_PAYMENT_SCREENSHOT_BYTES) {
+    return 'The payment screenshot must be 1.5 MB or smaller.';
+  }
+  const validSignature =
+    (format === 'png' &&
+      bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) ||
+    (format === 'jpeg' && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) ||
+    (format === 'webp' &&
+      bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      bytes.subarray(8, 12).toString('ascii') === 'WEBP');
+  return validSignature ? null : 'The uploaded file is not a valid image.';
+}
+
+function bookingPaymentAmount(facilityType, role, bookingDate, assistantReferees) {
+  if (facilityType !== 'football') return NON_FOOTBALL_COMMERCIAL_FEE;
+  const weekend = [0, 6].includes(dayOfWeek(bookingDate));
+  if (assistantReferees) return role === 'student' ? 2900 : weekend ? 4400 : 3900;
+  return role === 'student' ? 2500 : weekend ? 4000 : 3500;
+}
 
 async function addBookingNotification(queryable, userId, type, message) {
   const preferences = await queryable.query(
@@ -200,7 +230,7 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
   }
 
   const fac = await client.query(
-    'SELECT max_duration_minutes, is_active FROM facilities WHERE id = $1',
+    'SELECT type, max_duration_minutes, is_active FROM facilities WHERE id = $1',
     [facilityId],
   );
   if (fac.rows.length === 0) return { ok: false, status: 404, message: 'Facility not found' };
@@ -283,7 +313,7 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
     }
   }
 
-  return { ok: true, rule };
+  return { ok: true, rule, facility_type: fac.rows[0].type };
 }
 
 // Shared input checks. Returns an error message, or null when the input is fine.
@@ -346,20 +376,72 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(eligibility.status).json({ error: eligibility.message });
     }
 
-    // Commercial-rate slots require offline payment and approval, including
+    // Commercial-rate slots require payment and approval, including
     // when a student is allowed to book one of those slots.
     // (A female student booking her own reserved slot is NOT a commercial booking.)
     const commercialSlot =
       slot.rule.primary_role === 'commercial' || eligibility.viaFallback === true;
-    const initialStatus = req.user.role === 'outsider' || commercialSlot ? 'pending' : 'approved';
+    const requiresPayment = req.user.role === 'outsider' || commercialSlot;
+    let paymentAmount = null;
+    let paymentJournalNumber = null;
+    let paymentScreenshot = null;
+    if (requiresPayment) {
+      paymentJournalNumber = req.body.payment_journal_number;
+      if (typeof paymentJournalNumber !== 'string' || !paymentJournalNumber.trim()) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Enter the payment journal number.' });
+      }
+      if (paymentJournalNumber.trim().length > 100) {
+        await client.query('ROLLBACK');
+        return res
+          .status(400)
+          .json({ error: 'The journal number must be 100 characters or fewer.' });
+      }
+      const screenshotError = paymentScreenshotError(req.body.payment_screenshot);
+      if (screenshotError) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: screenshotError });
+      }
+      if (
+        req.body.assistant_referees !== undefined &&
+        typeof req.body.assistant_referees !== 'boolean'
+      ) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'assistant_referees must be a boolean.' });
+      }
+      paymentAmount = bookingPaymentAmount(
+        slot.facility_type,
+        req.user.role,
+        booking_date,
+        req.body.assistant_referees === true,
+      );
+      paymentJournalNumber = paymentJournalNumber.trim();
+      paymentScreenshot = req.body.payment_screenshot;
+    }
+    const initialStatus = requiresPayment ? 'pending' : 'approved';
     const inserted = await client.query(
-      `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, status`,
-      [req.user.id, facility_id, booking_date, start, end, purpose || null, initialStatus],
+      `INSERT INTO bookings (
+         user_id, facility_id, booking_date, start_time, end_time, purpose, status,
+         payment_amount, payment_journal_number, payment_screenshot
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING id, status, payment_amount, payment_journal_number`,
+      [
+        req.user.id,
+        facility_id,
+        booking_date,
+        start,
+        end,
+        purpose || null,
+        initialStatus,
+        paymentAmount,
+        paymentJournalNumber,
+        paymentScreenshot,
+      ],
     );
     const notificationMessage =
       initialStatus === 'pending'
-        ? `Your booking for ${booking_date} (${start}-${end}) is pending approval after offline payment verification.`
+        ? `Your booking for ${booking_date} (${start}-${end}) is pending approval after payment verification.`
         : `Your booking for ${booking_date} (${start}-${end}) is confirmed.`;
     await addBookingNotification(
       client,
@@ -378,7 +460,12 @@ router.post('/', authenticate, async (req, res) => {
         endTime: end,
       });
     }
-    res.status(201).json({ booking: inserted.rows[0] });
+    res.status(201).json({
+      booking: {
+        ...inserted.rows[0],
+        payment_account_number: requiresPayment ? PAYMENT_ACCOUNT_NUMBER : null,
+      },
+    });
   } catch (err) {
     await client.query('ROLLBACK');
     if (err.code === '23505') return res.status(409).json({ error: CONFLICT_MESSAGE }); // database backstop
@@ -401,7 +488,8 @@ router.get('/user/:userId', authenticate, async (req, res) => {
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
               to_char(b.start_time, 'HH24:MI') AS start_time,
               to_char(b.end_time, 'HH24:MI') AS end_time,
-              f.name AS facility_name
+              f.name AS facility_name, b.payment_amount, b.payment_resolution,
+              b.payment_resolution_completed_at
        FROM bookings b JOIN facilities f ON f.id = b.facility_id
        WHERE b.user_id = $1
          AND (b.status <> 'approved' OR b.booking_date >= $2::date - 7)
@@ -511,7 +599,11 @@ router.get('/', requireAdmin, async (req, res) => {
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
               to_char(b.start_time, 'HH24:MI') AS start_time,
               to_char(b.end_time, 'HH24:MI') AS end_time,
-              u.full_name AS user_name, u.role AS user_role, f.name AS facility_name
+              u.full_name AS user_name, u.role AS user_role, f.name AS facility_name,
+              b.payment_amount, b.payment_journal_number,
+              b.payment_screenshot IS NOT NULL AS has_payment_proof,
+              b.payment_verified_at, b.payment_resolution,
+              b.payment_resolution_completed_at
        FROM bookings b
        JOIN users u ON u.id = b.user_id
        JOIN facilities f ON f.id = b.facility_id
@@ -524,13 +616,116 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
+router.get('/:id/payment-proof', requireAdmin, async (req, res) => {
+  const bookingId = Number(req.params.id);
+  if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'Invalid booking id' });
+  }
+  try {
+    const result = await pool.query(
+      `SELECT payment_amount, payment_journal_number, payment_screenshot, payment_verified_at
+       FROM bookings WHERE id = $1`,
+      [bookingId],
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
+    const proof = result.rows[0];
+    if (!proof.payment_screenshot || !proof.payment_journal_number) {
+      return res.status(404).json({ error: 'Payment proof was not submitted for this booking.' });
+    }
+    res.json(proof);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch payment proof' });
+  }
+});
+
+router.patch('/:id/payment-resolution', authenticate, async (req, res) => {
+  const bookingId = Number(req.params.id);
+  if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'Invalid booking id' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    let result;
+    if (req.user.role === 'admin') {
+      if (req.body.completed !== true) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Admin completion must be confirmed.' });
+      }
+      result = await client.query(
+        `UPDATE bookings
+         SET payment_resolution_completed_at = now()
+         WHERE id = $1 AND status = 'expired' AND payment_amount IS NOT NULL
+           AND payment_resolution IS NOT NULL AND payment_resolution_completed_at IS NULL
+         RETURNING id, user_id, payment_resolution, payment_resolution_completed_at`,
+        [bookingId],
+      );
+    } else {
+      const { resolution } = req.body;
+      if (!['refund', 'credit'].includes(resolution)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Choose either a refund or booking credit.' });
+      }
+      result = await client.query(
+        `UPDATE bookings
+         SET payment_resolution = $3
+         WHERE id = $1 AND user_id = $2 AND status = 'expired'
+           AND payment_amount IS NOT NULL AND payment_resolution_completed_at IS NULL
+         RETURNING id, payment_resolution, payment_resolution_completed_at`,
+        [bookingId, req.user.id, resolution],
+      );
+    }
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        error:
+          req.user.role === 'admin'
+            ? 'An outstanding payment remedy with a user choice was not found.'
+            : 'No eligible expired paid booking was found.',
+      });
+    }
+
+    const booking = result.rows[0];
+    if (req.user.role === 'admin') {
+      await addBookingNotification(
+        client,
+        booking.user_id,
+        'payment_resolution_completed',
+        booking.payment_resolution === 'refund'
+          ? `The DSA has marked the full refund for booking B-${booking.id} as processed.`
+          : `The DSA has marked the booking credit for booking B-${booking.id} as issued.`,
+      );
+    } else {
+      await addBookingNotification(
+        client,
+        req.user.id,
+        'payment_resolution_requested',
+        booking.payment_resolution === 'refund'
+          ? `Your full-refund request for expired booking B-${booking.id} has been sent to the DSA.`
+          : `Your booking-credit request for expired booking B-${booking.id} has been sent to the DSA.`,
+      );
+    }
+    await client.query('COMMIT');
+    res.json({ booking });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update payment remedy' });
+  } finally {
+    client.release();
+  }
+});
+
 // ---- PATCH /bookings/:id : admin approves a pending booking, or cancels any --
-// status 'approved'  -> pending outsider booking after payment check
+// status 'approved'  -> pending paid booking after proof review
 // status 'cancelled' -> exception handling (no-shows, rule violations, closures)
 router.patch('/:id', requireAdmin, async (req, res) => {
   const { status, reason } = req.body;
 
-  // Approve a pending (outsider) booking after the offline payment is verified.
+  // Approve a pending paid booking only after payment proof has been submitted.
   if (status === 'approved') {
     const bookingId = Number(req.params.id);
     if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
@@ -540,8 +735,13 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     try {
       await client.query('BEGIN');
       const result = await client.query(
-        `UPDATE bookings SET status = 'approved' WHERE id = $1 AND status = 'pending'
-           AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') > now()
+        `UPDATE bookings
+         SET status = 'approved', payment_verified_at = now()
+         WHERE id = $1 AND status = 'pending'
+           AND payment_amount IS NOT NULL
+           AND payment_journal_number IS NOT NULL
+           AND payment_screenshot IS NOT NULL
+           AND ((booking_date + start_time) AT TIME ZONE 'Asia/Thimphu') > now()
          RETURNING id, user_id, facility_id, to_char(booking_date,'YYYY-MM-DD') AS booking_date,
                    to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time`,
         [bookingId],
@@ -549,16 +749,42 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       if (result.rows.length === 0) {
         const expired = await client.query(
           `UPDATE bookings SET status = 'expired' WHERE id = $1 AND status = 'pending'
-             AND ((booking_date + end_time) AT TIME ZONE 'Asia/Thimphu') <= now()`,
+             AND ((booking_date + start_time) AT TIME ZONE 'Asia/Thimphu') <= now()
+           RETURNING id, user_id, facility_id, booking_date, start_time, payment_amount,
+                     payment_screenshot`,
           [bookingId],
         );
         if (expired.rowCount > 0) {
+          const expiredBooking = expired.rows[0];
+          if (expiredBooking.payment_amount && expiredBooking.payment_screenshot) {
+            await addBookingNotification(
+              client,
+              expiredBooking.user_id,
+              'payment_resolution_required',
+              'Your paid booking was not approved before it started and has expired. Choose a full refund or booking credit in My Bookings. The DSA will arrange your choice.',
+            );
+          }
           await client.query('COMMIT');
           return res.status(410).json({
-            error: 'This pending booking has expired because its reservation time has passed',
+            error: 'This pending booking has expired because its start time has passed.',
           });
         }
         await client.query('ROLLBACK');
+        const pending = await client.query(
+          `SELECT payment_amount, payment_screenshot, payment_journal_number
+           FROM bookings WHERE id = $1 AND status = 'pending'`,
+          [bookingId],
+        );
+        if (
+          pending.rows.length > 0 &&
+          (!pending.rows[0].payment_amount ||
+            !pending.rows[0].payment_screenshot ||
+            !pending.rows[0].payment_journal_number)
+        ) {
+          return res
+            .status(400)
+            .json({ error: 'Payment proof must be submitted before approval.' });
+        }
         return res
           .status(404)
           .json({ error: 'Pending booking not found (it may already be approved or cancelled)' });

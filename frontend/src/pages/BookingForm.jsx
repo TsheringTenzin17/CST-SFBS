@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { prettyDate } from '../utils/format';
@@ -22,10 +22,10 @@ function formatTime(value) {
 }
 
 function bookingMode(role, commercialSlot = false) {
-  if (commercialSlot) return { name: 'Commercial Booking Mode', tag: 'Pay offline' };
+  if (commercialSlot) return { name: 'Commercial Booking Mode', tag: 'Payment required' };
   if (role === 'student') return { name: 'Student Booking Mode', tag: 'Free' };
   if (role === 'faculty') return { name: 'Faculty & Staff Booking Mode', tag: null };
-  if (role === 'outsider') return { name: 'Commercial Booking Mode', tag: 'Pay offline' };
+  if (role === 'outsider') return { name: 'Commercial Booking Mode', tag: 'Payment required' };
   return { name: ROLE_NAMES[role] || role, tag: null };
 }
 
@@ -38,16 +38,16 @@ function sportLabel(type) {
 }
 
 function footballFee(role, date, assistantReferees = false) {
+  const day = new Date(`${date}T00:00:00Z`).getUTCDay();
+  const weekend = day === 0 || day === 6;
   if (assistantReferees) {
     if (role === 'student') return 2900;
-    if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6)
-      return 4400;
+    if (weekend) return 4400;
     return 3900;
   }
 
   if (role === 'student') return 2500;
-  if (new Date(`${date}T00:00:00`).getDay() === 0 || new Date(`${date}T00:00:00`).getDay() === 6)
-    return 4000;
+  if (weekend) return 4000;
   return 3500;
 }
 
@@ -62,6 +62,9 @@ function rulesFor(type) {
 }
 
 const STEPS = ['Choose slot', 'Your details', 'Confirmation'];
+const PAYMENT_ACCOUNT_NUMBER = '221758633';
+const NON_FOOTBALL_COMMERCIAL_FEE = 1500;
+const MAX_PAYMENT_SCREENSHOT_BYTES = 1.5 * 1024 * 1024;
 
 function identityField(role, user) {
   if (role === 'student') {
@@ -93,6 +96,10 @@ function BookingForm() {
   const [submitting, setSubmitting] = useState(false);
   const [accountProfile, setAccountProfile] = useState(null);
   const [assistantReferees, setAssistantReferees] = useState(false);
+  const [paymentScreenshot, setPaymentScreenshot] = useState('');
+  const [paymentScreenshotName, setPaymentScreenshotName] = useState('');
+  const [paymentJournalNumber, setPaymentJournalNumber] = useState('');
+  const paymentScreenshotInput = useRef(null);
   const conflict = conflictSlot === slotKey;
   const bookingUser = accountProfile ? { ...user, ...accountProfile } : user;
   const selectedRule = availability?.rules?.find(
@@ -107,6 +114,37 @@ function BookingForm() {
     requiresPayment && facility?.type === 'football'
       ? footballFee(bookingUser.role, date, assistantReferees)
       : null;
+  const paymentAmount = requiresPayment ? (footballFeeAmount ?? NON_FOOTBALL_COMMERCIAL_FEE) : null;
+
+  function choosePaymentScreenshot(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      setPaymentScreenshot('');
+      setPaymentScreenshotName('');
+      setError('Choose a JPG, PNG or WEBP payment screenshot.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > MAX_PAYMENT_SCREENSHOT_BYTES) {
+      setPaymentScreenshot('');
+      setPaymentScreenshotName('');
+      setError('The payment screenshot must be 1.5 MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPaymentScreenshot(reader.result);
+        setPaymentScreenshotName(file.name);
+        setError(null);
+      }
+    };
+    reader.onerror = () => setError('Could not read the payment screenshot. Please try again.');
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     apiCall('/facilities')
@@ -153,6 +191,14 @@ function BookingForm() {
     e.preventDefault();
     setError(null);
     setConflictSlot(null);
+    if (requiresPayment && !paymentJournalNumber.trim()) {
+      setError('Enter the payment journal number.');
+      return;
+    }
+    if (requiresPayment && !paymentScreenshot) {
+      setError('Upload a screenshot of your payment.');
+      return;
+    }
     setSubmitting(true);
     try {
       const data = await apiCall('/bookings', 'POST', {
@@ -161,6 +207,13 @@ function BookingForm() {
         start_time: start,
         end_time: end,
         purpose,
+        ...(requiresPayment
+          ? {
+              payment_screenshot: paymentScreenshot,
+              payment_journal_number: paymentJournalNumber.trim(),
+              assistant_referees: assistantReferees,
+            }
+          : {}),
       });
       navigate('/booking-confirmed', {
         state: {
@@ -173,6 +226,10 @@ function BookingForm() {
           status: data.booking.status,
           commercialSlot,
           footballFee: footballFeeAmount,
+          paymentAmount: data.booking.payment_amount,
+          paymentAccountNumber: data.booking.payment_account_number,
+          paymentJournalNumber: data.booking.payment_journal_number,
+          hasPaymentScreenshot: Boolean(paymentScreenshot),
           refereeService: assistantReferees ? 'Referee and assistant referees' : 'One referee',
         },
       });
@@ -292,7 +349,8 @@ function BookingForm() {
               <div className="booking-payment-note">
                 <strong>Football booking fee: Nu. {footballFeeAmount.toLocaleString()}</strong>
                 <br />
-                Pay this facility fee offline before the booking can be approved.
+                Transfer the fee to account {PAYMENT_ACCOUNT_NUMBER} and submit your payment
+                screenshot and journal number below.
               </div>
             )}
           </div>
@@ -390,27 +448,23 @@ function BookingForm() {
               <>
                 <span>
                   {bookingUser.role === 'outsider'
-                    ? 'Outsider football fee — pay at the DSA office'
-                    : 'Fee to pay at the DSA office'}
+                    ? 'Outsider football fee'
+                    : 'Football booking fee'}
                 </span>
                 <strong>Nu. {footballFeeAmount.toLocaleString()}</strong>
                 <small>
-                  {assistantReferees ? 'Referee and assistant referees' : 'One referee'} · offline
-                  payment required before approval
+                  {assistantReferees ? 'Referee and assistant referees' : 'One referee'}
                 </small>
               </>
             ) : requiresPayment ? (
               <>
                 <span>
                   {bookingUser.role === 'outsider'
-                    ? 'Outsider facility fee — payment required'
+                    ? 'Outsider facility fee'
                     : 'Commercial facility fee'}
                 </span>
-                <strong>Confirm amount with the DSA office</strong>
-                <small>
-                  Ask the DSA office to confirm the amount. Pay offline before your booking can be
-                  approved.
-                </small>
+                <strong>Nu. {NON_FOOTBALL_COMMERCIAL_FEE.toLocaleString()}</strong>
+                <small>Transfer to account {PAYMENT_ACCOUNT_NUMBER} to submit your booking.</small>
               </>
             ) : (
               <>
@@ -419,6 +473,58 @@ function BookingForm() {
               </>
             )}
           </div>
+          {requiresPayment && !bookingDetailsLoading && (
+            <section className="payment-proof-form" aria-label="Payment details">
+              <h3>Payment details</h3>
+              <p>
+                Pay <strong>Nu. {paymentAmount.toLocaleString()}</strong> to account number{' '}
+                <strong>{PAYMENT_ACCOUNT_NUMBER}</strong>. Your booking stays pending until an
+                administrator verifies the payment.
+              </p>
+              <label className="form-field">
+                Payment journal number <span className="required">*</span>
+                <input
+                  required
+                  maxLength="100"
+                  value={paymentJournalNumber}
+                  onChange={(event) => setPaymentJournalNumber(event.target.value)}
+                  placeholder="Enter the journal/reference number"
+                />
+              </label>
+              <label className="form-field">
+                Payment screenshot <span className="required">*</span>
+                <input
+                  ref={paymentScreenshotInput}
+                  required={!paymentScreenshot}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={choosePaymentScreenshot}
+                />
+                <small>JPG, PNG or WEBP; maximum 1.5 MB.</small>
+              </label>
+              {paymentScreenshot && (
+                <div className="payment-proof-preview">
+                  <img src={paymentScreenshot} alt="Payment screenshot preview" />
+                  <div>
+                    <span>{paymentScreenshotName}</span>
+                    <button
+                      type="button"
+                      className="payment-proof-remove"
+                      onClick={() => {
+                        setPaymentScreenshot('');
+                        setPaymentScreenshotName('');
+                        if (paymentScreenshotInput.current) {
+                          paymentScreenshotInput.current.value = '';
+                        }
+                      }}
+                    >
+                      Remove screenshot
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>
               Cancel
@@ -431,7 +537,7 @@ function BookingForm() {
               {submitting ? (
                 <Spinner label="Confirming…" />
               ) : bookingDetailsLoading ? (
-                <Spinner label="Loading booking details…" />
+                <Spinner label="Loading" />
               ) : (
                 'Confirm Booking'
               )}
