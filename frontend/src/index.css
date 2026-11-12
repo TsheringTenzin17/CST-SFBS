@@ -2263,3 +2263,149 @@ html {
     left: 12px;
   }
 }
+
+/* ============================================================== */
+/* BIGGER TEXT  -  easier to read on desktop and phone            */
+/* ============================================================== */
+
+/* ------------------------------------------------------------ */
+/* desktop and tablet                                           */
+/* ------------------------------------------------------------ */
+.home-page .hero-location {
+  font-size: 14px;  /* was 12px, small line above the title */
+}
+
+.home-page .hero-text p {
+  font-size: 18px;  /* was 17px, main sentence */
+}
+
+.home-page .hero-text small {
+  font-size: 15px;  /* was 12px, "for students, staff..." line */
+}
+
+.home-page .hero-buttons .btn-green,
+.home-page .hero-buttons .btn-outline-white {
+  font-size: 14px;  /* was 13px, hero buttons */
+}
+
+.home-page .sport-category-title {
+  font-size: 14px;  /* was 12px, "browse by sport" */
+}
+
+.home-page .sport-category-item {
+  font-size: 16px;  /* was 14px, sport names */
+}
+
+.home-page .availability-heading > span {
+  font-size: 13px;  /* was 10px, "make time to play" */
+}
+
+.home-page .availability-fields label span {
+  font-size: 13px;  /* was 10px, "sport" and "when" labels */
+}
+
+.home-page .availability-check {
+  font-size: 14px;  /* was 12px, "check availability" */
+}
+
+/* ------------------------------------------------------------ */
+/* phone (same breakpoints your file already uses)              */
+/* ------------------------------------------------------------ */
+@media (max-width: 600px) {
+  .home-page .sport-category-title {
+    font-size: 12px;  /* was 10px */
+  }
+
+  .home-page .sport-category-item {
+    font-size: 14px;  /* was 12px */
+  }
+}
+
+@media (max-width: 520px) {
+  .home-page .hero-location {
+    font-size: 12px;  /* was 10px */
+  }
+
+  .home-page .hero-text p {
+    font-size: 16px;  /* was 15px */
+  }
+
+  .home-page .hero-text small {
+    font-size: 14px;  /* was 11px */
+  }
+
+  .home-page .hero-buttons .btn-outline-white,
+  .home-page .hero-buttons .btn-green {
+    font-size: 13px;  /* was 11px */
+  }
+}
+
+/* ============================================================== */
+/* BIGGER TEXT PART 2  -  facility cards and booking banner       */
+/* ============================================================== */
+
+/* ------------------------------------------------------------ */
+/* desktop and tablet (761px and wider)                         */
+/* ------------------------------------------------------------ */
+@media (min-width: 761px) {
+  .home-page .subtitle {
+    font-size: 15px;  /* was 13px, line under "our sports arenas" */
+  }
+
+  .home-page .card-title {
+    font-size: 17px;  /* was 15px, facility name */
+  }
+
+  .home-page .court-count {
+    font-size: 13px;  /* was 12px, "(2 courts)" */
+  }
+
+  .home-page .card-desc {
+    font-size: 14px;  /* was 12px, card description */
+  }
+
+  .home-page .card .badge {
+    font-size: 12px;  /* was 10px, "available today" tag */
+  }
+
+  .home-page .booking-guidance strong {
+    font-size: 16px;  /* was 14px, "good games start..." */
+  }
+
+  .home-page .booking-guidance p {
+    font-size: 15px;  /* was 13px, banner sentence */
+  }
+
+  .home-page .booking-guidance-link {
+    font-size: 15px;  /* was 13px, "booking rules" link */
+  }
+
+  .home-page .stats-ticker-item span {
+    font-size: 13px;  /* was 11px, labels under the big numbers */
+  }
+}
+
+/* ------------------------------------------------------------ */
+/* phone (760px and smaller)                                    */
+/* ------------------------------------------------------------ */
+@media (max-width: 760px) {
+  .home-page .court-count {
+    font-size: 13px;  /* was 12px */
+  }
+
+  .home-page .card .badge {
+    font-size: 12px;  /* was 10px */
+  }
+
+  .home-page .booking-guidance p {
+    font-size: 14px;  /* was 13px */
+  }
+
+  .home-page .booking-guidance-link {
+    font-size: 14px;  /* was 13px */
+  }
+
+  .home-page .stats-ticker-item span {
+    font-size: 12px;  /* was 11px */
+  }
+}

@@ -98,7 +98,7 @@ function nextFreeSlot(fac, ctx) {
       capped.some(
         (r) => toMin(r.start_time) <= toMin(b.start_time) && toMin(r.end_time) >= toMin(b.end_time),
       ),
-    ).length;
+    ).length;                                                          // Count bookings that use the daily limit.
 
     const candidates = [];                                             // start times that are free
     for (const r of rules) {                                           // go through each rule
@@ -214,19 +214,19 @@ router.post('/', requireAdmin, async (req, res) => {
   if (!name) return res.status(400).json({ error: 'Facility name is required' });                // name is needed
   if (!sport || !slug(sport)) return res.status(400).json({ error: 'Sport type is required' });  // sport is needed
   if (capacity !== null && (!Number.isInteger(capacity) || capacity <= 0)) {                     // capacity must be a whole number
-    return res.status(400).json({ error: 'Capacity must be a whole number above 0' });
+    return res.status(400).json({ error: 'Capacity must be a whole number above 0' }); // Return an error for invalid capacity.
   }
   if (!Number.isInteger(maxMinutes) || maxMinutes < 15 || maxMinutes > 480) {                    // 15 to 480 minutes
     return res
       .status(400)
-      .json({ error: 'Maximum booking length must be between 15 and 480 minutes' });
+      .json({ error: 'Maximum booking length must be between 15 and 480 minutes' }); // Return an error for an invalid booking length.
   }
   if (!PRIMARY_ROLES.includes(role))                                   // role must be an allowed one
-    return res.status(400).json({ error: 'Choose who can book this facility' });
+    return res.status(400).json({ error: 'Choose who can book this facility' }); // Return an error for an unsupported role.
   if (!validImage(imageUrl))                                           // image must be valid
     return res
       .status(400)
-      .json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' });
+      .json({ error: 'Image must be a JPG, PNG or WEBP photo under 500 KB (or a web address)' }); // Return an error for an invalid image.
 
   // ---- default opening hours: weekdays and weekends ----
   const windows = [
@@ -237,12 +237,12 @@ router.post('/', requireAdmin, async (req, res) => {
     if (!isValidTime(start) || !isValidTime(end) || toMin(end) <= toMin(start)) {   // times must be valid, close after open
       return res
         .status(400)
-        .json({ error: `Enter valid ${label} opening hours (closing must be after opening)` });
+        .json({ error: `Enter valid ${label} opening hours (closing must be after opening)` }); // Return an error for invalid hours.
     }
     if (toMin(end) - toMin(start) < maxMinutes) {                      // window must fit at least one booking
       return res
         .status(400)
-        .json({ error: `The ${label} opening window is shorter than one booking` });
+        .json({ error: `The ${label} opening window is shorter than one booking` }); // Return an error if the window is too short.
     }
   }
 
@@ -284,7 +284,7 @@ router.post('/', requireAdmin, async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');                                    // undo everything if there is an error
     if (err.code === '23505')                                          // 23505 = name already exists
-      return res.status(409).json({ error: 'A facility with that name already exists' });
+      return res.status(409).json({ error: 'A facility with that name already exists' }); // Return an error if the name is already used.
     console.error(err);                                                // show the error in the server console
     res.status(500).json({ error: 'Failed to add facility' });         // tell the client it failed
   } finally {
@@ -299,7 +299,7 @@ router.post('/', requireAdmin, async (req, res) => {
 router.patch('/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);                                    // change the id from text to a number
   if (!Number.isSafeInteger(id) || id <= 0)                            // id must be a positive whole number
-    return res.status(400).json({ error: 'Invalid facility id' });
+    return res.status(400).json({ error: 'Invalid facility id' }); // Return an error for an invalid facility id.
 
   const sets = [];                                                     // SQL parts, like "name = $1"
   const values = [];                                                   // values for $1, $2, $3 ...
@@ -311,7 +311,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
   // ---- open / close ----
   if ('is_active' in req.body) {                                       // only if it was sent
     if (typeof req.body.is_active !== 'boolean')                       // must be true or false
-      return res.status(400).json({ error: 'is_active must be true or false' });
+      return res.status(400).json({ error: 'is_active must be true or false' }); // Return an error if the value is not true or false.
     add('is_active', req.body.is_active);
   }
 
@@ -341,7 +341,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     const capacity =
       req.body.capacity === '' || req.body.capacity == null ? null : Number(req.body.capacity);   // null if empty
     if (capacity !== null && (!Number.isInteger(capacity) || capacity <= 0)) {                    // must be a whole number
-      return res.status(400).json({ error: 'Capacity must be a whole number above 0' });
+      return res.status(400).json({ error: 'Capacity must be a whole number above 0' }); // Return an error for invalid capacity.
     }
     add('capacity', capacity);
   }
@@ -374,7 +374,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     );
     if (result.rows.length === 0) {                                    // no row updated
       await client.query('ROLLBACK');                                  // undo
-      transactionStarted = false;
+      transactionStarted = false;                                      // record that the transaction is closed
       return res.status(404).json({ error: 'Facility not found' });
     }
 
@@ -394,17 +394,17 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       upcoming = count.rows[0].n;                                      // save the number
     }
     await client.query('COMMIT');                                      // save everything
-    transactionStarted = false;
+    transactionStarted = false;                                        // record that the transaction is closed
     res.json({ facility, upcoming_bookings: upcoming });               // send the result back
   } catch (err) {
     if (client && transactionStarted) {                                // undo if the transaction is still open
       await client.query('ROLLBACK');
-      transactionStarted = false;
+      transactionStarted = false;                                      // record that the transaction is closed
     }
     if (err.code === '23505')                                          // 23505 = name already exists
-      return res.status(409).json({ error: 'A facility with that name already exists' });
+      return res.status(409).json({ error: 'A facility with that name already exists' }); // Return an error if the name is already used.
     console.error(err);                                                // show the error in the server console
-    res.status(500).json({ error: 'Failed to update facility' });      // tell the client it failed
+    res.status(500).json({ error: 'Failed to update facility' });      // Return an error if the update fails.
   } finally {
     client?.release();                                                 // give the connection back
   }
