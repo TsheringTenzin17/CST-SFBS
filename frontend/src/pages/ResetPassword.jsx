@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import { apiCall } from '../utils/api';
+import { checkPassword } from '../utils/passwordStrength';  // password strength checker
 
 function ResetPassword() {
   const [params] = useSearchParams();
@@ -11,11 +12,17 @@ function ResetPassword() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+    // ---------- password strength ----------
+  const strength = checkPassword(password);  // weak, medium or strong
 
   async function submit(event) {
     event.preventDefault();
     setError('');
     setMessage('');
+    if (!strength.ok) {                                                              // block weak passwords
+      setError('Password is too weak. Add a mix of letters, numbers and symbols.');  // tell the user
+      return;                                                                        // stop here
+    }
     if (password !== confirm) {
       setError('Passwords do not match.');
       return;
@@ -59,6 +66,12 @@ function ResetPassword() {
               onChange={(event) => setPassword(event.target.value)}
               required
             />
+            {/* shows the strength under the new password box */}
+            {password && (
+              <span className={strength.ok ? 'auth-hint ok' : 'auth-hint bad'}>
+                {strength.ok ? `Password strength: ${strength.level}.` : `Too weak. Add: ${strength.tips.join(', ')}.`}
+              </span>
+            )}
           </label>
           <label className="auth-field">
             <span className="auth-label">Confirm new password</span>

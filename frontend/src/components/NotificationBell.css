@@ -1,0 +1,260 @@
+/* ============================================================== */
+/* NotificationBell.css  -  BELL ICON AND NOTIFICATION DROPDOWN   */
+/* ============================================================== */
+
+/* ============================================================== */
+/* HEADER GROUP  -  user menu and bell side by side               */
+/* ============================================================== */
+.header .header-actions {
+  display: flex;        /* put items in one row */
+  align-items: center;  /* line them up in the middle */
+  justify-self: end;    /* push the group to the far right */
+  gap: 18px;            /* space between user menu and bell */
+}
+
+/* ============================================================== */
+/* BELL BUTTON                                                    */
+/* ============================================================== */
+.notif-bell {
+  position: relative;  /* panel and badge are placed against this */
+}
+
+.notif-bell-btn {
+  position: relative;                     /* needed for the red badge */
+  width: 40px;                            /* same size as the avatar circle */
+  height: 40px;                           /* same height as the avatar circle */
+  display: flex;                          /* to centre the icon */
+  align-items: center;                    /* centre up and down */
+  justify-content: center;                /* centre left and right */
+  border: 0;                              /* remove default button border */
+  border-radius: 50%;                     /* make it a circle */
+  background: rgba(255, 255, 255, 0.14);  /* light white on the teal header */
+  color: #fff;                            /* white bell icon */
+  cursor: pointer;                        /* hand cursor */
+  transition: background 0.15s;           /* smooth colour change */
+}
+
+.notif-bell-btn:hover,
+.notif-bell-btn.is-open {
+  background: rgba(255, 255, 255, 0.26);  /* brighter on hover or when open */
+}
+
+.notif-bell-btn:focus-visible {
+  outline: 2px solid #fff;  /* white outline for keyboard users */
+  outline-offset: 2px;      /* small gap from the button */
+}
+
+/* ============================================================== */
+/* RED NUMBER ON THE BELL                                         */
+/* ============================================================== */
+.notif-bell-badge {
+  position: absolute;         /* sits on the corner of the bell */
+  top: -4px;                  /* move a bit up */
+  right: -4px;                /* move a bit right */
+  min-width: 20px;            /* keeps it round for one digit */
+  height: 20px;               /* badge height */
+  padding: 0 5px;             /* extra space for 9+ */
+  box-sizing: border-box;     /* padding and border stay inside the size */
+  display: flex;              /* to centre the number */
+  align-items: center;        /* centre up and down */
+  justify-content: center;    /* centre left and right */
+  border: 2px solid #295361;  /* header colour, looks cut out */
+  border-radius: 10px;        /* pill shape */
+  background: #dc2626;        /* red */
+  color: #fff;                /* white number */
+  font-size: 11px;            /* small text */
+  font-weight: 700;           /* bold */
+  line-height: 1;             /* no extra line space */
+}
+
+/* ============================================================== */
+/* DROPDOWN PANEL                                                 */
+/* ============================================================== */
+.notif-panel {
+  position: absolute;                              /* floats under the bell */
+  top: calc(100% + 24px);                          /* same distance as the user menu panel */
+  right: 0;                                        /* line up with the right edge of the bell */
+  width: 360px;                                    /* panel width on desktop */
+  background: #fff;                                /* white background */
+  color: #334155;                                  /* default text colour */
+  border: 1px solid #e2e8f0;                       /* light grey border */
+  border-radius: 14px;                             /* rounded corners like the user menu */
+  box-shadow: 0 10px 30px rgba(15, 59, 79, 0.12);  /* soft shadow */
+  overflow: hidden;                                /* keep content inside the corners */
+  z-index: 1000;                                   /* stay above the page */
+}
+
+/* ------------------------------------------------------------ */
+/* panel top  -  title and mark all button                      */
+/* ------------------------------------------------------------ */
+.notif-panel-head {
+  display: flex;                     /* title and button in one row */
+  align-items: center;               /* line up in the middle */
+  justify-content: space-between;    /* title left, button right */
+  padding: 14px 16px;                /* inside space */
+  border-bottom: 1px solid #e2e8f0;  /* line under the top */
+}
+
+.notif-panel-title {
+  font-size: 15px;   /* title size */
+  font-weight: 700;  /* bold */
+  color: #0f3b4f;    /* same dark blue as the user menu */
+}
+
+.notif-panel-markall {
+  background: none;  /* no button background */
+  border: 0;         /* no border */
+  padding: 0;        /* no extra space */
+  color: #0b57c3;    /* blue link colour */
+  font: inherit;     /* same font as the page */
+  font-size: 13px;   /* small text */
+  cursor: pointer;   /* hand cursor */
+}
+
+.notif-panel-markall:hover:not(:disabled) {
+  text-decoration: underline;  /* underline on hover */
+}
+
+.notif-panel-markall:disabled {
+  color: #94a3b8;   /* grey when it cannot be used */
+  cursor: default;  /* normal cursor */
+}
+
+/* ------------------------------------------------------------ */
+/* panel list  -  the notification rows                         */
+/* ------------------------------------------------------------ */
+.notif-panel-list {
+  max-height: 360px;  /* panel cannot grow too tall */
+  overflow-y: auto;   /* scroll when there are many rows */
+}
+
+.notif-panel-empty {
+  margin: 0;           /* remove default paragraph space */
+  padding: 28px 16px;  /* space around the message */
+  text-align: center;  /* centre the text */
+  font-size: 14px;     /* normal small text */
+  color: #64748b;      /* soft grey */
+}
+
+.notif-item {
+  display: flex;                     /* icon, text and dot in one row */
+  align-items: flex-start;           /* line up at the top */
+  gap: 12px;                         /* space between the parts */
+  width: 100%;                       /* fill the panel */
+  padding: 12px 16px;                /* inside space */
+  background: none;                  /* no button background */
+  border: 0;                         /* remove default border */
+  border-bottom: 1px solid #eef2f6;  /* thin line between rows */
+  text-align: left;                  /* text starts from the left */
+  font: inherit;                     /* same font as the page */
+  cursor: pointer;                   /* hand cursor */
+}
+
+.notif-item:hover,
+.notif-item:focus-visible {
+  background: #f8fafc;  /* light grey on hover */
+  outline: none;        /* remove default outline */
+}
+
+.notif-item.is-unread {
+  background: #f1f7fd;  /* light blue for unread rows */
+}
+
+/* ------------------------------------------------------------ */
+/* row icon  -  round icon and its colours                      */
+/* ------------------------------------------------------------ */
+.notif-item-icon {
+  flex-shrink: 0;           /* do not squish the circle */
+  width: 32px;              /* circle width */
+  height: 32px;             /* circle height */
+  display: flex;            /* to centre the icon */
+  align-items: center;      /* centre up and down */
+  justify-content: center;  /* centre left and right */
+  border-radius: 50%;       /* make it a circle */
+}
+
+.tone-confirmed { background: #dcfce7; color: #15803d; }    /* green  - confirmed */
+.tone-cancelled { background: #fee2e2; color: #b91c1c; }    /* red    - cancelled */
+.tone-maintenance { background: #fef3c7; color: #b45309; }  /* yellow - maintenance */
+.tone-pending { background: #ffedd5; color: #c2410c; }      /* orange - pending */
+.tone-reminder { background: #ede9fe; color: #6d28d9; }     /* purple - reminder */
+.tone-update { background: #dbeafe; color: #1d4ed8; }       /* blue   - updates */
+.tone-info { background: #e2e8f0; color: #475569; }         /* grey   - everything else */
+
+/* ------------------------------------------------------------ */
+/* row text  -  title, message and time                         */
+/* ------------------------------------------------------------ */
+.notif-item-body {
+  flex: 1;                 /* take all the free space */
+  min-width: 0;            /* long text is allowed to shrink */
+  display: flex;           /* stack the lines */
+  flex-direction: column;  /* one line under another */
+  gap: 2px;                /* small space between lines */
+}
+
+.notif-item-title {
+  font-size: 14px;   /* title size */
+  font-weight: 700;  /* bold */
+  color: #0f3b4f;    /* dark blue */
+}
+
+.notif-item-msg {
+  display: -webkit-box;          /* needed for the 2 line limit */
+  -webkit-line-clamp: 2;         /* show only 2 lines */
+  -webkit-box-orient: vertical;  /* stack lines downward */
+  overflow: hidden;              /* hide the extra text */
+  font-size: 13px;               /* message size */
+  color: #475569;                /* slightly soft text */
+  line-height: 1.4;              /* nice line spacing */
+}
+
+.notif-item-time {
+  font-size: 12px;  /* small time text */
+  color: #94a3b8;   /* light grey */
+}
+
+.notif-item-dot {
+  flex-shrink: 0;       /* keep the dot round */
+  width: 8px;           /* dot width */
+  height: 8px;          /* dot height */
+  margin-top: 6px;      /* line up with the title */
+  border-radius: 50%;   /* make it a circle */
+  background: #0b8fd1;  /* blue */
+}
+
+/* ------------------------------------------------------------ */
+/* panel bottom  -  link to the full page                       */
+/* ------------------------------------------------------------ */
+.notif-panel-footer {
+  display: block;                 /* fill the full width */
+  padding: 12px 16px;             /* inside space */
+  border-top: 1px solid #e2e8f0;  /* line above the link */
+  text-align: center;             /* centre the text */
+  font-size: 14px;                /* link size */
+  font-weight: 700;               /* bold */
+  color: #0b57c3;                 /* blue */
+  text-decoration: none;          /* no underline */
+}
+
+.notif-panel-footer:hover {
+  background: #f8fafc;  /* light grey on hover */
+}
+
+/* ============================================================== */
+/* PHONE SCREENS                                                  */
+/* ============================================================== */
+@media (max-width: 600px) {
+  .header .header-actions {
+    grid-column: 2;  /* same grid column the user menu used */
+    grid-row: 1;     /* stay in the first row */
+    gap: 10px;       /* smaller space on phones */
+  }
+
+  .notif-panel {
+    position: fixed;  /* stick to the screen, cannot go off the edge */
+    top: 80px;        /* just under the header */
+    left: 16px;       /* space from the left edge */
+    right: 16px;      /* space from the right edge */
+    width: auto;      /* width comes from left and right */
+  }
+}

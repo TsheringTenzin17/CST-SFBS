@@ -1,207 +1,215 @@
 /* Sticky live-notice ticker, controls, and compact mobile presentation. */
-.live-notice {
-  position: sticky;
-  top: 112px;
-  z-index: 99;
-  height: 44px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 10px;
-  overflow: hidden;
-  padding: 0 18px;
-  background: linear-gradient(90deg, #102f40 0%, #123b50 55%, #123445 100%);
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(5, 31, 43, 0.16);
+
+/* ---------- Notice bar ---------- */
+.live-notice {                           /* The whole notice strip under the header */
+  position: sticky;                      /* Stay on screen while scrolling */
+  top: 112px;                            /* Stick just below the header (header is 112px tall) */
+  z-index: 99;                           /* Show above the page, just under the header */
+  height: 44px;                          /* Strip height */
+  display: grid;                         /* Use a grid with 5 columns */
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;    /* Label | ticker | pause | details | close */
+  align-items: center;                   /* Center up and down */
+  gap: 10px;                             /* Space between the items */
+  overflow: hidden;                      /* Hide anything that goes outside */
+  padding: 0 18px;                       /* Space on the left and right */
+  background: linear-gradient(90deg, #102f40 0%, #123b50 55%, #123445 100%);    /* Dark blue gradient */
+  color: #fff;                           /* White text */
+  box-shadow: 0 4px 18px rgba(5, 31, 43, 0.16);    /* Soft shadow under the strip */
 }
 
-.live-notice .sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
+.live-notice .sr-only {                  /* Text only for screen readers (not seen) */
+  position: absolute;                    /* Take it out of the layout */
+  width: 1px;                            /* Make it 1px wide */
+  height: 1px;                           /* Make it 1px tall */
+  padding: 0;                            /* No space inside */
+  margin: -1px;                          /* Pull it out of sight */
+  overflow: hidden;                      /* Hide anything that goes outside */
+  clip: rect(0, 0, 0, 0);                /* Cut it away (old browsers) */
+  clip-path: inset(50%);                 /* Cut it away (new browsers) */
+  white-space: nowrap;                   /* Keep the text on one line */
+  border: 0;                             /* No border */
 }
 
-.live-notice-label {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 11px;
-  height: 28px;
-  padding: 0 13px;
-  border: 0;
-  border-right: 1px solid rgba(54, 198, 221, 0.18);
-  color: #36c6dd;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1.1px;
-  text-transform: uppercase;
+/* ---------- Label ("LIVE NOTICE") ---------- */
+.live-notice-label {                     /* The label at the start of the strip */
+  position: relative;                    /* So z-index works */
+  z-index: 3;                            /* Show above the moving text */
+  display: flex;                         /* Dot and text in a row */
+  align-items: center;                   /* Center up and down */
+  gap: 8px;                              /* Space between the dot and text */
+  min-width: 11px;                       /* Minimum label width */
+  height: 28px;                          /* Label height */
+  padding: 0 13px;                       /* Space on the left and right */
+  border: 0;                             /* No border */
+  border-right: 1px solid rgba(54, 198, 221, 0.18);    /* Thin line on the right side */
+  color: #36c6dd;                        /* Light blue text */
+  font-size: 11px;                       /* Small text */
+  font-weight: 900;                      /* Extra bold text */
+  letter-spacing: 1.1px;                 /* Space between letters */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
 }
 
-.live-notice-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 0%;
-  background: #10bfe0;
-  box-shadow: 0 0 8px #10bfe0;
-  animation: liveNoticePulse 1.4s infinite;
+.live-notice-dot {                       /* The small blinking square before the label */
+  width: 8px;                            /* Dot width */
+  height: 8px;                           /* Dot height */
+  border-radius: 0%;                     /* No round corners (a square) */
+  background: #10bfe0;                   /* Bright blue color */
+  box-shadow: 0 0 8px #10bfe0;           /* Blue glow around it */
+  animation: liveNoticePulse 1.4s infinite;    /* Blink again and again every 1.4s */
 }
 
-.live-notice-track {
-  position: relative;
-  z-index: 1;
-  height: 44px;
-  min-width: 0;
-  overflow: hidden;
+/* ---------- Moving text (ticker) ---------- */
+.live-notice-track {                     /* The window where the text moves */
+  position: relative;                    /* So the moving text can sit inside it */
+  z-index: 1;                            /* Keep it below the buttons */
+  height: 44px;                          /* Window height */
+  min-width: 0;                          /* Allow the window to shrink */
+  overflow: hidden;                      /* Hide the text outside the window */
 }
-.live-notice-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: max-content;
-  animation: liveNoticeScroll 38s linear infinite;
-  will-change: transform;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 44px;
-  white-space: nowrap;
+.live-notice-content {                   /* The long line of text that moves */
+  position: absolute;                    /* Place it freely inside the window */
+  top: 0;                                /* Start at the top */
+  left: 0;                               /* Start at the left */
+  display: flex;                         /* Put the groups in a row */
+  width: max-content;                    /* As wide as all the text */
+  animation: liveNoticeScroll 38s linear infinite;    /* Move left forever (38s per round) */
+  will-change: transform;                /* Tell the browser it will move (smoother) */
+  font-size: 14px;                       /* Text size */
+  font-weight: 600;                      /* Semi-bold text */
+  line-height: 44px;                     /* Same as the window height (centers the text) */
+  white-space: nowrap;                   /* Keep the text on one line */
 }
-.live-notice-group {
-  display: flex;
-  flex: none;
-  align-items: center;
+.live-notice-group {                     /* One copy of the notice messages */
+  display: flex;                         /* Put the messages in a row */
+  flex: none;                            /* Do not shrink */
+  align-items: center;                   /* Center up and down */
 }
-.live-notice-group span {
-  flex: none;
+.live-notice-group span {                /* One message */
+  flex: none;                            /* Do not shrink */
 }
-.live-notice-track.paused .live-notice-content {
-  animation-play-state: paused;
+.live-notice-track.paused .live-notice-content {    /* When the user pressed pause */
+  animation-play-state: paused;          /* Stop the moving text */
 }
-.live-notice-content strong {
-  color: #36c6dd;
-  text-transform: uppercase;
+.live-notice-content strong {            /* Bold words like "FACILITY STATUS:" */
+  color: #36c6dd;                        /* Light blue text */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
 }
-.live-notice-content i {
-  margin: 0 28px;
-  color: #f3b33d;
-  font-style: normal;
-}
-
-.live-notice-control,
-.live-notice-close {
-  border: 0;
-  background: transparent;
-  color: #d7e5ea;
-  cursor: pointer;
-}
-.live-notice-control,
-.live-notice-details,
-.live-notice-close {
-  position: relative;
-  z-index: 3;
-}
-.live-notice-control {
-  font-size: 15px;
-}
-.live-notice-close {
-  font-size: 22px;
-  line-height: 1;
+.live-notice-content i {                 /* The small divider between messages */
+  margin: 0 28px;                        /* Space on the left and right */
+  color: #f3b33d;                        /* Gold color */
+  font-style: normal;                    /* Not slanted */
 }
 
-.live-notice-details {
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: #0d9fd0;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-  text-decoration: none;
-  text-transform: uppercase;
+/* ---------- Buttons (pause, details, close) ---------- */
+.live-notice-control,                    /* The pause/play button */
+.live-notice-close {                     /* The close "x" button */
+  border: 0;                             /* No border */
+  background: transparent;               /* No background color */
+  color: #d7e5ea;                        /* Light grey-blue color */
+  cursor: pointer;                       /* Show a hand when the mouse is over it */
+}
+.live-notice-control,                    /* The pause/play button */
+.live-notice-details,                    /* The "Details" button */
+.live-notice-close {                     /* The close "x" button */
+  position: relative;                    /* So z-index works */
+  z-index: 3;                            /* Show above the moving text */
+}
+.live-notice-control {                   /* The pause/play button */
+  font-size: 15px;                       /* Icon size */
+}
+.live-notice-close {                     /* The close "x" button */
+  font-size: 22px;                       /* Make the "x" bigger */
+  line-height: 1;                        /* No extra line space */
 }
 
-@keyframes liveNoticeScroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-@keyframes liveNoticePulse {
-  50% {
-    opacity: 0.35;
-  }
+.live-notice-details {                   /* The "Details" button */
+  height: 28px;                          /* Button height */
+  display: inline-flex;                  /* Flex, but only as wide as needed */
+  align-items: center;                   /* Center up and down */
+  padding: 0 16px;                       /* Space on the left and right */
+  border-radius: 999px;                  /* Fully rounded ends */
+  background: #0d9fd0;                   /* Blue button */
+  color: #fff;                           /* White text */
+  font-size: 11px;                       /* Small text */
+  font-weight: 900;                      /* Extra bold text */
+  text-decoration: none;                 /* Remove the link underline */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
 }
 
-@media (max-width: 700px) {
-  .live-notice {
-    top: 72px !important;
-    height: 52px;
-    grid-template-columns: auto minmax(0, 1fr) 36px 36px;
-    gap: 6px;
-    padding: 0 8px 0 12px;
+/* ---------- Animations ---------- */
+@keyframes liveNoticeScroll {            /* Text moves to the left */
+  from {                                 /* Start */
+    transform: translateX(0);            /* At the normal place */
   }
-  .live-notice-label {
-    min-width: 48px;
-    height: 28px;
-    padding: 0;
-    justify-content: flex-start;
-    font-size: 0;
+  to {                                   /* End */
+    transform: translateX(-50%);         /* Moved left by half (one full copy), then it repeats */
   }
-  .live-notice-label::after {
-    content: 'NOTICE';
-    font-size: 11px;
-    letter-spacing: 1px;
-  }
-  .live-notice-track {
-    height: 52px;
-  }
-  .live-notice-content {
-    height: 52px;
-    font-size: 13px;
-    line-height: 52px;
-    animation-duration: 55s;
-    animation-delay: -8s;
-  }
-  .live-notice-details {
-    display: none;
-  }
-  .live-notice-control,
-  .live-notice-close {
-    width: 36px;
-    height: 36px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 50%;
-  }
-  .live-notice-control {
-    font-size: 13px;
-    background: rgba(54, 198, 221, 0.12);
-  }
-  .live-notice-close {
-    font-size: 22px;
-    background: rgba(255, 255, 255, 0.08);
+}
+@keyframes liveNoticePulse {             /* Dot blinks */
+  50% {                                  /* In the middle of the blink */
+    opacity: 0.35;                       /* Almost see-through */
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .live-notice-content {
-    animation-duration: 45s;
+/* ---------- Mobile screens (700px or smaller) ---------- */
+@media (max-width: 700px) {              /* Apply these rules only on phones */
+  .live-notice {                         /* The notice strip */
+    top: 72px !important;                /* Stick below the shorter mobile header (forced) */
+    height: 52px;                        /* Taller strip (easier to read and tap) */
+    grid-template-columns: auto minmax(0, 1fr) 36px 36px;    /* Label | ticker | pause | close */
+    gap: 6px;                            /* Smaller space between the items */
+    padding: 0 8px 0 12px;               /* Less space on the sides */
   }
-  .live-notice-dot {
-    animation: none;
+  .live-notice-label {                   /* The label */
+    min-width: 48px;                     /* Minimum label width */
+    height: 28px;                        /* Label height */
+    padding: 0;                          /* No space inside */
+    justify-content: flex-start;         /* Align to the left */
+    font-size: 0;                        /* Hide the original text */
+  }
+  .live-notice-label::after {            /* New short text shown instead */
+    content: 'NOTICE';                   /* Show the word NOTICE */
+    font-size: 11px;                     /* Small text */
+    letter-spacing: 1px;                 /* Space between letters */
+  }
+  .live-notice-track {                   /* The window where the text moves */
+    height: 52px;                        /* Same as the strip height */
+  }
+  .live-notice-content {                 /* The moving text */
+    height: 52px;                        /* Same as the strip height */
+    font-size: 13px;                     /* Slightly smaller text */
+    line-height: 52px;                   /* Center the text up and down */
+    animation-duration: 55s;             /* Move slower (55s per round) */
+    animation-delay: -8s;                /* Start 8 seconds ahead, so text shows at once */
+  }
+  .live-notice-details {                 /* The "Details" button */
+    display: none;                       /* Hide it on phones */
+  }
+  .live-notice-control,                  /* The pause/play button */
+  .live-notice-close {                   /* The close "x" button */
+    width: 36px;                         /* Button width (easy to tap) */
+    height: 36px;                        /* Button height (easy to tap) */
+    display: inline-grid;                /* Use a grid to center the icon */
+    place-items: center;                 /* Center the icon */
+    padding: 0;                          /* No space inside */
+    border-radius: 50%;                  /* Make it a circle */
+  }
+  .live-notice-control {                 /* The pause/play button */
+    font-size: 13px;                     /* Icon size */
+    background: rgba(54, 198, 221, 0.12);    /* Faint blue circle */
+  }
+  .live-notice-close {                   /* The close "x" button */
+    font-size: 22px;                     /* Make the "x" bigger */
+    background: rgba(255, 255, 255, 0.08);   /* Faint white circle */
+  }
+}
+
+/* ---------- Users who want less animation ---------- */
+@media (prefers-reduced-motion: reduce) {    /* Apply when the user turned on "reduce motion" */
+  .live-notice-content {                     /* The moving text */
+    animation-duration: 45s;                 /* Move slower */
+  }
+  .live-notice-dot {                         /* The blinking dot */
+    animation: none;                         /* Do not blink */
   }
 }

@@ -1,382 +1,393 @@
-/* Conflict summary, alternative-slot choices, and responsive action layout. */
-.conflict-page.main {
-  width: min(100%, 1180px);
-  min-height: 0;
-  padding-top: 32px;
-  padding-bottom: 44px;
+/* ================= Conflict page: summary, alternative slots and responsive layout ================= */
+
+/* ---------- Page wrapper ---------- */
+.conflict-page.main {                    /* Main wrapper of the conflict page */
+  width: min(100%, 1180px);              /* Full width, but never wider than 1180px */
+  min-height: 0;                         /* Do not force a minimum height */
+  padding-top: 32px;                     /* Space at the top */
+  padding-bottom: 44px;                  /* Space at the bottom */
 }
 
-.conflict-alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding: 16px 18px;
-  border: 1px solid #fecaca;
-  border-left: 4px solid #dc2626;
-  border-radius: 14px;
-  background: #fef2f2;
-  color: #b91c1c;
-  box-shadow: 0 8px 24px rgba(185, 28, 28, 0.06);
+/* ---------- Red alert box at the top ---------- */
+.conflict-alert {                                  /* The red box that says there is a conflict */
+  display: flex;                                   /* Put the items in a row */
+  align-items: flex-start;                         /* Align the items to the top */
+  gap: 14px;                                       /* Space between the items */
+  margin-bottom: 20px;                             /* Space below the box */
+  padding: 16px 18px;                              /* Space inside the box */
+  border: 1px solid #fecaca;                       /* Thin light red border */
+  border-left: 4px solid #dc2626;                  /* Thick dark red border on the left */
+  border-radius: 14px;                             /* Round the corners */
+  background: #fef2f2;                             /* Very light red background */
+  color: #b91c1c;                                  /* Dark red text */
+  box-shadow: 0 8px 24px rgba(185, 28, 28, 0.06);  /* Soft red shadow under the box */
 }
 
-.conflict-alert-icon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: #dc2626;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 700;
+.conflict-alert-icon {                   /* The round "!" icon in the alert */
+  display: grid;                         /* Use grid so the icon can be centered */
+  width: 30px;                           /* Icon width */
+  height: 30px;                          /* Icon height */
+  flex: 0 0 auto;                        /* Do not grow or shrink */
+  place-items: center;                   /* Center the icon inside */
+  border-radius: 50%;                    /* Make it a circle */
+  background: #dc2626;                   /* Red circle */
+  color: #fff;                           /* White icon */
+  font-size: 17px;                       /* Icon size */
+  font-weight: 700;                      /* Bold icon */
 }
 
-.conflict-alert strong {
-  font-size: 16px;
+.conflict-alert strong {                 /* The bold title inside the alert */
+  font-size: 16px;                       /* Title size */
 }
 
-.conflict-alert p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
+.conflict-alert p {                      /* The small text under the title */
+  margin: 4px 0 0;                       /* Small space above, none on the sides and bottom */
+  font-size: 13px;                       /* Text size */
+  line-height: 1.5;                      /* Space between the lines */
 }
 
-.conflict-alert-status {
-  margin-left: auto;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #fee2e2;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
+.conflict-alert-status {                 /* The small status tag on the right of the alert */
+  margin-left: auto;                     /* Push it to the far right */
+  padding: 5px 10px;                     /* Space inside the tag */
+  border-radius: 999px;                  /* Fully rounded ends */
+  background: #fee2e2;                   /* Light red background */
+  font-size: 11px;                       /* Small text */
+  font-weight: 700;                      /* Bold text */
+  white-space: nowrap;                   /* Keep the text on one line */
 }
 
-.conflict-load-error {
-  margin: 0 0 16px;
-  color: #b91c1c;
-  font-size: 13px;
+.conflict-load-error {                   /* Error message when loading fails */
+  margin: 0 0 16px;                      /* Space below only */
+  color: #b91c1c;                        /* Dark red text */
+  font-size: 13px;                       /* Text size */
 }
 
-.conflict-layout {
-  display: grid;
-  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.5fr);
-  gap: 20px;
-  align-items: start;
+/* ---------- Two-column layout ---------- */
+.conflict-layout {                                                   /* Wrapper for the left and right cards */
+  display: grid;                                                     /* Use a grid */
+  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.5fr);     /* Left column smaller, right column bigger */
+  gap: 20px;                                                         /* Space between the columns */
+  align-items: start;                                                /* Align both cards to the top */
 }
 
-.conflict-request-card,
-.conflict-options-card {
-  padding: 22px;
-  border: 1px solid #e2e8ec;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(20, 65, 76, 0.06);
+/* ---------- Cards (left: request, right: options) ---------- */
+.conflict-request-card,                              /* Left card (your request) */
+.conflict-options-card {                             /* Right card (other options) */
+  padding: 22px;                                     /* Space inside the card */
+  border: 1px solid #e2e8ec;                       /* Thin light border */
+  border-radius: 16px;                               /* Round the corners */
+  background: #fff;                                  /* White background */
+  box-shadow: 0 10px 30px rgba(20, 65, 76, 0.06);    /* Soft shadow under the card */
 }
 
-.conflict-request-card h2,
-.conflict-options-card h2 {
-  margin: 0 0 8px;
-  color: #295361;
-  font-size: 18px;
+.conflict-request-card h2,               /* Heading in the left card */
+.conflict-options-card h2 {              /* Heading in the right card */
+  margin: 0 0 8px;                       /* Space below only */
+  color: #295361;                        /* Dark blue-green text */
+  font-size: 18px;                       /* Heading size */
 }
 
-.conflict-request-card h2 {
-  padding-bottom: 12px;
-  border-bottom: 1px solid #edf0f2;
-  color: #295361;
+.conflict-request-card h2 {              /* Extra style for the left card heading only */
+  padding-bottom: 12px;                  /* Space under the heading text */
+  border-bottom: 1px solid #edf0f2;      /* Light line under the heading */
 }
 
-.conflict-request-card dl {
-  display: grid;
-  gap: 14px;
-  margin: 16px 0;
+/* ---------- Request details list ---------- */
+.conflict-request-card dl {              /* The list of request details */
+  display: grid;                         /* Use a grid */
+  gap: 14px;                             /* Space between the items */
+  margin: 16px 0;                        /* Space above and below the list */
 }
 
-.conflict-request-card dl > div {
-  padding-bottom: 13px;
-  border-bottom: 1px solid #f1f5f4;
+.conflict-request-card dl > div {        /* One item (label + value) */
+  padding-bottom: 13px;                  /* Space under the item */
+  border-bottom: 1px solid #f1f5f4;      /* Light line under the item */
 }
 
-.conflict-request-card dl > div:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.conflict-request-card dl > div:last-child {    /* The last item in the list */
+  padding-bottom: 0;                            /* No space under it */
+  border-bottom: 0;                             /* No line under it */
 }
 
-.conflict-request-card dt {
-  margin-bottom: 5px;
-  color: #737b84;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
+.conflict-request-card dt {              /* The small label (like "Facility") */
+  margin-bottom: 5px;                    /* Space under the label */
+  color: #737b84;                        /* Grey text */
+  font-size: 11px;                       /* Small text */
+  font-weight: 600;                      /* Semi-bold text */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
 }
 
-.conflict-request-card dd {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+.conflict-request-card dd {              /* The value under the label */
+  margin: 0;                             /* Remove the default space */
+  font-size: 14px;                       /* Text size */
+  line-height: 1.5;                      /* Space between the lines */
 }
 
-.conflict-request-card .conflict-requested {
-  color: #b91c1c;
-  font-weight: 600;
+.conflict-request-card .conflict-requested {    /* The slot you asked for, shown in red */
+  color: #b91c1c;                               /* Dark red text */
+  font-weight: 600;                             /* Semi-bold text */
 }
 
-.conflict-back {
-  display: flex;
-  min-height: 42px;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1px solid #cbd9dd;
-  border-radius: 10px;
-  color: #374151;
-  font-size: 13px;
-  text-align: center;
-  text-decoration: none;
+/* ---------- Back button ---------- */
+.conflict-back {                         /* The "go back" button */
+  display: flex;                         /* Use flex to center the content */
+  min-height: 42px;                      /* Minimum button height */
+  justify-content: center;               /* Center sideways */
+  align-items: center;                   /* Center up and down */
+  gap: 8px;                              /* Space between icon and text */
+  padding: 10px 14px;                    /* Space inside the button */
+  border: 1px solid #cbd9dd;             /* Thin border */
+  border-radius: 10px;                   /* Round the corners */
+  color: #374151;                        /* Dark grey text */
+  font-size: 13px;                       /* Text size */
+  text-align: center;                    /* Center the text */
+  text-decoration: none;                 /* Remove the link underline */
 }
 
-.conflict-back:hover {
-  background: #f8fafc;
+.conflict-back:hover {                   /* When the mouse is over the back button */
+  background: #f8fafc;                   /* Very light grey background */
 }
 
-.conflict-options-subtitle {
-  margin: 0 0 14px;
-  color: #737b84;
-  font-size: 13px;
+/* ---------- Right card: subtitle and slot suggestions ---------- */
+.conflict-options-subtitle {             /* Small text under the right card heading */
+  margin: 0 0 14px;                      /* Space below only */
+  color: #737b84;                        /* Grey text */
+  font-size: 13px;                       /* Text size */
 }
 
-.conflict-suggestions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+.conflict-suggestions {                              /* Wrapper for all the slot choices */
+  display: grid;                                     /* Use a grid */
+  grid-template-columns: repeat(3, minmax(0, 1fr));  /* 3 equal columns */
+  gap: 12px;                                         /* Space between the choices */
 }
 
-.conflict-suggestion {
-  display: flex;
-  min-width: 0;
-  position: relative;
-  min-height: 178px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 15px;
-  border: 1px solid #dfe7e9;
-  border-radius: 12px;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  text-align: left;
+.conflict-suggestion {                   /* One slot choice (a clickable card) */
+  display: flex;                         /* Use flex */
+  min-width: 0;                          /* Allow the card to shrink if needed */
+  position: relative;                    /* So the radio circle can sit inside it */
+  min-height: 178px;                     /* Minimum card height */
+  flex-direction: column;                /* Stack the content top to bottom */
+  align-items: flex-start;               /* Align the content to the left */
+  gap: 8px;                              /* Space between the lines */
+  padding: 15px;                         /* Space inside the card */
+  border: 1px solid #dfe7e9;             /* Thin light border */
+  border-radius: 12px;                   /* Round the corners */
+  background: #fff;                      /* White background */
+  color: #333;                           /* Dark grey text */
+  cursor: pointer;                       /* Show a hand when the mouse is over it */
+  font: inherit;                         /* Use the same font as the page */
+  font-size: 12px;                       /* Text size */
+  text-align: left;                      /* Align the text to the left */
 }
 
-.conflict-suggestion:hover {
-  border-color: #78a5af;
-  transform: translateY(-2px);
+.conflict-suggestion:hover {             /* When the mouse is over a choice */
+  border-color: #78a5af;                 /* Change the border color */
+  transform: translateY(-2px);           /* Lift the card up a little */
 }
 
-.conflict-suggestion.selected {
-  border: 2px solid #295361;
-  background: #f3f8f8;
-  box-shadow: 0 8px 20px rgba(41, 83, 97, 0.09);
+.conflict-suggestion.selected {                    /* The choice you clicked */
+  border: 2px solid #295361;                       /* Thicker dark border */
+  background: #f3f8f8;                             /* Light green-blue background */
+  box-shadow: 0 8px 20px rgba(41, 83, 97, 0.09);   /* Soft shadow */
 }
 
-.conflict-suggestion-top {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  gap: 5px;
-  color: #295361;
-  font-size: 10px;
-  text-transform: uppercase;
+.conflict-suggestion-top {               /* Top row of a choice (label + tag) */
+  display: flex;                         /* Put the items in a row */
+  width: 100%;                           /* Use the full card width */
+  justify-content: space-between;        /* One item left, one item right */
+  align-items: center;                   /* Center up and down */
+  gap: 5px;                              /* Small space between the items */
+  color: #295361;                        /* Dark blue-green text */
+  font-size: 10px;                       /* Very small text */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
 }
 
-.conflict-suggestion-top small {
-  padding: 3px 5px;
-  border-radius: 3px;
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 9px;
-  text-transform: none;
+.conflict-suggestion-top small {         /* The small green tag in the top row */
+  padding: 3px 5px;                      /* Space inside the tag */
+  border-radius: 3px;                    /* Slightly round corners */
+  background: #dcfce7;                   /* Light green background */
+  color: #15803d;                        /* Dark green text */
+  font-size: 9px;                        /* Tiny text */
+  text-transform: none;                  /* Keep normal letters (not CAPITAL) */
 }
 
-.conflict-suggestion-facility {
-  margin-top: 6px;
-  font-size: 14px;
+.conflict-suggestion-facility {          /* Facility name in the choice */
+  margin-top: 6px;                       /* Space above */
+  font-size: 14px;                       /* Text size */
 }
 
-.conflict-suggestion-time {
-  color: #295361;
-  font-size: 14px;
-  font-weight: 700;
+.conflict-suggestion-time {              /* Time of the suggested slot */
+  color: #295361;                        /* Dark blue-green text */
+  font-size: 14px;                       /* Text size */
+  font-weight: 700;                      /* Bold text */
 }
 
-.conflict-suggestion-label {
-  margin-top: auto;
-  color: #737b84;
-  font-size: 11px;
+.conflict-suggestion-label {             /* Small note at the bottom of the choice */
+  margin-top: auto;                      /* Push it to the bottom of the card */
+  color: #737b84;                        /* Grey text */
+  font-size: 11px;                       /* Small text */
 }
 
-.conflict-radio {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  width: 17px;
-  height: 17px;
-  border: 2px solid #cbd5d8;
-  border-radius: 50%;
-  background: #fff;
+.conflict-radio {                        /* The round radio button in the corner */
+  position: absolute;                    /* Place it freely inside the card */
+  right: 14px;                           /* Distance from the right edge */
+  bottom: 14px;                          /* Distance from the bottom edge */
+  width: 17px;                           /* Circle width */
+  height: 17px;                          /* Circle height */
+  border: 2px solid #cbd5d8;             /* Light grey ring */
+  border-radius: 50%;                    /* Make it a circle */
+  background: #fff;                      /* White inside */
 }
 
-.conflict-suggestion.selected .conflict-radio {
-  border: 5px solid #295361;
+.conflict-suggestion.selected .conflict-radio {    /* The radio circle of the chosen card */
+  border: 5px solid #295361;                       /* Thick dark ring = filled look */
 }
 
-.conflict-empty {
-  padding: 16px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.5;
+.conflict-empty {                        /* Message when no slots are available */
+  padding: 16px;                         /* Space inside the box */
+  border: 1px dashed #cbd5e1;            /* Dashed border */
+  border-radius: 6px;                    /* Round the corners a little */
+  color: #64748b;                        /* Grey text */
+  font-size: 12px;                       /* Text size */
+  line-height: 1.5;                      /* Space between the lines */
 }
 
-.conflict-selection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #edf0f2;
-  color: #52646a;
-  font-size: 12px;
+/* ---------- Selection bar and continue button ---------- */
+.conflict-selection {                    /* Bar under the choices (text + button) */
+  display: flex;                         /* Put the items in a row */
+  justify-content: space-between;        /* One item left, one item right */
+  align-items: center;                   /* Center up and down */
+  gap: 12px;                             /* Space between the items */
+  margin-top: 16px;                      /* Space above the bar */
+  padding-top: 14px;                     /* Space inside, at the top */
+  border-top: 1px solid #edf0f2;         /* Light line above the bar */
+  color: #52646a;                        /* Grey-green text */
+  font-size: 12px;                       /* Text size */
 }
 
-.conflict-continue {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 11px 16px;
-  border-radius: 10px;
-  background: #295361;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  text-decoration: none;
+.conflict-continue {                     /* The "Continue" button */
+  display: inline-flex;                  /* Flex, but only as wide as needed */
+  min-height: 44px;                      /* Minimum button height */
+  align-items: center;                   /* Center up and down */
+  justify-content: center;               /* Center sideways */
+  gap: 10px;                             /* Space between icon and text */
+  padding: 11px 16px;                    /* Space inside the button */
+  border-radius: 10px;                   /* Round the corners */
+  background: #295361;                   /* Dark blue-green button */
+  color: #fff;                           /* White text */
+  font-size: 13px;                       /* Text size */
+  font-weight: 600;                      /* Semi-bold text */
+  text-align: center;                    /* Center the text */
+  text-decoration: none;                 /* Remove the link underline */
 }
 
-.conflict-continue:hover {
-  background: #1f4350;
+.conflict-continue:hover {               /* When the mouse is over the button */
+  background: #1f4350;                   /* Make the button darker */
 }
 
-.conflict-continue.disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.conflict-continue.disabled {            /* When no slot is chosen yet */
+  opacity: 0.55;                         /* Make the button look faded */
+  cursor: not-allowed;                   /* Show a "not allowed" mouse sign */
 }
 
-.conflict-loading-card {
-  display: flex;
-  max-width: 520px;
-  align-items: center;
-  gap: 16px;
-  margin: 40px auto;
-  padding: 22px;
-  border: 1px solid #e2e8ec;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(20, 65, 76, 0.06);
+/* ---------- Loading card ---------- */
+.conflict-loading-card {                             /* Card shown while the page is loading */
+  display: flex;                                     /* Put the items in a row */
+  max-width: 520px;                                  /* Do not get wider than 520px */
+  align-items: center;                               /* Center up and down */
+  gap: 16px;                                         /* Space between spinner and text */
+  margin: 40px auto;                                 /* Space above/below, centered sideways */
+  padding: 22px;                                     /* Space inside the card */
+  border: 1px solid #e2e8ec;                         /* Thin light border */
+  border-radius: 16px;                               /* Round the corners */
+  background: #fff;                                  /* White background */
+  box-shadow: 0 10px 30px rgba(20, 65, 76, 0.06);    /* Soft shadow */
 }
 
-.conflict-loading-card strong {
-  color: #295361;
-  font-size: 16px;
+.conflict-loading-card strong {          /* Loading title */
+  color: #295361;                        /* Dark blue-green text */
+  font-size: 16px;                       /* Text size */
 }
 
-.conflict-loading-card p {
-  margin: 4px 0 0;
-  color: #64748b;
-  font-size: 13px;
+.conflict-loading-card p {               /* Loading small text */
+  margin: 4px 0 0;                       /* Small space above */
+  color: #64748b;                        /* Grey text */
+  font-size: 13px;                       /* Text size */
 }
 
-.conflict-loading-spinner {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  border: 3px solid #dce8ea;
-  border-top-color: #295361;
-  border-radius: 50%;
-  animation: conflict-spin 0.8s linear infinite;
+.conflict-loading-spinner {              /* The spinning circle */
+  width: 28px;                           /* Spinner width */
+  height: 28px;                          /* Spinner height */
+  flex: 0 0 auto;                        /* Do not grow or shrink */
+  border: 3px solid #dce8ea;             /* Light ring */
+  border-top-color: #295361;             /* Dark top part, so the spin is visible */
+  border-radius: 50%;                    /* Make it a circle */
+  animation: conflict-spin 0.8s linear infinite;    /* Spin forever, 0.8s per turn */
 }
 
-@keyframes conflict-spin {
-  to {
-    transform: rotate(360deg);
+@keyframes conflict-spin {               /* Spin animation steps */
+  to {                                   /* End of the animation */
+    transform: rotate(360deg);           /* Turn one full circle */
   }
 }
 
-@media (max-width: 760px) {
-  .conflict-page.main {
-    padding-top: 20px;
-    padding-bottom: 32px;
+/* ---------- Mobile screens (760px or smaller) ---------- */
+@media (max-width: 760px) {              /* Apply these rules only on small screens */
+  .conflict-page.main {                  /* Page wrapper on mobile */
+    padding-top: 20px;                   /* Less space at the top */
+    padding-bottom: 32px;                /* Less space at the bottom */
   }
 
-  .conflict-alert {
-    position: relative;
-    padding: 16px;
-    padding-right: 15px;
+  .conflict-alert {                      /* Alert box on mobile */
+    position: relative;                  /* So the status tag can be placed inside */
+    padding: 16px;                       /* Space inside the box */
+    padding-right: 15px;                 /* Slightly less space on the right */
   }
 
-  .conflict-alert-status {
-    position: absolute;
-    top: 16px;
-    right: 15px;
+  .conflict-alert-status {               /* Status tag on mobile */
+    position: absolute;                  /* Place it freely inside the alert */
+    top: 16px;                           /* Distance from the top */
+    right: 15px;                         /* Distance from the right */
   }
 
-  .conflict-alert > div {
-    padding-right: 90px;
+  .conflict-alert > div {                /* Text part of the alert */
+    padding-right: 90px;                 /* Keep the text away from the status tag */
   }
 
-  .conflict-request-card,
-  .conflict-options-card {
-    padding: 18px;
+  .conflict-request-card,                /* Left card on mobile */
+  .conflict-options-card {               /* Right card on mobile */
+    padding: 18px;                       /* Less space inside the cards */
   }
 
-  .conflict-layout {
-    grid-template-columns: 1fr;
+  .conflict-layout {                     /* Two-column layout on mobile */
+    grid-template-columns: 1fr;          /* Change to one column (cards stack) */
   }
 
-  .conflict-suggestions {
-    grid-template-columns: 1fr;
+  .conflict-suggestions {                /* Slot choices on mobile */
+    grid-template-columns: 1fr;          /* Change to one column */
   }
 
-  .conflict-suggestion {
-    min-height: 0;
+  .conflict-suggestion {                 /* One slot choice on mobile */
+    min-height: 0;                       /* Remove the minimum height */
   }
 
-  .conflict-selection {
-    align-items: stretch;
-    flex-direction: column;
+  .conflict-selection {                  /* Selection bar on mobile */
+    align-items: stretch;                /* Make the items full width */
+    flex-direction: column;              /* Stack the text and button */
   }
 
-  .conflict-continue {
-    width: 100%;
-    box-sizing: border-box;
+  .conflict-continue {                   /* Continue button on mobile */
+    width: 100%;                         /* Full width button */
+    box-sizing: border-box;              /* Count padding inside the width */
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .conflict-loading-spinner {
-    animation-duration: 1.6s;
+/* ---------- Users who want less animation ---------- */
+@media (prefers-reduced-motion: reduce) {    /* Apply when the user turned on "reduce motion" */
+  .conflict-loading-spinner {                /* The spinner */
+    animation-duration: 1.6s;                /* Spin slower (1.6s per turn) */
   }
-  .conflict-suggestion {
-    transition: none;
+  .conflict-suggestion {                     /* Slot choices */
+    transition: none;                        /* No smooth movement */
   }
 }

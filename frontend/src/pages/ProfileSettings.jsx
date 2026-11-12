@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { apiCall } from '../utils/api';
+import { checkPassword } from '../utils/passwordStrength';  // password strength checker
 import './ProfileSettings.css';
 
 const DEFAULT_PREFERENCES = {
@@ -44,6 +45,8 @@ function ProfileSettings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+    // ---------- password strength ----------
+  const strength = checkPassword(newPassword);  // weak, medium or strong
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -154,6 +157,13 @@ function ProfileSettings() {
   async function changePassword(event) {
     event.preventDefault();
     setPasswordMessage(null);
+    if (!strength.ok) {                                                            // block weak passwords
+      setPasswordMessage({                                                         // show red message
+        type: 'error',                                                             // error style
+        text: 'Password is too weak. Add a mix of letters, numbers and symbols.',  // error text
+      });
+      return;                                                                      // stop here
+    }
     if (newPassword !== confirmPassword) {
       setPasswordMessage({
         type: 'error',
@@ -485,6 +495,12 @@ function ProfileSettings() {
                     placeholder="At least 8 characters"
                     required
                   />
+                  {/* shows the strength under the new password box */}
+                  {newPassword && (
+                    <small style={{ color: strength.ok ? '#16a34a' : '#dc2626' }}>
+                      {strength.ok ? `Password strength: ${strength.level}.` : `Too weak. Add: ${strength.tips.join(', ')}.`}
+                    </small>
+                  )}
                 </label>
                 <label>
                   Confirm new password

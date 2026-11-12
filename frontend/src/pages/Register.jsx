@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout, { SPORTS } from '../components/AuthLayout';
 import { Spinner } from '../components/Loading';
+import { checkPassword } from '../utils/passwordStrength';  // password strength checker
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 const COLLEGE_EMAIL = /^[^@\s]+\.cst@rub\.edu\.bt$/i;
@@ -85,6 +86,14 @@ function Register() {
   const formErrorRef = useRef(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const navigate = useNavigate();
+
+    // ---------- password strength (for the hint under the box) ----------
+  const strength = checkPassword(form.password);                  // weak, medium or strong
+  const passwordHint = !form.password                             // nothing typed yet
+    ? 'Min 8 characters. Use capital, small, number and symbol.'  // show the rule
+    : strength.ok                                                 // medium or strong
+      ? `Password strength: ${strength.level}.`                   // show the level
+      : `Too weak. Add: ${strength.tips.join(', ')}.`;            // show what is missing
 
   const tabIndex = TABS.findIndex((t) => t.id === tab);
   const role = TABS[tabIndex].role;
@@ -210,8 +219,8 @@ function Register() {
     if (!form.gender) {
       nextErrors.gender = 'Select your gender.';
     }
-    if (form.password.length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters.';
+    if (!strength.ok) {                                                                          // block weak passwords
+      nextErrors.password = 'Password is too weak. Add a mix of letters, numbers and symbols.';  // error text
     }
     if (form.password !== form.confirm) {
       nextErrors.confirm = 'Passwords do not match.';
@@ -469,9 +478,11 @@ function Register() {
         </Field>
 
         <div className="auth-row">
+          {/* password box  -  shows live strength hint (green = ok, red = weak) */}
           <Field
             label="Password"
-            hint="At least 8 characters."
+            hint={passwordHint}
+            hintClass={form.password ? (strength.ok ? 'ok' : 'bad') : ''}
             error={fieldErrors.password}
             errorId="password-error"
           >

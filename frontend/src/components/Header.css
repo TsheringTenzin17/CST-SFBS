@@ -1,620 +1,279 @@
-/* Shared client/admin header; responsive navigation variants follow the desktop rules. */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 0 24px;
-  background: #070a07;
-  border-top: 3px solid #252925;
-  color: #e6e9e1;
-}
 
-.site-notice {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 34px;
-  max-width: 1240px;
-  margin: 8px auto 0;
-  padding: 6px 10px;
-  overflow: hidden;
-  border: 1px solid rgba(198, 244, 65, 0.24);
-  border-radius: 3px;
-  background: #151a12;
-  color: #e3edcc;
-  font-size: 11px;
-}
 
-.site-notice-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  color: #c6f441;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.site-notice-label .site-icon {
-  width: 13px;
-  height: 13px;
-}
-
-.site-notice-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #c6f441;
-  box-shadow: 0 0 8px rgba(198, 244, 65, 0.6);
-}
-
-.site-notice-message {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.site-notice-details {
-  flex: 0 0 auto;
-  padding: 4px 10px;
-  border-radius: 5px;
-  background: #c6f441;
-  color: #11150d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.site-notice-details:hover {
-  background: #d8ff6a;
-}
-
-.site-notice-dismiss {
-  flex: 0 0 auto;
-  padding: 0 3px;
-  border: 0;
-  background: transparent;
-  color: #b8d7dc;
-  font: inherit;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.site-notice-dismiss:hover {
-  color: #fff;
-}
-
-.site-notice-error {
-  border-color: rgba(248, 113, 113, 0.35);
-  background: #512c32;
-  color: #fee2e2;
-}
-
-.site-notice-error .site-notice-label {
-  color: #fecaca;
-}
-.site-notice-error .site-notice-dot {
-  background: #f87171;
-  box-shadow: none;
-}
-
-.site-header-inner {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  max-width: 1240px;
-  min-height: 64px;
-  margin: 0 auto;
-  padding: 8px 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-.site-brand {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  text-decoration: none;
-}
-
-.site-brand .nav-logo-img {
-  display: block;
-  width: auto;
-  height: 42px;
-  max-width: 190px;
-  object-fit: contain;
-}
-
-.site-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  flex: 1;
-  min-width: 0;
-}
-
-.site-nav a {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  position: relative;
-  padding: 10px 8px;
-  border-radius: 0;
-  color: #bbc0b5;
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-  transition:
-    color 0.18s ease,
-    background-color 0.18s ease;
-}
-
-.site-nav a:hover,
-.site-nav a.active {
-  background: transparent;
-  color: #c6f441;
-}
-
-.site-nav a.active::after {
-  position: absolute;
-  right: 8px;
-  bottom: 1px;
-  left: 8px;
-  height: 2px;
-  background: #c6f441;
-  content: '';
-}
-
-.site-icon {
-  display: block;
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-}
-
-.site-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-
-.site-sign-in {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 35px;
-  padding: 0 14px;
-  border: 1px solid #c6f441;
-  border-radius: 3px;
-  background: #c6f441;
-  color: #10140b;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  text-transform: uppercase;
-  transition:
-    background-color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.site-sign-in:hover {
-  background: #d8ff6a;
-  transform: translateY(-1px);
-}
-
-.site-header .user-menu-btn {
-  min-height: 35px;
-  padding: 6px 10px;
-  border: 1px solid #30372b;
-  border-radius: 3px;
-  background: #151a12;
-  color: #e6e9e1;
-  font-size: 11px;
-}
-
-.site-header .user-menu-btn:hover {
-  background: #20271a;
-}
-.site-header .user-menu-btn:focus-visible {
-  outline-color: #c6f441;
-}
-.site-header .user-menu-chevron {
-  width: 14px;
-  height: 14px;
-}
-.site-header .user-menu-panel {
-  border-color: #30372b;
-  background: #111510;
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-}
-.site-header .user-menu-name,
-.site-header .user-menu-item {
-  color: #e6e9e1;
-}
-.site-header .user-menu-role,
-.site-header .user-menu-check {
-  color: #9da694;
-}
-.site-header .user-menu-avatar {
-  background: #20271a;
-  color: #c6f441;
-}
-.site-header .user-menu-divider {
-  background: #30372b;
-}
-.site-header .user-menu-item:hover,
-.site-header .user-menu-item:focus-visible {
-  background: #20271a;
-}
-.site-header .user-menu-logout {
-  color: #ff9a8d;
-}
-.site-header .user-menu-logout:hover,
-.site-header .user-menu-logout:focus-visible {
-  background: #35201d;
-}
-
-@media (max-width: 900px) {
-  .site-header {
-    padding: 0 18px;
-  }
-  .site-header-inner {
-    flex-wrap: wrap;
-    gap: 10px 18px;
-  }
-  .site-nav {
-    order: 3;
-    justify-content: flex-start;
-    width: 100%;
-    flex-basis: 100%;
-  }
-  .site-header-actions {
-    margin-left: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .site-header {
-    padding: 0 12px;
-  }
-  .site-notice {
-    gap: 8px;
-    padding: 5px 7px;
-    font-size: 10px;
-  }
-  .site-notice-label {
-    gap: 4px;
-  }
-  .site-notice-details {
-    padding: 4px 7px;
-    font-size: 9px;
-  }
-  .site-header-inner {
-    gap: 10px 8px;
-    padding: 8px 0;
-  }
-  .site-brand .nav-logo-img {
-    height: 34px;
-    max-width: 140px;
-  }
-  .site-header-actions {
-    gap: 6px;
-  }
-  .site-sign-in {
-    min-height: 32px;
-    padding: 0 9px;
-    font-size: 9px;
-  }
-  .site-nav {
-    gap: 2px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .site-nav::-webkit-scrollbar {
-    display: none;
-  }
-  .site-nav a {
-    gap: 5px;
-    padding: 8px 7px;
-    font-size: 11px;
-  }
-  .site-nav a.active::after {
-    right: 7px;
-    left: 7px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-nav a,
-  .site-sign-in {
-    transition: none;
-  }
-}
-
-/* Header layout matching the CST-SFBS reference */
-.header {
-  position: sticky !important;
-  top: 0;
-  z-index: 100 !important;
-  height: 112px !important;
-  display: grid !important;
-  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);
-  align-items: center !important;
-  justify-content: initial !important;
-  gap: 32px;
-  padding: 0 60px !important;
-  border: 0 !important;
-  border-bottom: 0 !important;
+/* ---------- Header layout matching the CST-SFBS reference ---------- */
+.header {                                /* Main blue-green header bar */
+  position: sticky !important;           /* Stay at the top while scrolling (forced) */
+  top: 0;                                /* Stick at the very top */
+  z-index: 100 !important;               /* Show above the other content (forced) */
+  height: 112px !important;              /* Fixed header height (forced) */
+  display: grid !important;              /* Use a grid layout (forced) */
+  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);    /* Left | center | right columns */
+  align-items: center !important;        /* Center up and down (forced) */
+  justify-content: initial !important;   /* Reset sideways alignment (forced) */
+  gap: 32px;                             /* Space between the columns */
+  padding: 0 60px !important;            /* Space on the left and right (forced) */
+  border: 0 !important;                  /* No border (forced) */
+  border-bottom: 0 !important;           /* No bottom border (forced) */
   background:
     radial-gradient(circle at 48% 15%, rgba(55, 105, 135, 0.38), transparent 38%),
-    linear-gradient(90deg, #295361 0%, #295361 48%, #295361 100%) !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    #295361 !important;
 }
 
 /* (the dark strip under the header was removed) */
-.nav-brand {
-  display: inline-flex;
-  align-items: center;
-  width: 145px;
-  height: 100%;
-  text-decoration: none;
+.nav-brand {                             /* The logo link */
+  display: inline-flex;                  /* Flex, but only as wide as needed */
+  align-items: center;                   /* Center up and down */
+  width: 145px;                          /* Logo area width */
+  height: 100%;                          /* Full header height */
+  text-decoration: none;                 /* Remove the link underline */
 }
 
-.nav-brand .nav-logo-img {
-  width: 145px;
-  height: 92px;
-  object-fit: contain;
-  filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+.nav-brand .nav-logo-img {               /* The logo image */
+  width: 145px;                          /* Logo width */
+  height: 92px;                          /* Logo height */
+  object-fit: contain;                   /* Show the full logo without cutting */
+  filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));    /* Make the logo white and add a small shadow */
 }
 
-.header .nav {
-  display: flex;
-  align-self: stretch;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+.header .nav {                           /* The menu links in the center */
+  display: flex;                         /* Put the links in a row */
+  align-self: stretch;                   /* Make the menu as tall as the header */
+  align-items: center;                   /* Center up and down */
+  justify-content: center;               /* Center sideways */
+  gap: 16px;                             /* Space between the links */
 }
 
-.logo-home-transition {
-  position: fixed;
-  z-index: 10000;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  padding: 28px;
-  background:
-    radial-gradient(ellipse at 50% 42%, rgba(210, 178, 104, 0.12), transparent 34%),
-    linear-gradient(145deg, #173e39, #102c2b 68%, #122a29);
-  color: #f7f3e8;
-  animation: logo-transition-enter 0.24s ease-out both;
+/* ---------- Logo transition screen (full-screen intro when going home) ---------- */
+.logo-home-transition {                  /* The full-screen cover */
+  position: fixed;                       /* Fix it to the screen */
+  z-index: 10000;                        /* Show above everything */
+  inset: 0;                              /* Cover the whole screen */
+  display: grid;                         /* Use a grid so the content can be centered */
+  place-items: center;                   /* Center the content */
+  overflow: hidden;                      /* Hide anything that goes outside */
+  padding: 28px;                         /* Space around the content */
+  background:                            /* Background has 2 layers */
+    radial-gradient(ellipse at 50% 42%, rgba(210, 178, 104, 0.12), transparent 34%),    /* Soft gold glow in the middle */
+    linear-gradient(145deg, #173e39, #102c2b 68%, #122a29);                             /* Dark green gradient */
+  color: #f7f3e8;                        /* Warm white text */
+  animation: logo-transition-enter 0.24s ease-out both;    /* Fade in quickly */
 }
 
-.logo-transition-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: min(100%, 700px);
-  text-align: center;
+.logo-transition-content {               /* Wrapper for the logo and texts */
+  position: relative;                    /* So it can sit above the orbit circle */
+  z-index: 1;                            /* Show above the orbit circle */
+  display: flex;                         /* Use flex */
+  flex-direction: column;                /* Stack the items top to bottom */
+  align-items: center;                   /* Center sideways */
+  width: min(100%, 700px);               /* Full width, but never wider than 700px */
+  text-align: center;                    /* Center the text */
 }
 
-.logo-transition-orbit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(72vw, 430px);
-  aspect-ratio: 1;
-  border: 1px solid rgba(218, 187, 116, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -68%) scale(0.8);
-  animation: logo-transition-orbit 1.3s ease-out both;
+.logo-transition-orbit {                 /* The big thin circle behind the logo */
+  position: absolute;                    /* Place it freely */
+  top: 50%;                              /* Start at the middle (up and down) */
+  left: 50%;                             /* Start at the middle (sideways) */
+  width: min(72vw, 430px);               /* Circle size (smaller of 72% screen or 430px) */
+  aspect-ratio: 1;                       /* Make width and height equal */
+  border: 1px solid rgba(218, 187, 116, 0.2);    /* Thin gold line */
+  border-radius: 50%;                    /* Make it a circle */
+  transform: translate(-50%, -68%) scale(0.8);   /* Center it, move it up a little, make it smaller */
+  animation: logo-transition-orbit 1.3s ease-out both;    /* Grow and turn into place */
 }
 
-.logo-transition-orbit::before,
-.logo-transition-orbit::after {
-  position: absolute;
-  border: 1px solid rgba(218, 187, 116, 0.12);
-  border-radius: 50%;
-  content: '';
+.logo-transition-orbit::before,          /* Inner circle 1 */
+.logo-transition-orbit::after {          /* Inner circle 2 */
+  position: absolute;                    /* Place it freely inside the orbit */
+  border: 1px solid rgba(218, 187, 116, 0.12);    /* Very thin faint gold line */
+  border-radius: 50%;                    /* Make it a circle */
+  content: '';                           /* Empty content (needed to show the circle) */
 }
 
-.logo-transition-orbit::before {
-  inset: 9%;
+.logo-transition-orbit::before {         /* The first inner circle */
+  inset: 9%;                             /* Keep 9% space from each edge */
 }
-.logo-transition-orbit::after {
-  inset: 19%;
-}
-
-.logo-transition-mark {
-  position: relative;
-  width: min(78vw, 470px);
-  height: auto;
-  margin-bottom: 24px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-  opacity: 0;
-  transform: scale(0.78);
-  animation: logo-transition-mark 1.1s cubic-bezier(0.2, 0.75, 0.25, 1) 0.08s both;
+.logo-transition-orbit::after {          /* The second inner circle */
+  inset: 19%;                            /* Keep 19% space from each edge (smaller circle) */
 }
 
-.logo-transition-kicker {
-  margin: 0 0 12px;
-  color: #d7bc7c;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  line-height: 1.5;
-  text-transform: uppercase;
-  opacity: 0;
-  animation: logo-transition-copy 0.55s ease-out 0.65s both;
+.logo-transition-mark {                  /* The big logo image */
+  position: relative;                    /* Keep it above the orbit */
+  width: min(78vw, 470px);               /* Logo size (smaller of 78% screen or 470px) */
+  height: auto;                          /* Height follows the width */
+  margin-bottom: 24px;                   /* Space below the logo */
+  object-fit: contain;                   /* Show the full logo without cutting */
+  filter: brightness(0) invert(1);       /* Make the logo white */
+  opacity: 0;                            /* Start invisible (animation shows it) */
+  transform: scale(0.78);                /* Start smaller (animation grows it) */
+  animation: logo-transition-mark 1.1s cubic-bezier(0.2, 0.75, 0.25, 1) 0.08s both;    /* Fade and grow in after 0.08s */
 }
 
-.logo-transition-content h2 {
-  margin: 0;
-  color: #f7f3e8;
-  font-family: var(--heading-font, Barlow, system-ui, sans-serif);
-  font-size: clamp(26px, 4vw, 42px);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
-  opacity: 0;
-  animation: logo-transition-copy 0.55s ease-out 0.82s both;
+.logo-transition-kicker {                /* Small gold text above the title */
+  margin: 0 0 12px;                      /* Space below only */
+  color: #d7bc7c;                        /* Gold text */
+  font-size: 12px;                       /* Small text */
+  font-weight: 700;                      /* Bold text */
+  letter-spacing: 0.2em;                 /* Wide space between letters */
+  line-height: 1.5;                      /* Space between the lines */
+  text-transform: uppercase;             /* Make the letters CAPITAL */
+  opacity: 0;                            /* Start invisible (animation shows it) */
+  animation: logo-transition-copy 0.55s ease-out 0.65s both;    /* Slide up and fade in after 0.65s */
 }
 
-.logo-transition-caption {
-  margin: 14px 0 0;
-  color: rgba(247, 243, 232, 0.72);
-  font-size: 14px;
-  letter-spacing: 0.035em;
-  line-height: 1.5;
-  opacity: 0;
-  animation: logo-transition-copy 0.55s ease-out 1s both;
+.logo-transition-content h2 {            /* The big title */
+  margin: 0;                             /* Remove the default space */
+  color: #f7f3e8;                        /* Warm white text */
+  font-family: var(--heading-font, Barlow, system-ui, sans-serif);    /* Use the site heading font */
+  font-size: clamp(26px, 4vw, 42px);     /* Size grows with the screen (26px to 42px) */
+  font-weight: 600;                      /* Semi-bold text */
+  letter-spacing: -0.025em;              /* Letters a little closer */
+  line-height: 1.15;                     /* Space between the lines */
+  opacity: 0;                            /* Start invisible (animation shows it) */
+  animation: logo-transition-copy 0.55s ease-out 0.82s both;    /* Slide up and fade in after 0.82s */
 }
 
-.logo-transition-skip {
-  position: absolute;
-  right: max(24px, env(safe-area-inset-right));
-  bottom: max(22px, env(safe-area-inset-bottom));
-  min-height: 42px;
-  padding: 0 16px;
-  border: 1px solid rgba(247, 243, 232, 0.38);
-  border-radius: 999px;
-  background: rgba(247, 243, 232, 0.06);
-  color: #f7f3e8;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease;
+.logo-transition-caption {               /* Small text under the title */
+  margin: 14px 0 0;                      /* Space above only */
+  color: rgba(247, 243, 232, 0.72);      /* Slightly faded white text */
+  font-size: 14px;                       /* Text size */
+  letter-spacing: 0.035em;               /* Little space between letters */
+  line-height: 1.5;                      /* Space between the lines */
+  opacity: 0;                            /* Start invisible (animation shows it) */
+  animation: logo-transition-copy 0.55s ease-out 1s both;    /* Slide up and fade in after 1s */
 }
 
-.logo-transition-skip:hover,
-.logo-transition-skip:focus-visible {
-  border-color: #d7bc7c;
-  background: rgba(247, 243, 232, 0.12);
+.logo-transition-skip {                  /* The "Skip" button */
+  position: absolute;                    /* Place it freely */
+  right: max(24px, env(safe-area-inset-right));      /* Distance from the right (safe on phones with notches) */
+  bottom: max(22px, env(safe-area-inset-bottom));    /* Distance from the bottom (safe on phones) */
+  min-height: 42px;                      /* Minimum button height */
+  padding: 0 16px;                       /* Space on the left and right */
+  border: 1px solid rgba(247, 243, 232, 0.38);       /* Thin faded white border */
+  border-radius: 999px;                  /* Fully rounded ends */
+  background: rgba(247, 243, 232, 0.06); /* Very faint white background */
+  color: #f7f3e8;                        /* Warm white text */
+  font: inherit;                         /* Use the same font as the page */
+  font-size: 13px;                       /* Text size */
+  cursor: pointer;                       /* Show a hand when the mouse is over it */
+  transition:                            /* Smooth change when hovering */
+    background-color 0.18s ease,         /* Smooth background color change */
+    border-color 0.18s ease;             /* Smooth border color change */
 }
 
-.logo-transition-skip:focus-visible {
-  outline: 2px solid #d7bc7c;
-  outline-offset: 3px;
+.logo-transition-skip:hover,             /* When the mouse is over the button */
+.logo-transition-skip:focus-visible {    /* Or when selected with the keyboard */
+  border-color: #d7bc7c;                 /* Gold border */
+  background: rgba(247, 243, 232, 0.12); /* Slightly brighter background */
 }
 
-.logo-home-transition.is-leaving {
-  animation: logo-transition-exit 0.32s ease-in both;
-}
-.logo-home-transition.is-leaving .logo-transition-content {
-  animation: logo-transition-story-exit 0.32s ease-in both;
+.logo-transition-skip:focus-visible {    /* When selected with the keyboard */
+  outline: 2px solid #d7bc7c;            /* Gold focus ring */
+  outline-offset: 3px;                   /* Space between the button and the ring */
 }
 
-@keyframes logo-transition-enter {
-  from {
-    opacity: 0;
+.logo-home-transition.is-leaving {                                  /* When the screen is closing */
+  animation: logo-transition-exit 0.32s ease-in both;               /* Fade out */
+}
+.logo-home-transition.is-leaving .logo-transition-content {         /* The content while closing */
+  animation: logo-transition-story-exit 0.32s ease-in both;         /* Fade out and grow a little */
+}
+
+/* ---------- Animation steps ---------- */
+@keyframes logo-transition-enter {       /* Screen fades in */
+  from {                                 /* Start */
+    opacity: 0;                          /* Invisible */
   }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes logo-transition-exit {
-  to {
-    opacity: 0;
+  to {                                   /* End */
+    opacity: 1;                          /* Fully visible */
   }
 }
 
-@keyframes logo-transition-story-exit {
-  to {
-    opacity: 0;
-    transform: scale(1.045);
+@keyframes logo-transition-exit {        /* Screen fades out */
+  to {                                   /* End */
+    opacity: 0;                          /* Invisible */
   }
 }
 
-@keyframes logo-transition-orbit {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -68%) scale(0.65) rotate(-18deg);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -68%) scale(1) rotate(0);
+@keyframes logo-transition-story-exit {  /* Content fades out while growing a little */
+  to {                                   /* End */
+    opacity: 0;                          /* Invisible */
+    transform: scale(1.045);             /* Slightly bigger */
   }
 }
 
-@keyframes logo-transition-mark {
-  0% {
-    opacity: 0;
-    filter: brightness(0) invert(1) blur(8px);
-    transform: scale(0.78);
+@keyframes logo-transition-orbit {       /* Orbit circle grows and turns into place */
+  0% {                                   /* Start */
+    opacity: 0;                          /* Invisible */
+    transform: translate(-50%, -68%) scale(0.65) rotate(-18deg);    /* Small and turned left */
   }
-  70% {
-    opacity: 1;
-    filter: brightness(0) invert(1) blur(0);
-    transform: scale(1.035);
-  }
-  100% {
-    opacity: 1;
-    filter: brightness(0) invert(1) blur(0);
-    transform: scale(1);
+  100% {                                 /* End */
+    opacity: 1;                          /* Fully visible */
+    transform: translate(-50%, -68%) scale(1) rotate(0);            /* Normal size, not turned */
   }
 }
 
-@keyframes logo-transition-copy {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+@keyframes logo-transition-mark {        /* Logo appears: blurry and small, then sharp */
+  0% {                                   /* Start */
+    opacity: 0;                          /* Invisible */
+    filter: brightness(0) invert(1) blur(8px);       /* White and blurry */
+    transform: scale(0.78);              /* Small */
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  70% {                                  /* Most of the way */
+    opacity: 1;                          /* Fully visible */
+    filter: brightness(0) invert(1) blur(0);         /* White and sharp */
+    transform: scale(1.035);             /* A little bigger than normal (small bounce) */
   }
-}
-
-@media (max-width: 600px) {
-  .logo-home-transition {
-    padding: 24px;
-  }
-  .logo-transition-mark {
-    width: min(82vw, 390px);
-    margin-bottom: 18px;
-  }
-  .logo-transition-orbit {
-    width: 82vw;
-    transform: translate(-50%, -76%) scale(0.8);
-  }
-  .logo-transition-content h2 {
-    max-width: 360px;
-  }
-  .logo-transition-caption {
-    max-width: 300px;
-    font-size: 13px;
+  100% {                                 /* End */
+    opacity: 1;                          /* Fully visible */
+    filter: brightness(0) invert(1) blur(0);         /* White and sharp */
+    transform: scale(1);                 /* Normal size */
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .logo-home-transition,
-  .logo-home-transition.is-leaving,
-  .logo-transition-orbit,
-  .logo-transition-mark,
-  .logo-transition-kicker,
-  .logo-transition-content h2,
-  .logo-transition-caption {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+@keyframes logo-transition-copy {        /* Text slides up and fades in */
+  from {                                 /* Start */
+    opacity: 0;                          /* Invisible */
+    transform: translateY(12px);         /* 12px lower than the final place */
+  }
+  to {                                   /* End */
+    opacity: 1;                          /* Fully visible */
+    transform: translateY(0);            /* In the final place */
+  }
+}
+
+/* ---------- Mobile screens (600px or smaller) ---------- */
+@media (max-width: 600px) {              /* Apply these rules only on phones */
+  .logo-home-transition {                /* The full-screen cover */
+    padding: 24px;                       /* Less space around the content */
+  }
+  .logo-transition-mark {                /* The big logo */
+    width: min(82vw, 390px);             /* Slightly smaller logo */
+    margin-bottom: 18px;                 /* Less space below the logo */
+  }
+  .logo-transition-orbit {               /* The big thin circle */
+    width: 82vw;                         /* Circle size follows the screen width */
+    transform: translate(-50%, -76%) scale(0.8);    /* Move it a bit higher */
+  }
+  .logo-transition-content h2 {          /* The title */
+    max-width: 360px;                    /* Do not get wider than 360px */
+  }
+  .logo-transition-caption {             /* The small text */
+    max-width: 300px;                    /* Do not get wider than 300px */
+    font-size: 13px;                     /* Smaller text */
+  }
+}
+
+/* ---------- Users who want less animation ---------- */
+@media (prefers-reduced-motion: reduce) {    /* Apply when the user turned on "reduce motion" */
+  .logo-home-transition,                     /* The cover */
+  .logo-home-transition.is-leaving,          /* The cover while closing */
+  .logo-transition-orbit,                    /* The circle */
+  .logo-transition-mark,                     /* The logo */
+  .logo-transition-kicker,                   /* The small gold text */
+  .logo-transition-content h2,               /* The title */
+  .logo-transition-caption {                 /* The small text */
+    animation-duration: 0.01ms !important;   /* Make the animation almost instant */
+    animation-iteration-count: 1 !important; /* Play only once */
   }
 }
 
@@ -761,9 +420,6 @@
     text-overflow: ellipsis;
     grid-column: 2;
     grid-row: 1;
-  }
-  .nav-brand {
-    max-width: 150px;
   }
   .nav-brand {
     max-width: 96px;
