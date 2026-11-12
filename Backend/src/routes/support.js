@@ -4,9 +4,9 @@
 const express = require('express');                         // web framework
 const pool = require('../db');                              // database connection pool
 const { authenticate } = require('../auth');                // checks the user is logged in
-
 const router = express.Router();                            // new router for this file
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;         // simple email check
+const { notifyAdmins } = require('../adminNotify');    // Helper that emails the admin(s)
 
 // ==============================================================
 // OPTIONAL AUTH - login is not needed, but use it if it is sent
@@ -66,6 +66,19 @@ router.post('/requests', optionalAuthenticate, async (req, res) => {
       [req.user?.id || null, cleanName, cleanEmail, cleanMessage],
     );                                                      // end of insert
     const request = result.rows[0];                         // the new row we just saved
+
+    const ticketId = `CST-${request.year}-${String(request.id).padStart(6, '0')}`;    // Ticket id like CST-2026-000123
+    // ----- email the admin(s) (no await, so the user does not wait) -----
+    notifyAdmins({                                                                    // Send the alert
+      subject: `New support request ${ticketId}`,                                     // Mail title
+      text:                                                                           // Mail body, joined from short lines
+        'A new support request was submitted.\n\n' +                                  // Intro line
+        `Ticket: ${ticketId}\n` +                                                     // Ticket number
+        `From: ${cleanName} <${cleanEmail}>\n` +                                      // Sender name and email
+        `Signed in: ${req.user ? 'yes' : 'no (visitor)'}\n\n` +                       // Is the sender logged in
+        `Message:\n${cleanMessage}\n\n` +                                             // What the user wrote
+        'Open Admin > Support to review and reply.',                                  // What to do next
+    });                                                                               // End of notifyAdmins
 
     // ----------------------------------------------------------
     // send the ticket back to the user

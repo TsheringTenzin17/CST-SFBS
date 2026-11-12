@@ -24,6 +24,7 @@
 const express = require('express');                                                                           // web framework to make routes
 const pool = require('../db');                                                                                // our database connection
 const { authenticate, requireAdmin } = require('../auth');                                                    // login check and admin-only check
+const { notifyAdmins } = require('../adminNotify');    // Helper that emails the admin(s)
 const {                                                                                                       // time helper functions (all use Bhutan time)
   bhutanNow,                                                                                                  // current date and time in Bhutan
   bookingWindow,                                                                                              // first and last date that can be booked
@@ -427,7 +428,25 @@ router.post('/', authenticate, async (req, res) => {                            
         return res                                                                                            // send error
           .status(400)                                                                                        // bad request
           .json({ error: 'The journal number must be 100 characters or fewer.' });                            // error text
-      }                                                                                                       // end of check
+      }             
+            // ----- block a journal number that was already used -----
+      const journalKey = paymentJournalNumber.trim().toLowerCase();                                             // Clean version: no spaces, lowercase
+      await client.query(                                                                                       // Lock this journal number, so two requests cannot use it together
+        'SELECT pg_advisory_xact_lock(1002, hashtext($1))',                                                     // Lock number 1002 + the journal text
+        [journalKey],                                                                                           // Value for $1
+      );                                                                                                        // End of the lock query
+      const duplicate = await client.query(                                                                     // Look for the same journal number in other bookings
+        `SELECT 1 FROM bookings -- We only need to know if a row exists
+         WHERE lower(trim(payment_journal_number)) = $1 -- Same number, ignoring spaces and case
+           AND status IN ('pending', 'approved', 'expired') -- Cancelled ones are allowed to be reused
+         LIMIT 1`,                                                                                              // Stop at the first match
+        [journalKey],                                                                                           // Value for $1
+      );                                                                                                        // End of the duplicate query
+      if (duplicate.rows.length > 0) {                                                                          // The number was already used
+        await client.query('ROLLBACK');                                                                         // Undo everything
+        return res.status(400).json({ error: 'This journal number was already used for another booking.' });    // Tell the user
+      }
+                                                                                                               // End of the duplicate check                                                                                          // end of check
       const screenshotError = paymentScreenshotError(req.body.payment_screenshot);                            // check the screenshot
       if (screenshotError) {                                                                                  // screenshot is not fine
         await client.query('ROLLBACK');                                                                       // undo everything
@@ -492,7 +511,34 @@ router.post('/', authenticate, async (req, res) => {                            
         startTime: start,                                                                                     // start time
         endTime: end,                                                                                         // end time
       });                                                                                                     // end of email
-    }                                                                                                         // end of check
+    }  
+    if (requiresPayment) {                                                        // Only paid bookings need the admin to check payment
+      // ----- get names for the admin email -----
+      const who = await pool.query(                                               // Ask the database for booking details
+        `SELECT u.full_name, u.email, u.role, u.contact_number, -- Who booked
+                f.name AS facility_name -- Which facility
+         FROM users u JOIN facilities f ON f.id = $2 -- Join user and facility
+         WHERE u.id = $1`,                                                        // Only this user
+        [req.user.id, facility_id],                                               // Values for $1 and $2
+      );                                                                          // End of the query
+      const w = who.rows[0] || {};                                                // The row, or an empty object
+      // ----- send the alert (no await, so the user does not wait) -----
+      notifyAdmins({                                                              // Email the admin(s)
+        subject: `New paid booking to approve - BK-${inserted.rows[0].id}`,       // Mail title
+        text:                                                                     // Mail body, joined from short lines
+          'A commercial/outsider booking is waiting for your approval.\n\n' +     // Intro line
+          `Booking: BK-${inserted.rows[0].id}\n` +                                // Booking number
+          `Booked by: ${w.full_name} (${w.role}) - ${w.email}\n` +                // Name, role and email
+          `Phone: ${w.contact_number || 'not given'}\n` +                         // Phone number
+          `Facility: ${w.facility_name}\n` +                                      // Facility name
+          `Date: ${booking_date}\n` +                                             // Booking date
+          `Time: ${start}-${end}\n` +                                             // Start and end time
+          `Amount: Nu. ${paymentAmount}\n` +                                      // Money to be paid
+          `Journal number: ${paymentJournalNumber}\n\n` +                         // Payment reference
+          'Open Admin > Bookings, check the screenshot and journal number, ' +    // What to do
+          'then approve the booking once the payment is confirmed.',              // Last instruction
+      });                                                                         // End of notifyAdmins
+    }                                                                             // End of the requiresPayment check                                                                                                       // end of check
     res.status(201).json({                                                                                    // 201 = created, send the result
       booking: {                                                                                              // the new booking
         ...inserted.rows[0],                                                                                  // values saved in the database

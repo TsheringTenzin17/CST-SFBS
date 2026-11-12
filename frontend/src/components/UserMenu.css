@@ -1,134 +1,172 @@
 /* User-menu trigger and account dropdown panel. */
-.user-menu {
-  position: relative;
-}
+
+/* ----- Menu wrapper ----- */
+
+/* Holds the button and the panel; the panel is placed relative to this box */
+.user-menu {             /* Select the menu wrapper */
+  position: relative;    /* Make this the reference point for the panel */
+}                        /* End of .user-menu */
+
+/* ----- Trigger button ----- */
 
 /* Pill */
-.user-menu-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #eaf1f8;
-  color: #0f3b4f;
-  border: none;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.user-menu-btn:hover {
-  background: #dde9f4;
-}
-.user-menu-btn:focus-visible {
-  outline: 2px solid #0b57c3;
-  outline-offset: 2px;
-}
+/* The round button that opens the menu */
+.user-menu-btn {                   /* Select the menu button */
+  display: flex;                   /* Put the content in a row */
+  align-items: center;             /* Center the content up and down */
+  gap: 8px;                        /* Leave 8px of space between items */
+  padding: 10px 16px;              /* Space inside: 10px top/bottom, 16px left/right */
+  background: #eaf1f8;             /* Light blue background */
+  color: #0f3b4f;                  /* Dark blue text */
+  border: none;                    /* Remove the default border */
+  border-radius: 999px;            /* Make the ends fully round (pill shape) */
+  font-size: 14px;                 /* Text size */
+  font-weight: 600;                /* Semi-bold text */
+  cursor: pointer;                 /* Show a hand when the mouse is over it */
+  transition: background 0.15s;    /* Fade the background color smoothly */
+}                                  /* End of .user-menu-btn */
 
-.user-menu-chevron {
-  transition: transform 0.2s;
-}
-.user-menu-chevron.open {
-  transform: rotate(180deg);
-}
+/* Slightly darker background when the mouse is over the button */
+.user-menu-btn:hover {    /* Select the button on mouse hover */
+  background: #dde9f4;    /* Use a darker blue background */
+}                         /* End of hover rule */
+
+/* Show a clear outline when the button is reached with the keyboard */
+.user-menu-btn:focus-visible {     /* Select the button when focused by keyboard */
+  outline: 2px solid #0b57c3;      /* Draw a 2px blue outline */
+  outline-offset: 2px;             /* Move the outline 2px away from the button */
+}                                  /* End of focus rule */
+
+/* The small arrow icon inside the button */
+.user-menu-chevron {                  /* Select the arrow icon */
+  transition: transform 0.2s;         /* Turn the arrow smoothly in 0.2 seconds */
+}                                     /* End of .user-menu-chevron */
+
+/* Flip the arrow upside down when the menu is open */
+.user-menu-chevron.open {       /* Select the arrow when it also has the "open" class */
+  transform: rotate(180deg);    /* Turn the arrow half a circle */
+}                               /* End of open rule */
+
+/* ----- Dropdown panel ----- */
 
 /* Panel */
-.user-menu-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 260px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(15, 59, 79, 0.12);
-  padding: 8px 0;
-  z-index: 1000;
-}
+/* The white box that drops down under the button */
+.user-menu-panel {              /* Select the dropdown panel */
+  position: absolute;           /* Place it freely inside .user-menu */
+  top: calc(100% + 8px);        /* Put it just under the button with an 8px gap */
+  right: 0;                     /* Line up its right edge with the wrapper */
+  width: 260px;                 /* Fixed panel width */
+  background: #fff;             /* White background */
+  border: 1px solid #e2e8f0;    /* Thin light grey border */
+  border-radius: 14px;          /* Round the corners */
+  box-shadow: 0 10px 30px rgba(15, 59, 79, 0.12);    /* Soft shadow so the panel looks raised */
+  padding: 8px 0;               /* Space inside: 8px top/bottom, none left/right */
+  z-index: 1000;                /* Show the panel above other page content */
+}                               /* End of .user-menu-panel */
 
-.user-menu-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-}
-.user-menu-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #eaf1f8;
-  color: #0f3b4f;
-  flex-shrink: 0;
-}
-.user-menu-who {
-  flex: 1;
-  min-width: 0;
-}
-.user-menu-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f3b4f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-menu-role {
-  font-size: 12px;
-  color: #64748b;
-}
-.user-menu-check {
-  color: #64748b;
-  flex-shrink: 0;
-}
+/* Top part of the panel with the avatar and the name */
+.user-menu-head {         /* Select the panel header */
+  display: flex;          /* Put the content in a row */
+  align-items: center;    /* Center the content up and down */
+  gap: 12px;              /* Leave 12px of space between items */
+  padding: 12px 16px;     /* Space inside: 12px top/bottom, 16px left/right */
+}                         /* End of .user-menu-head */
 
-.user-menu-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 6px 0;
-}
+/* Round circle that holds the user icon */
+.user-menu-avatar {              /* Select the avatar circle */
+  display: flex;                 /* Use flex to center the icon */
+  align-items: center;           /* Center the icon up and down */
+  justify-content: center;       /* Center the icon left and right */
+  width: 40px;                   /* Circle width */
+  height: 40px;                  /* Circle height */
+  border-radius: 50%;            /* Make the box a perfect circle */
+  background: #eaf1f8;           /* Light blue background */
+  color: #0f3b4f;                /* Dark blue icon color */
+  flex-shrink: 0;                /* Do not let the circle get smaller */
+}                                /* End of .user-menu-avatar */
 
-.user-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 11px 16px;
-  background: none;
-  border: none;
-  font: inherit;
-  font-size: 15px;
-  color: #334155;
-  text-decoration: none;
-  text-align: left;
-  cursor: pointer;
-}
-.user-menu-item:hover,
-.user-menu-item:focus-visible {
-  background: #f1f5f9;
-  outline: none;
-}
+/* Box that holds the name and the role text */
+.user-menu-who {     /* Select the name and role box */
+  flex: 1;           /* Take all the free space in the row */
+  min-width: 0;      /* Allow this box to shrink so long text can be cut */
+}                    /* End of .user-menu-who */
 
-.user-menu-logout {
-  color: #dc2626;
-  font-weight: 700;
-}
-.user-menu-logout:hover,
-.user-menu-logout:focus-visible {
-  background: #fef2f2;
-}
+/* The user's name (cut with "..." if it is too long) */
+.user-menu-name {                  /* Select the name text */
+  font-size: 15px;                 /* Text size */
+  font-weight: 700;                /* Bold text */
+  color: #0f3b4f;                  /* Dark blue text */
+  white-space: nowrap;             /* Keep the name on one line */
+  overflow: hidden;                /* Hide any text that does not fit */
+  text-overflow: ellipsis;         /* Show "..." where the text is cut */
+}                                  /* End of .user-menu-name */
 
-@media (max-width: 480px) {
-  .user-menu-btn-name {
-    max-width: 90px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .user-menu-panel {
-    width: 230px;
-  }
-}
+/* The user's role under the name */
+.user-menu-role {         /* Select the role text */
+  font-size: 12px;        /* Small text size */
+  color: #64748b;         /* Grey text */
+}                         /* End of .user-menu-role */
+
+/* Small check icon on the right side of the header */
+.user-menu-check {        /* Select the check icon */
+  color: #64748b;         /* Grey icon color */
+  flex-shrink: 0;         /* Do not let the icon get smaller */
+}                         /* End of .user-menu-check */
+
+/* Thin line that separates parts of the panel */
+.user-menu-divider {          /* Select the divider line */
+  height: 1px;                /* Make the line 1px thick */
+  background: #e2e8f0;        /* Light grey line color */
+  margin: 6px 0;              /* 6px space above and below the line */
+}                             /* End of .user-menu-divider */
+
+/* A clickable row in the panel (link or button) */
+.user-menu-item {              /* Select a menu row */
+  display: flex;               /* Put the icon and text in a row */
+  align-items: center;         /* Center the content up and down */
+  gap: 12px;                   /* Leave 12px of space between icon and text */
+  width: 100%;                 /* Make the row as wide as the panel */
+  padding: 11px 16px;          /* Space inside: 11px top/bottom, 16px left/right */
+  background: none;            /* No background color */
+  border: none;                /* Remove the default border */
+  font: inherit;               /* Use the same font as the parent */
+  font-size: 15px;             /* Text size */
+  color: #334155;              /* Dark grey text */
+  text-decoration: none;       /* Remove the underline from links */
+  text-align: left;            /* Align the text to the left */
+  cursor: pointer;             /* Show a hand when the mouse is over it */
+}                              /* End of .user-menu-item */
+
+/* Grey background on hover or keyboard focus */
+.user-menu-item:hover,                 /* Select a row on mouse hover, and ... */
+.user-menu-item:focus-visible {        /* ... a row focused by keyboard */
+  background: #f1f5f9;                 /* Very light grey background */
+  outline: none;                       /* Remove the default outline (the grey background shows focus) */
+}                                      /* End of hover and focus rule */
+
+/* Special style for the logout row */
+.user-menu-logout {       /* Select the logout row */
+  color: #dc2626;         /* Red text */
+  font-weight: 700;       /* Bold text */
+}                         /* End of .user-menu-logout */
+
+/* Light red background on hover or keyboard focus */
+.user-menu-logout:hover,                 /* Select the logout row on mouse hover, and ... */
+.user-menu-logout:focus-visible {        /* ... the logout row focused by keyboard */
+  background: #fef2f2;                   /* Very light red background */
+}                                        /* End of logout hover and focus rule */
+
+/* ----- Small screens ----- */
+
+/* Changes that only apply on screens 480px wide or smaller */
+@media (max-width: 480px) {     /* Start of the phone-size rules */
+  .user-menu-btn-name {         /* Select the name text inside the button */
+    max-width: 90px;            /* Limit the name to 90px wide */
+    overflow: hidden;           /* Hide any text that does not fit */
+    text-overflow: ellipsis;    /* Show "..." where the text is cut */
+    white-space: nowrap;        /* Keep the name on one line */
+  }                             /* End of .user-menu-btn-name */
+  .user-menu-panel {            /* Select the dropdown panel */
+    width: 230px;               /* Make the panel narrower on small screens */
+  }                             /* End of .user-menu-panel */
+}                               /* End of the media query */
