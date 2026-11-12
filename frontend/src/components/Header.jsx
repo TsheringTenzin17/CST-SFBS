@@ -6,9 +6,9 @@ import './Header.css';                                                // Import 
 import NotificationBell from './NotificationBell';                    // Import the new notification bell component
 
 // AdminNavIcon draws a small icon for each admin menu link
-function AdminNavIcon({ to }) {                                       // "to" is the link path, used to pick the icon
-  const paths = {                                                     // List of icons; the key is the page path
-    '/admin/dashboard': (                                             // Icon for Dashboard (a chart)
+function AdminNavIcon({ to }) {                  // "to" is the link path, used to pick the icon
+  const paths = {                                // List of icons; the key is the page path
+    '/admin/dashboard': (                        // Icon for Dashboard (a chart)
       <>                                                              {/* Group the shapes without an extra tag */}
         <path d="M4 19V5M4 19h16" />                                  {/* Chart axis lines */}
         <path d="m7 15 3-4 3 2 5-7" />                                {/* Chart line going up */}
@@ -59,10 +59,10 @@ function AdminNavIcon({ to }) {                                       // "to" is
 
   return (
     <svg className="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true">    {/* Icon canvas (24 x 24); hidden from screen readers */}
-      {paths[to] || (                                                 // Use the icon for this path, or the default icon below
-        <>                                                            {/* Group the default shapes */}
-          <circle cx="12" cy="12" r="8" />                            {/* Default circle */}
-          <path d="M8 12h8m-4-4v8" />                                 {/* Plus sign inside the circle */}
+      {paths[to] || (                                       // Use the icon for this path, or the default icon below
+        <>                                                  {/* Group the default shapes */}
+          <circle cx="12" cy="12" r="8" />                  {/* Default circle */}
+          <path d="M8 12h8m-4-4v8" />                       {/* Plus sign inside the circle */}
         </>
       )}
     </svg>
@@ -81,6 +81,7 @@ function Header({ links, homeTo = '/' }) {                            // "links"
   const navRef = useRef(null);                                        // Reference to the main menu (nav)
   const adminTabBarRef = useRef(null);                                // Reference to the admin bottom tab bar
   const isAdminNavigation = Boolean(links);                           // True when admin links were given
+    const navLinks = links?.filter(({ to }) => to !== '/admin/reports');    // Admin links without Reports (it moved to the user dropdown)
   const quickAdminLinks =                                             // The 4 main admin links for the bottom tab bar
     links?.filter(({ to }) =>                                         // Keep only some of the admin links
       ['/admin/dashboard', '/admin/bookings', '/admin/facilities', '/admin/users'].includes(to),    // The 4 allowed paths
@@ -122,16 +123,16 @@ function Header({ links, homeTo = '/' }) {                            // "links"
     transitionTimeoutRef.current = window.setTimeout(() => {          // After the intro time
       setLogoTransition('leaving');                                   // Start the fade-out animation
       transitionTimeoutRef.current = window.setTimeout(() => {        // Wait for the fade-out to finish
-        navigate(homeTo);                                             // Go to the home page
-        setLogoTransition('idle');                                    // Reset the intro state
-      }, 320);                                                        // Wait 320 milliseconds
-    }, 1750);                                                         // Show the intro for 1.75 seconds
+        navigate(homeTo);                    // Go to the home page
+        setLogoTransition('idle');           // Reset the intro state
+      }, 320);                               // Wait 320 milliseconds
+    }, 1750);                                // Show the intro for 1.75 seconds
   };
 
   // Keep the mobile bottom tab bar above the footer (main menu)
   useEffect(() => {
-    const nav = navRef.current;                                       // Get the menu element
-    if (!nav) return undefined;                                       // Stop if there is no menu
+    const nav = navRef.current;                   // Get the menu element
+    if (!nav) return undefined;                   // Stop if there is no menu
 
     const updateFooterPosition = () => {                              // Work out where the footer is
       if (!window.matchMedia('(max-width: 600px)').matches) {         // If the screen is not a phone
@@ -160,8 +161,8 @@ function Header({ links, homeTo = '/' }) {                            // "links"
 
   // Keep the admin bottom tab bar above the footer (same idea as above)
   useEffect(() => {
-    const tabBar = adminTabBarRef.current;                            // Get the admin tab bar element
-    if (!tabBar) return undefined;                                    // Stop if there is no tab bar
+    const tabBar = adminTabBarRef.current;              // Get the admin tab bar element
+    if (!tabBar) return undefined;                      // Stop if there is no tab bar
 
     const updateFooterPosition = () => {                              // Work out where the footer is
       if (!window.matchMedia('(max-width: 600px)').matches) {         // If the screen is not a phone
@@ -208,31 +209,31 @@ function Header({ links, homeTo = '/' }) {                            // "links"
           aria-controls="primary-navigation"                          // This button controls the menu with this id
           onClick={() => setMenuOpen((open) => !open)}                // Click: open the menu, or close it if open
         >
-          <span />                                                    {/* Top line of the 3-line icon */}
-          <span />                                                    {/* Middle line of the 3-line icon */}
-          <span />                                                    {/* Bottom line of the 3-line icon */}
+          <span />                        {/* Top line of the 3-line icon */}
+          <span />                        {/* Middle line of the 3-line icon */}
+          <span />                        {/* Bottom line of the 3-line icon */}
         </button>
       )}
       <nav
-        ref={navRef}                                                  // Connect this menu to navRef (used for the footer position)
-        id="primary-navigation"                                       // Id so the buttons can point to this menu
+        ref={navRef}                          // Connect this menu to navRef (used for the footer position)
+        id="primary-navigation"               // Id so the buttons can point to this menu
         aria-label={links ? 'Admin navigation' : undefined}           // Label for screen readers on admin pages
         className={`nav${links ? ' nav-custom' : ''}${menuOpen ? ' is-open' : ''}`}    // Add extra classes for admin and for open menu
       >
-        {links ? (                                                    // If admin links were given
-          links.map((l) => (                                          // Go through each admin link
+        {links ? (                          // If admin links were given
+          navLinks.map((l) => (            // Go through each admin link
             <Link
-              key={l.to}                                              // Key so React can track each link
-              to={l.to}                                               // The page this link opens
-              className={isActiveSection(l.to)}                       // Add "active" for the current section
+              key={l.to}                                  // Key so React can track each link
+              to={l.to}                                   // The page this link opens
+              className={isActiveSection(l.to)}           // Add "active" for the current section
               aria-current={isActiveSection(l.to) ? 'page' : undefined}    // Tell screen readers it is the current page
             >
-              <AdminNavIcon to={l.to} />                              {/* Icon of this admin link */}
-              <span>{l.label}</span>                                  {/* Text of this admin link */}
+              <AdminNavIcon to={l.to} />           {/* Icon of this admin link */}
+              <span>{l.label}</span>               {/* Text of this admin link */}
             </Link>
           ))
-        ) : (                                                         // Otherwise show the normal links below
-          <>                                                          {/* Group the links without an extra tag */}
+        ) : (                   // Otherwise show the normal links below
+          <>                    {/* Group the links without an extra tag */}
             <Link to="/" className={isActive('/')}>                   {/* Home link */}
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">    {/* Icon canvas; hidden from screen readers */}
                 <path d="m3.6 10.6 8.2-6.9 8.6 6.8M5.7 9.2v10.5c0 .4.3.7.7.7h11.3c.4 0 .7-.3.7-.7V9.2M9.1 20.2v-6.4c0-.4.3-.7.7-.7h4.5c.4 0 .7.3.7.7v6.4" />    {/* House shape */}
@@ -294,11 +295,11 @@ function Header({ links, homeTo = '/' }) {                            // "links"
           Sign in
         </Link>
       )}
-      {isAdminNavigation && (                                         // Show the bottom tab bar only on admin pages
+      {isAdminNavigation && (                    // Show the bottom tab bar only on admin pages
         <nav
-          ref={adminTabBarRef}                                        // Connect this bar to adminTabBarRef (used for the footer position)
-          className="admin-mobile-tabbar"                             // Style class for the admin bottom bar
-          aria-label="Admin quick navigation"                         // Label for screen readers
+          ref={adminTabBarRef}                   // Connect this bar to adminTabBarRef (used for the footer position)
+          className="admin-mobile-tabbar"        // Style class for the admin bottom bar
+          aria-label="Admin quick navigation"    // Label for screen readers
         >
           {quickAdminLinks.map((link) => {                            // Go through each quick link
             const active = location.pathname.startsWith(link.to);     // Is this the current section?

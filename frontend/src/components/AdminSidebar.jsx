@@ -11,8 +11,7 @@ export const ADMIN_NAV = [                                                   // 
   { to: '/admin/tournaments', key: 'Tournaments', label: 'Tournaments' },    // Tournaments page; for managing tournaments
   { to: '/admin/users', key: 'Users', label: 'Registered Users' },          // Users page; menu text is "Registered Users"
   { to: '/admin/reports', key: 'Reports', label: 'Reports & Analytics' },    // Reports page; menu text is "Reports & Analytics"
-  { to: '/admin/settings', key: 'System Settings', label: 'System Settings' }, // Settings page for the whole system
-
+  { to: '/admin/settings', key: 'System Settings', label: 'System Settings', hidden: true },    // Moved into the user dropdown, so it is hidden from the header
   // This link is not shown in the header, so the header stays at 8 links.
   // It is opened from the System Settings page instead.
   { to: '/admin/support', key: 'Support Requests', label: 'Support Requests', hidden: true }, // "hidden: true" means do not show this in the header menu
