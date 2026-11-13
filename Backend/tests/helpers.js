@@ -33,7 +33,7 @@ async function api(method, path, body) {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: requestBody ? JSON.stringify(requestBody) : undefined,
+    body: requestBody && !['GET', 'HEAD'].includes(method) ? JSON.stringify(requestBody) : undefined,
   });
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
@@ -89,10 +89,12 @@ async function facilityId(name) {
   return r.rows[0].id;
 }
 
-// A random date in 2027 that falls on the given weekday (0=Sun ... 6=Sat).
+// A date inside the current booking window that falls on the given weekday (0=Sun ... 6=Sat).
+// The API only accepts dates from today to the end of the week, so tests use that window.
 function dateOnWeekday(dow) {
-  const d = new Date(Date.UTC(2027, 0, 1));
-  d.setUTCDate(d.getUTCDate() + Math.floor(Math.random() * 40) * 7);
+  const { bookingWindow } = require('../src/time');
+  const w = bookingWindow();
+  const d = new Date(`${w.from}T00:00:00Z`);
   while (d.getUTCDay() !== dow) d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 }

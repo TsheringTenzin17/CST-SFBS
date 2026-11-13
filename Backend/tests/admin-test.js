@@ -20,6 +20,7 @@ async function main() {
   const admin = await createUser('admin');
   const student = await createUser('student');
   const other = await createUser('student');
+  const outsider = await createUser('outsider');
   const basketball = await facilityId('Basketball Court');
   const football = await facilityId('Football Ground');
   const tuesday = dateOnWeekday(2);
@@ -794,7 +795,7 @@ async function main() {
 
   const lateApprovalBooking = await pool.query(
     `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
-     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '10:00', '11:00', 'Late approval test', 'pending')
+     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '12:00', '13:00', 'Late approval test', 'pending')
      RETURNING id`,
     [student, basketball],
   );
@@ -842,7 +843,7 @@ async function main() {
      SELECT $1, $2, local_start::date, local_start::time,
             (local_start + interval '1 hour')::time, 'Reminder opt-out test', 'approved'
      FROM slot`,
-    [other, basketball],
+    [other, football],
   );
   await processDueReminders();
   await processDueReminders();

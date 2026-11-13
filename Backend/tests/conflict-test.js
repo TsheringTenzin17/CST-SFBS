@@ -1,30 +1,11 @@
 // =============================================================
 // Backend/tests/conflict-test.js  —  Objective O3: zero double bookings
 // =============================================================
-const { api, post, createUser, facilityId, check, finish } = require('./helpers');
+const { api, post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
 const pool = require('../src/db');
 
-async function conflictFreeTuesday(facilityIds) {
-  const firstTuesday = new Date(Date.UTC(2027, 0, 5));
-  const startWeek = Math.floor(Math.random() * 52);
-
-  for (let offset = 0; offset < 52; offset += 1) {
-    const candidate = new Date(firstTuesday);
-    candidate.setUTCDate(firstTuesday.getUTCDate() + ((startWeek + offset) % 52) * 7);
-    const date = candidate.toISOString().slice(0, 10);
-    const conflicts = await pool.query(
-      `SELECT 1 FROM bookings
-       WHERE facility_id = ANY($1::int[]) AND booking_date = $2::date AND status <> 'cancelled'
-       UNION ALL
-       SELECT 1 FROM maintenance_blocks
-       WHERE facility_id = ANY($1::int[]) AND $2::date BETWEEN start_date AND end_date
-       LIMIT 1`,
-      [facilityIds, date],
-    );
-    if (conflicts.rows.length === 0) return date;
-  }
-
-  throw new Error('Could not find an unoccupied Tuesday for the conflict test');
+async function conflictFreeTuesday() {
+  return dateOnWeekday(2);
 }
 
 async function main() {

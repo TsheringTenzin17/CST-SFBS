@@ -28,6 +28,7 @@ async function main() {
   const thursday = dateOnWeekday(4);
   const saturday = dateOnWeekday(6);
   const sunday = dateOnWeekday(0);
+  const friday = dateOnWeekday(5);
   const book = (user_id, facility_id, booking_date, start_time, end_time) =>
     post({ user_id, facility_id, booking_date, start_time, end_time });
 
@@ -37,9 +38,10 @@ async function main() {
   r = await book(student, football, tuesday, '16:00', '18:00');
   check('student can book the student slot (Tue 4-6pm)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, tuesday, '18:00', '20:00');
-  check('student cannot book the commercial slot (Tue 6-8pm)', r.status === 403, `got ${r.status}`);
-  r = await book(outsider, football, tuesday, '18:00', '20:00');
-  check('outsider can book the commercial slot (Tue 6-8pm)', r.status === 201, `got ${r.status}`);
+  // DSA rule (confirmed 13 Nov 2026): commercial slots are open to students and staff too, at the paid rate.
+  check('student can book the commercial slot (Tue 6-8pm, paid)', r.status === 201, `got ${r.status}`);
+  r = await book(outsider, football, friday, '18:00', '20:00');
+  check('outsider can book the commercial slot (Fri 6-8pm)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, monday, '16:00', '18:00');
   check('student cannot book maintenance Monday', r.status === 403, `got ${r.status}`);
   r = await book(student, football, thursday, '18:00', '20:00');
@@ -57,12 +59,12 @@ async function main() {
   r = await book(student, football, saturday, '08:00', '10:00');
   check('student can book Saturday morning (before 4pm)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, saturday, '16:00', '18:00');
-  check('student cannot book Saturday evening (commercial)', r.status === 403, `got ${r.status}`);
+  check('student can book Saturday evening (commercial, paid)', r.status === 201, `got ${r.status}`);
   // Standard timetable (no tournament period covers these dates in the test DB)
   r = await book(student, football, tuesday, '20:00', '22:00');
-  check('standard: student cannot book Tue 8-10pm (hiring)', r.status === 403, `got ${r.status}`);
-  r = await book(outsider, football, tuesday, '20:00', '22:00');
-  check('standard: outsider can book Tue 8-10pm (hiring)', r.status === 201, `got ${r.status}`);
+  check('standard: student can book Tue 8-10pm (hiring, paid)', r.status === 201, `got ${r.status}`);
+  r = await book(outsider, football, friday, '20:00', '22:00');
+  check('standard: outsider can book Fri 8-10pm (hiring)', r.status === 201, `got ${r.status}`);
   r = await book(student, football, wednesday, '16:00', '18:00');
   check(
     'standard: Wed 4-6pm is reserved for female students (student blocked until gender exists)',
@@ -102,8 +104,8 @@ async function main() {
   );
   r = await book(faculty, basketball, tuesday, '17:00', '18:00');
   check(
-    'faculty cannot book basketball (DSA: students + commercial)',
-    r.status === 403,
+    'faculty can book basketball on a weekday evening (commercial, paid)',
+    r.status === 201,
     `got ${r.status}`,
   );
   r = await book(faculty, basketball, saturday, '08:00', '09:00');
