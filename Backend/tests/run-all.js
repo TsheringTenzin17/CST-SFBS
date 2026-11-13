@@ -3,7 +3,7 @@
 // =============================================================
 //   npm run test:all        (backend must be running in another terminal)
 const { spawnSync } = require('child_process');
-const files = ['conflict-test.js', 'rules-test.js', 'admin-test.js'];
+const files = ['conflict-test.js', 'conflict-load-test.js', 'rules-test.js', 'admin-test.js'];
 let failed = 0;
 for (const f of files) {
   console.log(`\n===== ${f} =====`);
