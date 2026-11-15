@@ -9,7 +9,7 @@
     "test:conflict": "node tests/conflict-test.js",
     "test:rules": "node tests/rules-test.js",
     "test:admin": "node tests/admin-test.js",
-    "test:all": "node tests/run-all.js"
+    "test:all": "node src/tests/run-all.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
