@@ -3,8 +3,8 @@
 -- old timestamp values were written by the UTC database session
 -- already converted columns are left unchanged
 
--- CONVERT created_at TO TIMESTAMPTZ, only if it is not converted yet
-DO $$                                                                   -- start of a code block, $$ marks where it begins
+-- CONVERT created_at TO TIMESTAMPTZ, only if it is not converted yet 
+--DO $$                                                                   -- start of a code block, $$ marks where it begins
 BEGIN                                                                   -- start of the steps inside the block
   IF EXISTS (                                                           -- check if a matching column is found below
     SELECT 1 FROM information_schema.columns                            -- look in the list of all table columns
