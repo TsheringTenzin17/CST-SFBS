@@ -1,5 +1,6 @@
 // Pins "now" so the weekly booking window is predictable (used only by the tests).
 const RealDate = Date;
+global.RealDate = RealDate; // tests that need the real clock can use global.RealDate
 const fake = RealDate.parse(process.env.FAKE_NOW || '');
 if (!Number.isNaN(fake)) {
   const offset = fake - RealDate.now();

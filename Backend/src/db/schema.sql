@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (                                      -- make 
   ),                                                                    -- end of the role check
   password_hash VARCHAR(255) NOT NULL,                                  -- hashed password, must be given
   contact_number VARCHAR(30),                                           -- phone number, can be empty
+  gender VARCHAR(10) CHECK (gender IN ('female', 'male')),                                         
   email_verified BOOLEAN NOT NULL DEFAULT TRUE,                         -- is the email verified, default is yes
   created_at TIMESTAMP DEFAULT now()                                    -- when the user was created, default is now
 );                                                                      -- end of the table, ; ends this command

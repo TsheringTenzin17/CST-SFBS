@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cst_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cst_test
+      DB_SSL: "false"
+      SESSION_SECRET: ci-only-secret
+      PORT: "4000"
+      API_URL: http://localhost:4000
+      PGPASSWORD: postgres
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create the database tables
+        run: |
+          DB="psql -h localhost -U postgres -d cst_test -v ON_ERROR_STOP=1 -q"
+          # Order matters: schema first, then hardening, then seed data, then the migrations.
+          for f in schema booking-hardening seed account-reminders booking-payment-proof \
+                   email-change facility-management facility-image-storage \
+                   football-commercial-slots football-timetable notification-timezone \
+                   organization pending-registrations profile-settings support-requests \
+                   user-booking-archives user-status wednesday-release; do
+            echo "Applying $f.sql"
+            $DB -f src/db/$f.sql
+          done
+          # users.gender is used by the code but no SQL file creates it yet.
+          # Remove this line once the column is added to schema.sql.
+          $DB -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(10) CHECK (gender IN ('female','male'));"
+
+      - name: Start the API (with the test clock)
+        env:
+          FAKE_NOW: "2026-11-16T02:00:00Z"
+          NODE_OPTIONS: --require ${{ github.workspace }}/Backend/tests/fake-clock.js
+        run: |
+          node src/server.js > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4000/health && exit 0
+            sleep 1
+          done
+          echo "API did not start"; cat api.log; exit 1
+
+      - name: Run the tests
+        env:
+          FAKE_NOW: "2026-11-16T02:00:00Z"
+          NODE_OPTIONS: --require ${{ github.workspace }}/Backend/tests/fake-clock.js
+        run: npm run test:all
+
+      - name: Show the API log if something failed
+        if: failure()
+        run: cat api.log
