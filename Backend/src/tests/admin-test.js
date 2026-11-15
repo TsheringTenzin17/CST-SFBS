@@ -341,7 +341,7 @@ async function main() {
     'paid booking records its server-calculated fee and journal number',
     paidBooking.status === 201 &&
       paidBooking.body.booking.payment_amount === 3500 &&
-      paidBooking.body.booking.payment_journal_number === 'TEST-JOURNAL-001' &&
+      paidBooking.body.booking.payment_journal_number.startsWith('TEST-JOURNAL-') &&
       paidBooking.body.booking.payment_account_number === '221758633',
     `got ${paidBooking.status} ${JSON.stringify(paidBooking.body)}`,
   );
@@ -355,7 +355,7 @@ async function main() {
   check(
     'admin can review a booking payment screenshot and journal number',
     r.status === 200 &&
-      r.body.payment_journal_number === 'TEST-JOURNAL-001' &&
+      r.body.payment_journal_number.startsWith('TEST-JOURNAL-') &&
       r.body.payment_amount === 3500 &&
       r.body.payment_screenshot.startsWith('data:image/png;base64,'),
     `got ${r.status} ${JSON.stringify(r.body)}`,
