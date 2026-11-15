@@ -74,8 +74,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_schedule_rule ON schedule_rules (  -- s
 );
 
 
-# 5. ARCHERY RANGE: OPEN TO EVERYONE
-# Weekdays 4pm-10pm, weekends 8am-10pm
+-- 5. ARCHERY RANGE: OPEN TO EVERYONE
+-- Weekdays 4pm-10pm, weekends 8am-10pm
 DELETE FROM schedule_rules                                         --  remove old archery rules first
 WHERE
   facility_id = (
