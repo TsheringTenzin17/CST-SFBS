@@ -1,7 +1,7 @@
-# BOOKING PAYMENT PROOF, safe to run more than once
-# run with: node src/db/run-sql.js src/db/booking-payment-proof.sql
+-- BOOKING PAYMENT PROOF, safe to run more than once
+-- run with: node src/db/run-sql.js src/db/booking-payment-proof.sql
 
-# ADD PAYMENT COLUMNS TO BOOKINGS
+-- ADD PAYMENT COLUMNS TO BOOKINGS
 ALTER TABLE bookings                                                    -- change the bookings table
 ADD COLUMN IF NOT EXISTS payment_amount INTEGER,                        -- amount the customer paid, whole number
 ADD COLUMN IF NOT EXISTS payment_journal_number VARCHAR(100),           -- journal number from the payment receipt
@@ -10,7 +10,7 @@ ADD COLUMN IF NOT EXISTS payment_verified_at TIMESTAMPTZ,               -- when 
 ADD COLUMN IF NOT EXISTS payment_resolution VARCHAR(10),                -- what we decided, refund or credit
 ADD COLUMN IF NOT EXISTS payment_resolution_completed_at TIMESTAMPTZ;   -- when the refund or credit was finished
 
-# PAYMENT AMOUNT RULE
+-- PAYMENT AMOUNT RULE
 ALTER TABLE bookings                                                    -- change the bookings table
 DROP CONSTRAINT IF EXISTS bookings_payment_amount_check;                -- remove old rule first, no error if run again
 
@@ -20,7 +20,7 @@ ADD CONSTRAINT bookings_payment_amount_check CHECK (                    -- add t
   OR payment_amount > 0                                                 -- or it must be more than 0
 );
 
-# PAYMENT RESOLUTION RULE
+-- PAYMENT RESOLUTION RULE
 ALTER TABLE bookings                                                    -- change the bookings table
 DROP CONSTRAINT IF EXISTS bookings_payment_resolution_check;            -- remove old rule first, no error if run again
 
