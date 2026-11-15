@@ -13,8 +13,8 @@ const {
   check,
   finish,
 } = require('./helpers');
-const pool = require('../src/db');
-const { expirePastPendingBookings, processDueReminders } = require('../src/reminders');
+const pool = require('../db');
+const { expirePastPendingBookings, processDueReminders } = require('../reminders');
 
 async function main() {
   const admin = await createUser('admin');

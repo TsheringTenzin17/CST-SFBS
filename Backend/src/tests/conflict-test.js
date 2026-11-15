@@ -2,7 +2,7 @@
 // Backend/tests/conflict-test.js  —  Objective O3: zero double bookings
 // =============================================================
 const { api, post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
-const pool = require('../src/db');
+const pool = require('../db');
 
 async function conflictFreeTuesday() {
   return dateOnWeekday(2);

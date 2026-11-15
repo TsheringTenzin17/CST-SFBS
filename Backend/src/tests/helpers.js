@@ -6,7 +6,7 @@
 // database without leaving junk behind or colliding with each other.
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const pool = require('../src/db');
+const pool = require('../db');
 
 const API_URL = process.env.API_URL || 'http://localhost:4000';
 const created = { users: [], blocks: [] };
@@ -92,7 +92,7 @@ async function facilityId(name) {
 // A date inside the current booking window that falls on the given weekday (0=Sun ... 6=Sat).
 // The API only accepts dates from today to the end of the week, so tests use that window.
 function dateOnWeekday(dow) {
-  const { bookingWindow } = require('../src/time');
+  const { bookingWindow } = require('../time');
   const w = bookingWindow();
   const d = new Date(`${w.from}T00:00:00Z`);
   while (d.getUTCDay() !== dow) d.setUTCDate(d.getUTCDate() + 1);

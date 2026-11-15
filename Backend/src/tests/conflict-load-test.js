@@ -1,6 +1,6 @@
 // Extra O3 evidence: 20 and 50 simultaneous requests from different users for ONE slot.
 const { post, createUser, facilityId, dateOnWeekday, check, finish } = require('./helpers');
-const pool = require('../src/db');
+const pool = require('../db');
 
 async function round(n, date, start, end, facility) {
   const users = await Promise.all(Array.from({ length: n }, () => createUser('student')));
