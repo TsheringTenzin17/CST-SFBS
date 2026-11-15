@@ -7,6 +7,8 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
+const crypto = require('crypto');
+const uniqueJournal = () => 'TEST-JOURNAL-' + crypto.randomUUID().slice(0, 8);
 
 const API_URL = process.env.API_URL || 'http://localhost:4000';
 const created = { users: [], blocks: [] };
@@ -42,7 +44,7 @@ const post = (body) =>
   api('POST', '/bookings', {
     ...body,
     payment_screenshot: body.payment_screenshot || TEST_PAYMENT_SCREENSHOT,
-    payment_journal_number: body.payment_journal_number || 'TEST-JOURNAL-001',
+    payment_journal_number: body.payment_journal_number || uniqueJournal(),
     test_user_id: body.user_id,
   });
 const postWithoutPayment = (body) =>

@@ -135,7 +135,7 @@ async function main() {
     'paid non-football booking stores the Nu. 1,500 amount and journal number',
     r.status === 201 &&
       r.body.booking.payment_amount === 1500 &&
-      r.body.booking.payment_journal_number === 'TEST-JOURNAL-001',
+      r.body.booking.payment_journal_number.startsWith('TEST-JOURNAL-'),
     `got ${r.status} ${JSON.stringify(r.body)}`,
   );
   r = await book(student, archery, monday, '16:00', '18:00');
