@@ -116,8 +116,8 @@ WHERE
 ON CONFLICT DO NOTHING;                                            -- skip if rule already exists
 
 
-# 6. OTHER SPORTS: WEEKDAY AND WEEKEND RULES
-# Weekday rules (Mon to Fri, 4pm-10pm)
+-- 6. OTHER SPORTS: WEEKDAY AND WEEKEND RULES
+-- Weekday rules (Mon to Fri, 4pm-10pm)
 INSERT INTO
   schedule_rules (
     facility_id,
@@ -150,7 +150,7 @@ WHERE
   )
 ON CONFLICT DO NOTHING;                                            -- skip if rule already exists
 
-# Remove old weekend rules so new ones can be added
+-- Remove old weekend rules so new ones can be added
 DELETE FROM schedule_rules
 WHERE
   facility_id IN (
@@ -168,7 +168,7 @@ WHERE
   )
   AND day_of_week IN (0, 6);                                       -- only Sunday and Saturday
 
-# Weekend rules (8am-10pm)
+-- Weekend rules (8am-10pm)
 INSERT INTO
   schedule_rules (
     facility_id,
