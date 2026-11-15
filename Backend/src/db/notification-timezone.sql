@@ -4,7 +4,8 @@
 -- already converted columns are left unchanged
 
 -- CONVERT created_at TO TIMESTAMPTZ, only if it is not converted yet 
---DO $$                                                                   -- start of a code block, $$ marks where it begins
+
+DO $$                                                                   -- start of a code block, $$ marks where it begins
 BEGIN                                                                   -- start of the steps inside the block
   IF EXISTS (                                                           -- check if a matching column is found below
     SELECT 1 FROM information_schema.columns                            -- look in the list of all table columns
@@ -17,7 +18,8 @@ BEGIN                                                                   -- start
       ALTER COLUMN created_at TYPE TIMESTAMPTZ                          -- change created_at to a timezone-aware time
       USING created_at AT TIME ZONE 'UTC';                              -- read the old values as UTC when converting
   END IF;                                                               -- end of the if check
-END;                                                                 -- end of the code block, ; ends this command
+END
+$$;                                                                 -- end of the code block, ; ends this command
 
 -- SET DEFAULT AND NOT NULL FOR created_at
 ALTER TABLE notifications                                               -- change the notifications table
