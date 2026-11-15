@@ -17,7 +17,7 @@ BEGIN                                                                   -- start
       ALTER COLUMN created_at TYPE TIMESTAMPTZ                          -- change created_at to a timezone-aware time
       USING created_at AT TIME ZONE 'UTC';                              -- read the old values as UTC when converting
   END IF;                                                               -- end of the if check
-END $$;                                                                 -- end of the code block, ; ends this command
+END;                                                                 -- end of the code block, ; ends this command
 
 -- SET DEFAULT AND NOT NULL FOR created_at
 ALTER TABLE notifications                                               -- change the notifications table
