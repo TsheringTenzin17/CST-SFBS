@@ -95,7 +95,7 @@ FROM                                                                    -- say w
   facilities f                                                          -- the facilities table, called f
   CROSS JOIN (                                                          -- join every facility with every row of the list below
     VALUES                                                              -- start of the list of rules
-      # Monday (1): ground maintenance all day
+      -- Monday (1): ground maintenance all day
       (                                                                 -- start of one rule
         1,                                                              -- day is Monday
         '06:00',                                                        -- starts at 6 AM
@@ -107,7 +107,7 @@ FROM                                                                    -- say w
         NULL,                                                           -- no cap
         'Monday: ground maintenance'                                    -- note
       ),                                                                -- end of this rule
-      # Tuesday (2)
+      -- Tuesday (2)
       (                                                                 -- start of one rule
         2,                                                              -- day is Tuesday
         '06:00',                                                        -- starts at 6 AM

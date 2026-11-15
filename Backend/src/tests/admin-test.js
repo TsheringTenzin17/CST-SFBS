@@ -13,8 +13,8 @@ const {
   check,
   finish,
 } = require('./helpers');
-const pool = require('../src/db');
-const { expirePastPendingBookings, processDueReminders } = require('../src/reminders');
+const pool = require('../db');
+const { expirePastPendingBookings, processDueReminders } = require('../reminders');
 
 async function main() {
   const admin = await createUser('admin');
@@ -283,7 +283,7 @@ async function main() {
     'notification timestamp is timezone-aware and close to current time',
     /(?:Z|[+-]\d{2}:\d{2})$/.test(r.body[0]?.created_at || '') &&
       Number.isFinite(notificationTimestamp) &&
-      Math.abs(Date.now() - notificationTimestamp) < 60000,
+      Math.abs((global.RealDate || Date).now() - notificationTimestamp) < 60000,
     `got ${r.body[0]?.created_at}`,
   );
   r = await api('PATCH', `/notifications/${otherNotification.rows[0].id}/read`, {
