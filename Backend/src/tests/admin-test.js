@@ -1101,11 +1101,21 @@ async function main() {
   );
 
   console.log('Scheduled booking reminders');
-  // Only the reminder scenario's bookings should be eligible for reminders.
+
+  // 1. FIRST: cancel leftover bookings from earlier sections so they
+  //    cannot create extra reminders.
   await pool.query(
     `UPDATE bookings SET status = 'cancelled'
-    WHERE user_id = ANY($1) AND status IN ('pending', 'approved')`,
+     WHERE user_id = ANY($1) AND status IN ('pending', 'approved')`,
     [[student, other, outsider, creditUser]],
+  );
+
+  // 2. THEN: set up the reminder scenario.
+  await pool.query(
+    `INSERT INTO user_notification_preferences (user_id, booking_updates, game_reminders, maintenance_alerts)
+     VALUES ($1, true, true, true)
+     ON CONFLICT (user_id) DO UPDATE SET game_reminders = true`,
+    [student],
   );
   const reminderBooking = await pool.query(
     `WITH slot AS (
@@ -1133,8 +1143,12 @@ async function main() {
      FROM slot`,
     [other, football],
   );
+
+  // 3. THEN: run the job twice (the second run must not create duplicates).
   await processDueReminders();
   await processDueReminders();
+
+  // 4. Check the results.
   const reminderRows = await pool.query(
     `SELECT lead_hours FROM booking_reminders WHERE booking_id = $1`,
     [reminderBooking.rows[0].id],
@@ -1147,13 +1161,21 @@ async function main() {
     `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_reminder'`,
     [other],
   );
-check(
-  '24-hour and 2-hour reminders are generated once per booking',
-  reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2,
-  `booking rows: ${JSON.stringify(reminderRows.rows)}, ` +
-  `student reminder notifications: ${reminderNotifications.rows.length}`,
-);
-check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
+  const reminderDebug = await pool.query(
+    `SELECT id, status, booking_date::text AS booking_date, start_time::text AS start_time,
+            ((booking_date + start_time) AT TIME ZONE 'Asia/Thimphu') AS starts_at,
+            now() AS db_now
+     FROM bookings WHERE id = $1`,
+    [reminderBooking.rows[0].id],
+  );
+  check(
+    '24-hour and 2-hour reminders are generated once per booking',
+    reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2,
+    `booking rows: ${JSON.stringify(reminderRows.rows)}, ` +
+      `student reminder notifications: ${reminderNotifications.rows.length}, ` +
+      `booking: ${JSON.stringify(reminderDebug.rows)}`,
+  );
+  check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
 }
 
 main()
