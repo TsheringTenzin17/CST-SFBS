@@ -1101,11 +1101,11 @@ async function main() {
   );
 
   console.log('Scheduled booking reminders');
+  // Only the reminder scenario's bookings should be eligible for reminders.
   await pool.query(
-    `INSERT INTO user_notification_preferences (user_id, booking_updates, game_reminders, maintenance_alerts)
-     VALUES ($1, true, true, true)
-     ON CONFLICT (user_id) DO UPDATE SET game_reminders = true`,
-    [student],
+    `UPDATE bookings SET status = 'cancelled'
+    WHERE user_id = ANY($1) AND status IN ('pending', 'approved')`,
+    [[student, other, outsider, creditUser]],
   );
   const reminderBooking = await pool.query(
     `WITH slot AS (
@@ -1147,11 +1147,13 @@ async function main() {
     `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_reminder'`,
     [other],
   );
-  check(
-    '24-hour and 2-hour reminders are generated once per booking',
-    reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2,
-  );
-  check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
+check(
+  '24-hour and 2-hour reminders are generated once per booking',
+  reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2,
+  `booking rows: ${JSON.stringify(reminderRows.rows)}, ` +
+  `student reminder notifications: ${reminderNotifications.rows.length}`,
+);
+check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
 }
 
 main()
