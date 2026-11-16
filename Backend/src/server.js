@@ -64,6 +64,7 @@ app.use('/facilities', require('./routes/facilities'));     // facilities list
 app.use('/bookings', require('./routes/bookings'));         // bookings
 app.use('/notifications', require('./routes/notifications'));  // user notifications
 app.use('/support', require('./routes/support'));           // contact requests
+app.use('/booking-blackouts', require('./routes/bookingBlackouts')); // campus-wide booking restrictions
 app.use('/maintenance', require('./routes/maintenance'));   // maintenance blocks
 app.use('/tournaments', require('./routes/tournaments'));   // tournament periods
 app.use('/admin/facilities', require('./routes/adminFacilities'));  // admin facility tools

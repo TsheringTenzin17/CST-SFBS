@@ -3,6 +3,7 @@ const express = require('express');                                             
 const bcrypt = require('bcryptjs');                                                       // to hash and check passwords
 const crypto = require('crypto');                                                         // for random tokens and hashing
 const pool = require('../db');                                                            // our database connection
+const { verifyPassword } = require('../passwords');
 const { authenticate, createSessionToken } = require('../auth');                          // login check and login token maker
 const { sendEmail } = require('../email');                                                // helper to send emails
 const router = express.Router();                                                          // router to group all routes in this file
@@ -523,18 +524,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email/ID or password' });             // send error
 
     const row = result.rows[0];                                                           // get the user row
-    let ok;                                                                               // will be true if password is correct
-    if (row.password_hash.startsWith('$2')) {                                             // bcrypt hashes start with $2
-      ok = await bcrypt.compare(password, row.password_hash);                             // compare typed password with the hash
-    } else {
-      ok = row.password_hash === password;                                                // old account with plain text password, compare directly
-      if (ok) {                                                                           // if correct, upgrade it to a bcrypt hash
-        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
-          await bcrypt.hash(password, 10),                                                // new hashed password
-          row.id,                                                                         // the user id
-        ]);
-      }
-    }
+    const ok = await verifyPassword(password, row.password_hash);                        // accept only bcrypt hashes
     if (!ok) return res.status(401).json({ error: 'Invalid email/ID or password' });      // wrong password
     if (!row.email_verified) {                                                            // email must be verified to login
       return res.status(403).json({
@@ -677,9 +667,7 @@ router.patch('/password', authenticate, async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
 
     const passwordHash = result.rows[0].password_hash;                                    // saved password hash
-    const validCurrentPassword = passwordHash.startsWith('$2')                            // is it a bcrypt hash?
-      ? await bcrypt.compare(current_password, passwordHash)                              // yes: compare with bcrypt
-      : current_password === passwordHash;                                                // no: old plain text, compare directly
+    const validCurrentPassword = await verifyPassword(current_password, passwordHash);
     if (!validCurrentPassword)                                                            // old password is wrong
       return res.status(400).json({ error: 'Current password is incorrect' });            // send error
 
@@ -875,9 +863,7 @@ router.post('/email-change', authenticate, async (req, res) => {
     // user not found
     if (result.rows.length === 0) return res.status(404).json({ error: 'Account not found' });
     const passwordHash = result.rows[0].password_hash;                                    // saved password hash
-    const validPassword = passwordHash.startsWith('$2')                                   // is it a bcrypt hash?
-      ? await bcrypt.compare(current_password, passwordHash)                              // yes: compare with bcrypt
-      : current_password === passwordHash;                                                // no: old plain text, compare directly
+    const validPassword = await verifyPassword(current_password, passwordHash);
     // wrong password
     if (!validPassword) return res.status(400).json({ error: 'Current password is incorrect' });
 
@@ -1027,9 +1013,7 @@ router.delete('/account', authenticate, async (req, res) => {
     }
 
     const passwordHash = result.rows[0].password_hash;                                    // saved password hash
-    const passwordMatches = passwordHash.startsWith('$2')                                 // is it a bcrypt hash?
-      ? await bcrypt.compare(current_password, passwordHash)                              // yes: compare with bcrypt
-      : current_password === passwordHash;                                                // no: old plain text, compare directly
+    const passwordMatches = await verifyPassword(current_password, passwordHash);
     if (!passwordMatches) {                                                               // wrong password
       await client.query('ROLLBACK');                                                     // undo everything
       transactionStarted = false;                                                         // transaction is finished

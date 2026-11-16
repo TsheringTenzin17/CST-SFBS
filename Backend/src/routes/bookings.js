@@ -3,11 +3,12 @@
 // =============================================================
 // POST   /bookings                         make a booking
 // GET    /bookings/user/:userId            one user's own bookings        (My Bookings page)
-// DELETE /bookings/:id/archive             hide an old completed booking from My Bookings
+// DELETE /bookings/:id/archive             hide a completed or cancelled booking from My Bookings
 // PATCH  /bookings/:id/cancel              a user cancels their own booking
 // GET    /bookings                         all bookings                   (admin only)
 // GET    /bookings/:id/payment-proof       see payment proof              (admin only)
 // PATCH  /bookings/:id/payment-resolution  refund / credit choice for an expired paid booking
+// PATCH  /bookings/:id/rebook              use an expired booking credit for a new slot (admin only)
 // PATCH  /bookings/:id                     admin approves or cancels any booking
 // PATCH  /bookings/:id/reschedule-request  a user moves their own booking
 // PATCH  /bookings/:id/reschedule          admin moves a booking          (admin only)
@@ -36,12 +37,12 @@ const {                                                                         
   isValidDate,                                                                                                // checks the date format
   isValidTime,                                                                                                // checks the time format
 } = require('../time');                                                                                       // the file that has these time helpers
+const { bookingPaymentAmount, requiresBookingPayment } = require('../bookingPricing');
 const { timetableForDate } = require('../timetable');                                                         // finds which timetable (standard or tournament) a date uses
 const { sendEmail } = require('../email');                                                                    // helper to send emails
 const router = express.Router();                                                                              // router to group all routes in this file
 
 const PAYMENT_ACCOUNT_NUMBER = '221758633';                                                                   // account number users pay into
-const NON_FOOTBALL_COMMERCIAL_FEE = 1500;                                                                     // fixed fee for non-football commercial bookings
 const MAX_PAYMENT_SCREENSHOT_BYTES = 1.5 * 1024 * 1024;                                                       // biggest screenshot allowed (1.5 MB)
 
 // =============================================================
@@ -67,14 +68,6 @@ function paymentScreenshotError(value) {                                        
       bytes.subarray(8, 12).toString('ascii') === 'WEBP');                                                    // bytes 8 to 12 say WEBP
   return validSignature ? null : 'The uploaded file is not a valid image.';                                   // null means OK, else an error text
 }                                                                                                             // end of paymentScreenshotError
-
-// works out how much the user must pay for a booking
-function bookingPaymentAmount(facilityType, role, bookingDate, assistantReferees) {                           // start of bookingPaymentAmount
-  if (facilityType !== 'football') return NON_FOOTBALL_COMMERCIAL_FEE;                                        // other facilities have one fixed fee
-  const weekend = [0, 6].includes(dayOfWeek(bookingDate));                                                    // true if the day is a weekend day
-  if (assistantReferees) return role === 'student' ? 2900 : weekend ? 4400 : 3900;                            // price with assistant referees
-  return role === 'student' ? 2500 : weekend ? 4000 : 3500;                                                   // price without assistant referees
-}                                                                                                             // end of bookingPaymentAmount
 
 // saves a notification for the user (only if they did not turn booking updates off)
 async function addBookingNotification(queryable, userId, type, message) {                                     // start of addBookingNotification
@@ -246,7 +239,7 @@ const CONFLICT_MESSAGE = 'This slot was just booked by someone else. Please choo
 // covers the time, no maintenance block, no overlapping booking.
 // Must be called INSIDE a transaction that already holds the facility lock.
 // `excludeBookingId` lets a reschedule ignore the booking being moved.
-async function validateSlot(client, { facilityId, date, start, end, excludeBookingId = 0 }) {                 // start of validateSlot
+async function validateSlot(client, { facilityId, date, start, end, userRole, excludeBookingId = 0 }) {      // start of validateSlot
   const window = bookingWindow();                                                                             // the first and last date that can be booked
   if (date < window.from || date > window.to) {                                                               // date is outside the allowed window
     return {                                                                                                  // stop here with an error
@@ -255,6 +248,23 @@ async function validateSlot(client, { facilityId, date, start, end, excludeBooki
       message: `Advance booking is limited to available dates ${window.from} through ${window.to}.`,          // error text
     };                                                                                                        // end of the error
   }                                                                                                           // end of window check
+
+  if (userRole === 'student') {
+    await client.query('SELECT pg_advisory_xact_lock_shared(1003, 1)');                                       // coordinate bookings with blackout changes
+    const campusBlackout = await client.query(                                                                // check for a campus-wide booking restriction
+      `SELECT reason FROM booking_blackout_dates
+       WHERE $1::date BETWEEN start_date AND end_date LIMIT 1`,
+      [date],                                                                                                 // value for $1
+    );                                                                                                        // end of query
+    if (campusBlackout.rows.length > 0) {                                                                     // this date is blocked across campus
+      const reason = campusBlackout.rows[0].reason;                                                           // restriction description
+      return {                                                                                                // stop before any facility-specific checks
+        ok: false,                                                                                            // not allowed
+        status: 403,                                                                                          // forbidden during a campus restriction
+        message: `Student bookings are paused across all facilities on ${date}. Reason: ${reason}`,           // explain the restriction
+      };                                                                                                      // end of the error
+    }                                                                                                         // end of blackout check
+  }
 
   // SQL below: get the facility type, its max booking length and whether it is open
   const fac = await client.query(                                                                             // run the query
@@ -390,6 +400,7 @@ router.post('/', authenticate, async (req, res) => {                            
       date: booking_date,                                                                                     // which date
       start,                                                                                                  // start time
       end,                                                                                                    // end time
+      userRole: req.user.role,                                                                           // role of the booking user
     });                                                                                                       // end of validateSlot call
     if (!slot.ok) {                                                                                           // a slot rule failed
       await client.query('ROLLBACK');                                                                         // undo everything
@@ -408,12 +419,15 @@ router.post('/', authenticate, async (req, res) => {                            
       return res.status(eligibility.status).json({ error: eligibility.message });                             // send the error
     }                                                                                                         // end of check
 
-    // Commercial-rate slots require payment and approval, including
-    // when a student is allowed to book one of those slots.
-    // (A female student booking her own reserved slot is NOT a commercial booking.)
+    // Students allowed into commercial-rate slots still pay; faculty are exempt outside football.
+    // Outsider bookings always require payment.
     const commercialSlot =                                                                                    // is this a commercial booking?
       slot.rule.primary_role === 'commercial' || eligibility.viaFallback === true;                            // commercial slot, or user got in through the fallback group
-    const requiresPayment = req.user.role === 'outsider' || commercialSlot;                                   // outsiders and commercial bookings must pay
+    const requiresPayment = requiresBookingPayment(
+      req.user.role,
+      slot.facility_type,
+      commercialSlot,
+    );
     let paymentAmount = null;                                                                                 // will hold the amount to pay
     let paymentJournalNumber = null;                                                                          // will hold the journal number
     let paymentScreenshot = null;                                                                             // will hold the screenshot
@@ -587,7 +601,7 @@ router.get('/user/:userId', authenticate, async (req, res) => {                 
   }                                                                                                           // end of try/catch
 });                                                                                                           // end of the My Bookings route
 
-// ---- DELETE /bookings/:id/archive : hide an old completed booking from the owner's history
+// ---- DELETE /bookings/:id/archive : hide an eligible booking from the owner's history
 router.delete('/:id/archive', authenticate, async (req, res) => {                                             // start of the archive route
   const bookingId = Number(req.params.id);                                                                    // booking id from the link
   if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {                                                   // id must be a positive whole number
@@ -595,15 +609,17 @@ router.delete('/:id/archive', authenticate, async (req, res) => {               
   }                                                                                                           // end of check
 
   try {                                                                                                       // start of main work
-    // SQL below: hide the booking (only if it is yours, approved and already in the past)
+    // Hide completed and cancelled bookings without deleting their official records.
     const result = await pool.query(                                                                          // run the query
       `INSERT INTO user_booking_archives (user_id, booking_id)
        SELECT b.user_id, b.id
        FROM bookings b
        WHERE b.id = $1
          AND b.user_id = $2
-         AND b.status = 'approved'
-         AND b.booking_date < $3::date
+         AND (
+           (b.status = 'approved' AND b.booking_date < $3::date)
+           OR b.status = 'cancelled'
+         )
        ON CONFLICT (user_id, booking_id)
        DO UPDATE SET archived_at = user_booking_archives.archived_at
        RETURNING booking_id`,
@@ -612,12 +628,14 @@ router.delete('/:id/archive', authenticate, async (req, res) => {               
     if (result.rows.length === 0) {                                                                           // nothing was archived
       return res                                                                                              // send error
         .status(404)                                                                                          // not found
-        .json({ error: 'Only your completed bookings can be removed from history' });                         // error text
+        .json({
+          error: 'Only completed or cancelled bookings can be removed.',
+        });                                                                                                   // error text
     }                                                                                                         // end of check
     res.json({ bookingId: result.rows[0].booking_id, archived: true });                                       // tell the frontend it is hidden
   } catch (err) {                                                                                             // if anything failed
     console.error(err);                                                                                       // show the error in console
-    res.status(500).json({ error: 'Failed to remove completed booking from history' });                       // send error
+    res.status(500).json({ error: 'Failed to remove booking from history' });                                 // send error
   }                                                                                                           // end of try/catch
 });                                                                                                           // end of the archive route
 
@@ -683,7 +701,8 @@ router.get('/', requireAdmin, async (req, res) => {                             
               to_char(b.booking_date, 'YYYY-MM-DD') AS booking_date,
               to_char(b.start_time, 'HH24:MI') AS start_time,
               to_char(b.end_time, 'HH24:MI') AS end_time,
-              u.full_name AS user_name, u.role AS user_role, f.name AS facility_name,
+              u.full_name AS user_name, u.role AS user_role, u.gender AS user_gender,
+              f.id AS facility_id, f.name AS facility_name,
               b.payment_amount, b.payment_journal_number,
               b.payment_screenshot IS NOT NULL AS has_payment_proof,
               b.payment_verified_at, b.payment_resolution,
@@ -808,6 +827,141 @@ router.patch('/:id/payment-resolution', authenticate, async (req, res) => {     
     client.release();                                                                                         // give the connection back
   }                                                                                                           // end of try/catch/finally
 });                                                                                                           // end of the payment-resolution route
+
+// ---- PATCH /bookings/:id/rebook : use a user's expired-booking credit ------
+router.patch('/:id/rebook', requireAdmin, async (req, res) => {
+  const bookingId = Number(req.params.id);
+  if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+    return res.status(400).json({ error: 'Invalid booking id' });
+  }
+  const { booking_date, facility_id } = req.body;
+  if (!booking_date || !req.body.start_time || !req.body.end_time) {
+    return res.status(400).json({ error: 'booking_date, start_time and end_time are required' });
+  }
+  const start = hhmm(req.body.start_time);
+  const end = hhmm(req.body.end_time);
+  const inputError = checkSlotInput(booking_date, start, end);
+  if (inputError) return res.status(400).json({ error: inputError });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT b.id, b.user_id, b.facility_id, b.status, b.payment_amount,
+              b.payment_resolution, b.payment_resolution_completed_at,
+              u.role AS user_role, u.gender AS user_gender
+       FROM bookings b JOIN users u ON u.id = b.user_id
+       WHERE b.id = $1 FOR UPDATE OF b`,
+      [bookingId],
+    );
+    if (existing.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const old = existing.rows[0];
+    if (old.status !== 'expired' || !old.payment_amount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Only an expired paid booking can be re-booked.' });
+    }
+    if (old.payment_resolution !== 'credit') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error:
+          old.payment_resolution === 'refund'
+            ? 'The user chose a refund, not a booking credit.'
+            : 'The user has not chosen a booking credit yet.',
+      });
+    }
+    if (old.payment_resolution_completed_at) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'This booking credit has already been used.' });
+    }
+
+    const facilityId = facility_id === undefined ? old.facility_id : Number(facility_id);
+    if (!Number.isSafeInteger(facilityId) || facilityId <= 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Invalid facility' });
+    }
+    await client.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [facilityId]);
+
+    const slot = await validateSlot(client, {
+      facilityId,
+      date: booking_date,
+      start,
+      end,
+      userRole: old.user_role,
+      excludeBookingId: old.id,
+    });
+    if (!slot.ok) {
+      await client.query('ROLLBACK');
+      return res.status(slot.status).json({ error: slot.message });
+    }
+
+    const eligibility = checkEligibility(
+      old.user_role,
+      slot.rule,
+      booking_date,
+      start,
+      old.user_gender,
+    );
+    if (!eligibility.ok) {
+      await client.query('ROLLBACK');
+      return res.status(eligibility.status).json({ error: eligibility.message });
+    }
+
+    const commercialSlot =
+      slot.rule.primary_role === 'commercial' || eligibility.viaFallback === true;
+    const fee = bookingPaymentAmount(slot.facility_type, old.user_role, booking_date, false);
+    if (old.user_role !== 'outsider' && (!commercialSlot || fee === 0)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: 'That slot is free for this user. Use a refund instead of the credit.',
+      });
+    }
+    if (fee > old.payment_amount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: `That slot costs Nu. ${fee}, more than the credit of Nu. ${old.payment_amount}. Choose a slot covered by the credit.`,
+      });
+    }
+
+    const updated = await client.query(
+      `UPDATE bookings
+       SET facility_id = $2, booking_date = $3, start_time = $4, end_time = $5,
+           status = 'approved', payment_verified_at = now(),
+           payment_resolution_completed_at = now()
+       WHERE id = $1
+       RETURNING id, facility_id, booking_date, start_time, end_time, status`,
+      [old.id, facilityId, booking_date, start, end],
+    );
+    await addBookingNotification(
+      client,
+      old.user_id,
+      'booking_confirmed',
+      `The DSA used the credit from your expired booking B-${old.id} for a new booking on ${booking_date} (${start}-${end}). It is confirmed.`,
+    );
+    await client.query('COMMIT');
+
+    await sendBookingUpdateEmail(old.user_id, facilityId, {
+      subject: 'Booking confirmed - CST-SFBS',
+      statusMessage: `The DSA used the credit from your expired booking B-${old.id} for this new booking. It is confirmed.`,
+      bookingDate: booking_date,
+      startTime: start,
+      endTime: end,
+    });
+    res.json({ booking: updated.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') {
+      return res.status(409).json({ error: CONFLICT_MESSAGE });
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Failed to re-book with the credit' });
+  } finally {
+    client.release();
+  }
+});
 
 // ---- PATCH /bookings/:id : admin approves a pending booking, or cancels any --
 // status 'approved'  -> pending paid booking after proof review
@@ -997,6 +1151,7 @@ router.patch('/:id/reschedule-request', authenticate, async (req, res) => {     
       date: booking_date,                                                                                     // new date
       start,                                                                                                  // new start time
       end,                                                                                                    // new end time
+      userRole: req.user.role,                                                                           // role of the booking user
       excludeBookingId: booking.id,                                                                           // ignore this booking itself when looking for overlaps
     });                                                                                                       // end of validateSlot call
     if (!slot.ok) {                                                                                           // a slot rule failed
@@ -1067,8 +1222,9 @@ router.patch('/:id/reschedule', requireAdmin, async (req, res) => {             
 
     // SQL below: find any booking that is not cancelled or expired and lock the row
     const existing = await client.query(             // run the query
-      `SELECT id, user_id, facility_id FROM bookings
-       WHERE id = $1 AND status NOT IN ('cancelled', 'expired') FOR UPDATE`,
+      `SELECT b.id, b.user_id, b.facility_id, u.role AS user_role
+       FROM bookings b JOIN users u ON u.id = b.user_id
+       WHERE b.id = $1 AND b.status NOT IN ('cancelled', 'expired') FOR UPDATE OF b`,
       [req.params.id],            // value for $1
     );          // end of query
     if (existing.rows.length === 0) {          // no such booking
@@ -1084,6 +1240,7 @@ router.patch('/:id/reschedule', requireAdmin, async (req, res) => {             
       date: booking_date,                      // new date
       start,                                   // new start time
       end,                                     // new end time
+      userRole: booking.user_role,             // role of the booking user
       excludeBookingId: booking.id,            // ignore this booking itself when looking for overlaps
     });            // end of validateSlot call
     if (!slot.ok) {                                 // a slot rule failed

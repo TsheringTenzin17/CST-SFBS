@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const uniqueJournal = () => 'TEST-JOURNAL-' + crypto.randomUUID().slice(0, 8);
 
 const API_URL = process.env.API_URL || 'http://localhost:4000';
-const created = { users: [], blocks: [] };
+const created = { users: [], blocks: [], blackouts: [] };
 const credentials = new Map();
 const sessions = new Map();
 let failures = 0;
@@ -91,8 +91,7 @@ async function facilityId(name) {
   return r.rows[0].id;
 }
 
-// A date inside the current booking window that falls on the given weekday (0=Sun ... 6=Sat).
-// The API only accepts dates from today to the end of the week, so tests use that window.
+// A date in the next seven days that falls on the given weekday (0=Sun ... 6=Sat).
 function dateOnWeekday(dow) {
   const { bookingWindow } = require('../time');
   const w = bookingWindow();
@@ -107,6 +106,12 @@ async function addMaintenanceBlock(facility_id, date, reason = 'test block') {
     [facility_id, date, reason],
   );
   created.blocks.push(r.rows[0].id);
+}
+
+function trackBookingBlackout(id) {
+  if (Number.isSafeInteger(Number(id)) && Number(id) > 0) {
+    created.blackouts.push(Number(id));
+  }
 }
 
 // ---- reporting ---------------------------------------------------------------
@@ -124,6 +129,8 @@ async function finish() {
     }
     if (created.blocks.length > 0)
       await pool.query('DELETE FROM maintenance_blocks WHERE id = ANY($1)', [created.blocks]);
+    if (created.blackouts.length > 0)
+      await pool.query('DELETE FROM booking_blackout_dates WHERE id = ANY($1)', [created.blackouts]);
     if (created.users.length > 0)
       await pool.query('DELETE FROM users WHERE id = ANY($1)', [created.users]);
   } finally {
@@ -142,6 +149,7 @@ module.exports = {
   facilityId,
   dateOnWeekday,
   addMaintenanceBlock,
+  trackBookingBlackout,
   check,
   finish,
 };

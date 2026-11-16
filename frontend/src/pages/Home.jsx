@@ -4,6 +4,7 @@
 // Sections:  1. data   2. hero banner   3. "Our Sports Arenas" cards
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import { apiCall } from '../utils/api';
 import { badgeFor, groupFacilities } from '../utils/availability';
@@ -13,13 +14,14 @@ import { FacilityCardSkeleton, Skeleton } from '../components/Loading';
 
 function Home() {
   // ---------- 1. data ----------
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [facilities, setFacilities] = useState([]);
   const [facilitiesLoading, setFacilitiesLoading] = useState(true);
   const [heroSlide, setHeroSlide] = useState(0);
   const [finderSport, setFinderSport] = useState('all');
   const [finderDate, setFinderDate] = useState(todayString());
-  const { summary, loading: summaryLoading } = useSummary(todayString()); // real counts for today
+  const { summary, loading: summaryLoading } = useSummary(todayString(), user?.role); // role-aware counts for today
 
   useEffect(() => {
     apiCall('/facilities')
@@ -198,7 +200,7 @@ function Home() {
           {facilitiesLoading &&
             Array.from({ length: 6 }, (_, index) => <FacilityCardSkeleton key={index} />)}
           {cards.map((f) => {
-            const badge = badgeFor(summary[f.group_name]);
+            const badge = badgeFor(summary[f.group_name], user?.role);
             return (
               <Link
                 to={`/facilities/${f.courtIds[0]}`}

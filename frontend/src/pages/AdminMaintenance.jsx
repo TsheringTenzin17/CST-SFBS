@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiCall } from '../utils/api';
 import { AdminLoading, Spinner } from '../components/Loading';
+import AdminBookingBlackouts from './AdminBookingBlackouts';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -149,8 +150,11 @@ function AdminMaintenance() {
   return (
     <div className="mt-page">
       <header className="mt-header">
-        <h1>Maintenance Blocks Scheduler</h1>
-        <p>Define downtime and prevent general bookings during maintenance operations.</p>
+        <h1>Maintenance &amp; Booking Restrictions</h1>
+        <p>
+          Schedule facility maintenance or block student bookings across campus for exams, tests, and
+          other events.
+        </p>
       </header>
 
       {error && (
@@ -278,6 +282,7 @@ function AdminMaintenance() {
           )}
         </section>
       </div>
+      <AdminBookingBlackouts />
     </div>
   );
 }

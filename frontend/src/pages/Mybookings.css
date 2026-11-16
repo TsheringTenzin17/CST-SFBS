@@ -325,14 +325,16 @@
 }
 
 .my-bookings-remedy-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
 }
 
 .my-bookings-remedy-actions button {
-  min-height: 34px;
-  padding: 0 10px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 8px;
   border: 1px solid #255463;
   border-radius: 6px;
   background: #fff;
@@ -530,6 +532,36 @@
     text-align: left;
   }
 
+  .my-bookings-table td[data-label='Status'] {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 8px;
+    text-align: left;
+  }
+
+  .my-bookings-table td[data-label='Status']::before {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .my-bookings-table td[data-label='Status'] > .my-bookings-status {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .my-bookings-table td[data-label='Status'] .my-bookings-payment-resolution {
+    grid-column: 1 / -1;
+    max-width: none;
+    margin-top: 0;
+  }
+
   .my-bookings-table td.my-bookings-actions {
     justify-content: flex-end;
   }
@@ -553,9 +585,9 @@
   }
 
   .my-bookings-archive {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(8px);
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
   }
 
   .my-bookings-table tr:focus-within .my-bookings-archive {

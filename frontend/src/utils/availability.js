@@ -5,28 +5,43 @@
 // (Badminton Court 1 + 2 become one "Badminton Court" card).
 
 // rows -> { 'Badminton Court': { available: 9, total: 12, blocked: false }, ... }
-export function groupSummary(rows) {
+export function groupSummary(rows, role) {
   const groups = {};
   for (const r of rows) {
-    if (!groups[r.group_name]) groups[r.group_name] = { available: 0, total: 0, blocked: false };
+    if (!groups[r.group_name]) {
+      groups[r.group_name] = {
+        available: 0,
+        total: 0,
+        blocked: false,
+        booking_blackout: null,
+      };
+    }
     groups[r.group_name].available += r.available;
     groups[r.group_name].total += r.total;
     groups[r.group_name].blocked = groups[r.group_name].blocked || r.blocked;
+    groups[r.group_name].booking_blackout ||= r.booking_blackout;
+  }
+  if (role === 'student') {
+    for (const summary of Object.values(groups)) {
+      if (summary.booking_blackout) summary.available = 0;
+    }
   }
   return groups;
 }
 
 // The coloured pill on a facility card. `s` may be undefined while loading.
-export function badgeFor(s) {
+export function badgeFor(s, role) {
   if (!s) return { label: '', variant: 'blue' };
+  if (s.booking_blackout && role === 'student') return { label: 'Student bookings paused', variant: 'orange' };
   if (s.blocked) return { label: 'Closed today', variant: 'orange' };
   if (s.total === 0) return { label: 'No slots today', variant: 'orange' };
   if (s.available === 0) return { label: 'No slots remaining today', variant: 'red' };
   return { label: 'Available today', variant: 'green' };
 }
 
-export function slotsText(s) {
+export function slotsText(s, role) {
   if (!s) return '';
+  if (s.booking_blackout && role === 'student') return 'Student bookings paused';
   if (s.total === 0) return 'No slots today';
   return `${s.available} of ${s.total} slots free`;
 }

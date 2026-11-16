@@ -241,6 +241,8 @@ function FacilityDetail() {
     }),
   );
   const selectedDateAvailableCount = availableCountsByDate[date] ?? null;
+  const selectedDateBlackout =
+    user?.role === 'student' ? weeklyAvailability[date]?.booking_blackout : null;
   const slotRows = [
     ...new Map(
       Object.values(slotsByDate)
@@ -407,6 +409,11 @@ function FacilityDetail() {
           ))}
         </div>
 
+        {selectedDateBlackout && (
+          <p className="fd-blackout-notice" role="status">
+            Student bookings are paused across all facilities on this date: {selectedDateBlackout.reason}.
+          </p>
+        )}
         {error && <p className="fd-error">{error}</p>}
         <div className="fd-grid-scroll">
           <div

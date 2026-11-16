@@ -4,6 +4,7 @@
 // Sections:  1. data   2. filter + sort   3. page layout
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import { DESCRIPTIONS, IMAGES } from '../facilityMeta';
 import { FacilityCardSkeletons, Skeleton } from '../components/Loading';
 import { apiCall } from '../utils/api';
@@ -16,12 +17,13 @@ const INDOOR_TYPES = ['basketball', 'badminton', 'table_tennis'];
 
 function Facilities() {
   // ---------- 1. data ----------
+  const { user } = useAuth();
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all | available | indoor
   const [sortOrder, setSortOrder] = useState('desc');
-  const { summary, loading: summaryLoading } = useSummary(todayString());
+  const { summary, loading: summaryLoading } = useSummary(todayString(), user?.role);
 
   useEffect(() => {
     apiCall('/facilities')
@@ -103,7 +105,7 @@ function Facilities() {
         <div className="grid">
           {visible.map((f) => {
             const s = summary[f.group_name];
-            const badge = badgeFor(s);
+            const badge = badgeFor(s, user?.role);
             const isFull = Boolean(s) && s.available === 0;
             return (
               <div className="card" key={f.group_name}>
@@ -129,7 +131,7 @@ function Facilities() {
                   </div>
                   <p className="card-desc">{f.description || DESCRIPTIONS[f.type] || ''}</p>
                   <div className="card-footer-row">
-                    <span className="slots-text">{slotsText(s)}</span>
+                    <span className="slots-text">{slotsText(s, user?.role)}</span>
                     {/* Even a fully booked facility stays clickable: other days may be free. */}
                     <Link
                       to={`/facilities/${f.courtIds[0]}`}

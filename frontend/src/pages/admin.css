@@ -110,16 +110,30 @@
   .admin-dashboard .header .nav {                    /* The row of menu links */
     grid-column: 1 / -1;                             /* Stretch across all columns */
     grid-row: 2;                                     /* Put the menu on the second row */
-    flex-wrap: wrap;                                 /* Links can go to a new line */
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;                                 /* Links can go to a new line */
     justify-content: flex-start;                     /* Start the links from the left */
   }                                                  /* End of menu rule */
   .admin-dashboard .header .nav a {                  /* Each menu link */
     padding-block: 12px;                             /* More space above and below */
+    flex: 0 0 auto;
+    white-space: nowrap;                             /* More space above and below */
   }                                                  /* End of menu link rule */
   .admin-dashboard .header .nav a.active::after {    /* Active link underline */
     bottom: 5px;                                     /* Underline sits 5px from the bottom */
   }                                                  /* End of underline rule */
 }                                                    /* End of the 1200px rule */
+
+@media (min-width: 761px) and (max-width: 1200px) {
+  .admin-dashboard .header .nav {
+    align-content: flex-start;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    overflow-x: visible;
+  }
+}
 
 /* ===== 3. Main content, stat cards, panels ===== */
 /* ----- Main content area ----- */
@@ -1285,8 +1299,8 @@
 
 .fac-grid { /* Styles the selected elements. */
   display: grid; /* Sets display to grid. */
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Sets grid template columns to repeat(auto-fill, minmax(300px, 1fr)). */
-  gap: 28px; /* Sets gap to 28px. */
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); /* Keeps facility cards spacious and the grid balanced. */
+  gap: 24px; /* Uses a consistent, compact gap between cards. */
   margin-bottom: 28px; /* Sets margin bottom to 28px. */
 } /* Ends this style rule. */
 .fac-card { /* Styles the selected elements. */
@@ -1886,6 +1900,25 @@
   color: var(--muted); /* Sets color to var(--muted). */
   width: 100%; /* Sets width to 100%. */
 } /* Ends this style rule. */
+.bk-form input,
+.bk-form select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid #cfd8db;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--bk-ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+}
+.bk-form input:focus,
+.bk-form select:focus {
+  outline: 3px solid rgba(31, 111, 120, 0.18);
+  border-color: var(--theme);
+}
 .bk-form textarea { /* Styles the selected elements. */
   min-height: 118px; /* Sets min height to 118px. */
   width: 100%; /* Sets width to 100%. */
@@ -1929,6 +1962,71 @@
   color: var(--muted); /* Sets color to var(--muted). */
   margin: 0; /* Sets margin to 0. */
 } /* Ends this style rule. */
+.bk-slot-status,
+.bk-slot-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.bk-slot-warning {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #efaaa6;
+  border-radius: 9px;
+  background: #fff0ef;
+  color: #a3211b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.bk-slot-recommendations {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cfe1d4;
+  border-radius: 10px;
+  background: #f5fbf6;
+}
+.bk-slot-recommendations h5,
+.bk-slot-recommendations p {
+  margin: 0;
+}
+.bk-slot-recommendations h5 {
+  color: #174b35;
+  font-size: 15px;
+}
+.bk-slot-recommendations p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.bk-slot-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bk-slot-option {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #b9d1c0;
+  border-radius: 8px;
+  background: #fff;
+  color: #174b35;
+  font: 600 14px Barlow, sans-serif;
+  cursor: pointer;
+}
+.bk-slot-option:hover,
+.bk-slot-option.selected {
+  border-color: #28744e;
+  background: #e4f3e8;
+}
+.bk-slot-option:focus-visible {
+  outline: 3px solid rgba(40, 116, 78, 0.2);
+}
 .bk-payment-review { /* Styles the selected elements. */
   display: grid; /* Sets display to grid. */
   gap: 16px; /* Sets gap to 16px. */
@@ -2027,6 +2125,28 @@
   padding: 12px 16px; /* Sets padding to 12px 16px. */
   margin-bottom: 16px; /* Sets margin bottom to 16px. */
 } /* Ends this style rule. */
+
+.mt-blackout-grid {
+  margin-top: 28px;
+}
+.mt-blackout-intro {
+  margin: -8px 0 22px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.mt-blackout-help {
+  color: var(--muted);
+  line-height: 1.45;
+}
+.mt-blackout-warning {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #f1d08a;
+  border-radius: 8px;
+  background: #fff7e2;
+  color: #754c00;
+  line-height: 1.5;
+}
 
 /* ----- New maintenance-block form ----- */
 .mt-grid { /* Styles the selected elements. */
@@ -4610,6 +4730,46 @@
   letter-spacing: -0.02em; /* Sets letter spacing to -0.02em. */
 } /* Ends this style rule. */
 
+.admin-dashboard .admin-maintenance:has(.tournament-summary) {
+  width: 100%;
+  max-width: none;
+}
+
+.admin-dashboard .admin-maintenance:has(.tournament-summary) .tournament-summary {
+  margin-bottom: 16px;
+}
+
+.admin-dashboard .admin-maintenance:has(.tournament-summary) > h3 {
+  margin: 24px 0 12px;
+}
+
+@media (min-width: 761px) {
+  .admin-dashboard .admin-maintenance:has(.tournament-summary) .admin-maintenance-form {
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .admin-dashboard
+    .admin-maintenance:has(.tournament-summary)
+    .admin-maintenance-form
+    .admin-primary-button {
+    grid-column: 1 / -1;
+    justify-self: end;
+    width: min(100%, 300px);
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-dashboard .admin-maintenance:has(.tournament-summary) .admin-maintenance-form {
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  .admin-dashboard .admin-maintenance:has(.tournament-summary) > h3 {
+    margin: 20px 0 12px;
+  }
+}
+
 .admin-dashboard .admin-maintenance .admin-table-scroll { /* Styles the selected elements. */
   border: 1px solid var(--line); /* Sets border to 1px solid var(--line). */
   border-radius: 12px; /* Sets border radius to 12px. */
@@ -4749,6 +4909,7 @@
 
   .admin-dashboard .header .nav { /* Styles the selected elements. */
     overflow-x: auto; /* Sets overflow x to auto. */
+    flex-wrap: nowrap;
     scrollbar-width: none; /* Sets scrollbar width to none. */
   } /* Ends this style rule. */
 
@@ -5239,12 +5400,17 @@
   .admin-dashboard .admin-table-scroll, /* More selectors share this rule. */
   .admin-dashboard .bk-table-wrap, /* More selectors share this rule. */
   .admin-dashboard .schedule-editor-scroll, /* More selectors share this rule. */
-  .admin-dashboard .set-table-scroll, /* More selectors share this rule. */
-  .admin-dashboard .admin-panel { /* Styles the selected elements. */
+  .admin-dashboard .set-table-scroll { /* Styles the selected elements. */
     width: 100%; /* Sets width to 100%. */
     margin-inline: 0; /* Sets margin inline to 0. */
     padding-inline: 0; /* Sets padding inline to 0. */
-    overflow: visible; /* Sets overflow to visible. */
+    overflow-x: auto;
+  } /* Ends this style rule. */
+
+  .admin-dashboard .admin-panel {
+    width: 100%;
+    margin-inline: 0;
+    overflow-x: auto;
   } /* Ends this style rule. */
 
   /* Convert dense tables to labeled card rows on mobile. */
@@ -6097,24 +6263,60 @@
 
 /* Add / Edit Facility form */
 .admin-dashboard .ud-page { /* Styles the selected elements. */
-  max-width: 1040px; /* Sets max width to 1040px. */
+  width: 100%; /* Keeps the form within the available content width. */
+  max-width: 1280px; /* Prevents the form from becoming too wide on large screens. */
+  margin-inline: auto; /* Centers the form on wide screens. */
   display: grid; /* Sets display to grid. */
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* Sets grid template columns to repeat(2, minmax(0, 1fr)). */
-  column-gap: 20px; /* Sets column gap to 20px. */
+  grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr); /* Gives the details more room than the side panels. */
+  grid-template-areas:
+    'back back'
+    'head head'
+    'info image'
+    'info status';
+  gap: 20px 24px; /* Keeps consistent spacing between form sections. */
   align-content: start; /* Sets align content to start. */
 } /* Ends this style rule. */
 
-.admin-dashboard .ud-page > .usr-back, /* More selectors share this rule. */
-.admin-dashboard .ud-page > .ud-head, /* More selectors share this rule. */
-.admin-dashboard .ud-page > .ud-identity, /* More selectors share this rule. */
-.admin-dashboard .ud-page > .error, /* More selectors share this rule. */
-.admin-dashboard .ud-page > .success-box, /* More selectors share this rule. */
-.admin-dashboard .ud-page > .ud-history { /* Styles the selected elements. */
-  grid-column: 1 / -1; /* Sets grid column to 1 / -1. */
-} /* Ends this style rule. */
+.admin-dashboard .ud-page.has-error {
+  grid-template-areas:
+    'back back'
+    'head head'
+    'error error'
+    'info image'
+    'info status';
+}
+
+.admin-dashboard .ud-page > .usr-back {
+  grid-area: back;
+  margin-bottom: 0;
+}
+
+.admin-dashboard .ud-page > .ud-head {
+  grid-area: head;
+  margin-bottom: 0;
+}
+
+.admin-dashboard .ud-page > .error {
+  grid-area: error;
+  margin: 0;
+}
+
+.admin-dashboard .ud-page > .ud-facility-info {
+  grid-area: info;
+}
+
+.admin-dashboard .ud-page > .ud-facility-image {
+  grid-area: image;
+}
+
+.admin-dashboard .ud-page > .ud-facility-status {
+  grid-area: status;
+}
 
 .admin-dashboard .ud-page > .ud-card { /* Styles the selected elements. */
   width: 100%; /* Sets width to 100%. */
+  min-width: 0;
+  margin: 0;
 } /* Ends this style rule. */
 
 .admin-dashboard .ud-identity { /* Styles the selected elements. */
@@ -6162,10 +6364,11 @@
 } /* Ends this style rule. */
 
 .admin-dashboard .ud-save { /* Styles the selected elements. */
-  min-height: 46px; /* Sets min height to 46px. */
+  min-height: 48px; /* Keeps the primary action easy to tap. */
   padding: 0 22px; /* Sets padding to 0 22px. */
   border-radius: 8px; /* Sets border radius to 8px. */
   font-size: 15px; /* Sets font size to 15px. */
+  white-space: nowrap;
 } /* Ends this style rule. */
 
 .admin-dashboard .ud-card { /* Styles the selected elements. */
@@ -6192,7 +6395,10 @@
 .admin-dashboard .ud-card input, /* More selectors share this rule. */
 .admin-dashboard .ud-card select, /* More selectors share this rule. */
 .admin-dashboard .ud-card textarea { /* Styles the selected elements. */
+  box-sizing: border-box;
+  min-width: 0;
   min-height: 46px; /* Sets min height to 46px. */
+  max-width: 100%;
   border-radius: 8px; /* Sets border radius to 8px. */
   border-color: #d9e1e2; /* Sets border color to #d9e1e2. */
 } /* Ends this style rule. */
@@ -6211,12 +6417,16 @@
 
 .admin-dashboard .fm-drop img, /* More selectors share this rule. */
 .admin-dashboard .fm-drop-empty { /* Styles the selected elements. */
+  width: 100%;
   max-width: 420px; /* Sets max width to 420px. */
   height: 210px; /* Sets height to 210px. */
   border-radius: 10px; /* Sets border radius to 10px. */
 } /* Ends this style rule. */
 
 .admin-dashboard .fm-upload-link { /* Styles the selected elements. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 42px; /* Sets min height to 42px. */
   padding: 0 16px; /* Sets padding to 0 16px. */
   border-radius: 8px; /* Sets border radius to 8px. */
@@ -6236,6 +6446,29 @@
 .admin-dashboard .fm-radio.on { /* Styles the selected elements. */
   box-shadow: 0 5px 16px rgba(20, 89, 103, 0.14); /* Sets box shadow to 0 5px 16px rgba(20, 89, 103, 0.14). */
 } /* Ends this style rule. */
+
+@media (max-width: 1100px) {
+  .admin-dashboard .ud-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'back'
+      'head'
+      'info'
+      'image'
+      'status';
+    row-gap: 18px;
+  }
+
+  .admin-dashboard .ud-page.has-error {
+    grid-template-areas:
+      'back'
+      'head'
+      'error'
+      'info'
+      'image'
+      'status';
+  }
+}
 
 @media (max-width: 760px) { /* Applies these styles for (max-width: 760px). */
   .admin-dashboard .ud-page { /* Styles the selected elements. */
@@ -6285,13 +6518,33 @@
     margin-bottom: 10px; /* Sets margin bottom to 10px. */
   } /* Ends this style rule. */
 
+  .admin-dashboard .ud-page > .usr-back {
+    margin-bottom: 8px;
+  }
+
+  .admin-dashboard .ud-page > .ud-head {
+    margin-bottom: 16px;
+  }
+
+  .admin-dashboard .ud-page > .error {
+    margin-bottom: 16px;
+  }
+
+  .admin-dashboard .ud-page > .ud-card {
+    margin-bottom: 16px;
+  }
+
+  .admin-dashboard .ud-page > .ud-card:last-child {
+    margin-bottom: 0;
+  }
+
   .admin-dashboard .ud-head { /* Styles the selected elements. */
     align-items: stretch; /* Sets align items to stretch. */
     gap: 14px; /* Sets gap to 14px. */
   } /* Ends this style rule. */
 
   .admin-dashboard .ud-head h1 { /* Styles the selected elements. */
-    font-size: 34px; /* Sets font size to 34px. */
+    font-size: clamp(28px, 8vw, 34px);
   } /* Ends this style rule. */
 
   .admin-dashboard .ud-save { /* Styles the selected elements. */
@@ -6336,7 +6589,20 @@
 
   .admin-dashboard .fm-upload-link { /* Styles the selected elements. */
     width: 100%; /* Sets width to 100%. */
+    min-height: 44px;
+    justify-content: center;
   } /* Ends this style rule. */
+
+  .admin-dashboard .fm-drop small {
+    max-width: 100%;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-dashboard .fm-remove {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
 
   .admin-dashboard .fm-radios { /* Styles the selected elements. */
     grid-template-columns: 1fr; /* Sets grid template columns to 1fr. */

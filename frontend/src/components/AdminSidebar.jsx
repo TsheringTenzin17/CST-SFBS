@@ -7,7 +7,7 @@ export const ADMIN_NAV = [                                                   // 
   { to: '/admin/dashboard', key: 'Dashboard', label: 'Dashboard' },          // Main dashboard page; menu text is "Dashboard"
   { to: '/admin/bookings', key: 'Bookings', label: 'Manage Bookings' },      // Bookings page; menu text is "Manage Bookings"
   { to: '/admin/facilities', key: 'Facilities Status', label: 'Facilities Status' }, // Facilities page; shows the status of facilities
-  { to: '/admin/maintenance', key: 'Maintenance Blocks', label: 'Maintenance Blocks' }, // Maintenance page; for blocking facilities for repair
+  { to: '/admin/maintenance', key: 'Maintenance Blocks', label: 'Maintenance & Closures' }, // Maintenance and campus-wide booking restrictions
   { to: '/admin/tournaments', key: 'Tournaments', label: 'Tournaments' },    // Tournaments page; for managing tournaments
   { to: '/admin/users', key: 'Users', label: 'Registered Users' },          // Users page; menu text is "Registered Users"
   { to: '/admin/reports', key: 'Reports', label: 'Reports & Analytics' },    // Reports page; menu text is "Reports & Analytics"

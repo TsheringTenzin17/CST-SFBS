@@ -56,14 +56,14 @@ function FeeStructure() {
       <section className="fee-card">
         <h2>Other facilities</h2>
         <p className="fee-intro">
-          Basketball, volleyball, badminton, and table tennis bookings are free for eligible student
-          slots. Commercial bookings for these facilities cost{' '}
-          <strong>Nu. 1,500 per booking</strong>, including outsider bookings and slots opened at
-          the commercial rate.
+          Faculty/staff bookings and eligible student slots for basketball, volleyball, badminton,
+          and table tennis are free. The <strong>Nu. 1,500 per booking</strong> commercial fee still
+          applies to outsider bookings and student bookings in slots opened at the commercial rate.
         </p>
         <p className="fee-note">
-          Pay to account 221758633 and submit the payment screenshot and journal number with your
-          booking request. The booking remains pending until an administrator verifies the payment.
+          When a fee applies, pay to account 221758633 and submit the payment screenshot and journal
+          number with your booking request. The booking remains pending until an administrator
+          verifies the payment.
         </p>
       </section>
     </main>

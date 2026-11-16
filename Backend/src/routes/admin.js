@@ -5,6 +5,7 @@
 // GET   /admin/support-requests                         list support requests
 // PATCH /admin/support-requests/:id                     change status of a request
 // POST  /admin/support-requests/:id/notify-resolution   email the user that it is resolved
+// DELETE /admin/support-requests/:id                   remove a resolved request
 // GET   /admin/users                                    list accounts
 // GET   /admin/users/:id                                one account + its booking summary
 // PATCH /admin/users/:id                                edit details, role, active/suspended
@@ -82,6 +83,38 @@ router.patch('/support-requests/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);                                                // show the error in the server console
     res.status(500).json({ error: 'Failed to update support request' });   // tell the client it failed
+  }
+});
+
+// ---- remove a resolved support request -----------------------
+router.delete('/support-requests/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid support request id' });
+  }
+
+  try {
+    const removed = await pool.query(
+      `DELETE FROM support_requests
+       WHERE id = $1 AND status = 'resolved'
+       RETURNING id`,
+      [id],
+    );
+    if (removed.rows.length === 0) {
+      const existing = await pool.query(
+        'SELECT status FROM support_requests WHERE id = $1',
+        [id],
+      );
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ error: 'Support request not found' });
+      }
+      return res.status(409).json({ error: 'Only resolved support requests can be removed' });
+    }
+
+    res.json({ deleted: true, id: removed.rows[0].id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove support request' });
   }
 });
 

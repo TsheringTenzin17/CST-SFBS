@@ -15,29 +15,13 @@ const TZ = 'Asia/Thimphu';                                  // bhutan time zone 
 // bookingWindow - which dates can be booked right now
 // ==============================================================
 function bookingWindow() {                                  // gives back from, to, nextOpens
-  // ----------------------------------------------------------
-  // find this monday
-  // ----------------------------------------------------------
   const today = bhutanNow().date;                           // today in bhutan
-  const d = new Date(`${today}T00:00:00Z`);                 // today at midnight utc
-  // go back to monday (sunday is 0 so it needs the + 6)
-  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // this Monday
-  // ----------------------------------------------------------
-  // helper to add days to monday
-  // ----------------------------------------------------------
-  const add = (n) => {                                      // n is number of days to add
-    const x = new Date(d);                                  // copy monday
-    x.setUTCDate(d.getUTCDate() + n);                       // move forward n days
-    return x.toISOString().slice(0, 10);                    // give back YYYY-MM-DD
-  };                                                        // end of add
-  // ----------------------------------------------------------
-  // work out the last bookable day
-  // ----------------------------------------------------------
-  // true if today is sunday in bhutan
-  const isSunday = bhutanNow().minutes >= 0 && new Date(`${today}T00:00:00Z`).getUTCDay() === 0;
-  const to = isSunday ? add(13) : add(6);                   // sunday sees 2 weeks, else this week
-  // give back the window
-  return { from: today, to, nextOpens: add(7) }; // Next week opens on Sunday at Bhutan midnight.
+  const add = (days) => {                                   // number of days from today
+    const date = new Date(`${today}T00:00:00Z`);             // today at midnight UTC
+    date.setUTCDate(date.getUTCDate() + days);               // move forward by the requested days
+    return date.toISOString().slice(0, 10);                  // return YYYY-MM-DD
+  };
+  return { from: today, to: add(6), nextOpens: add(7) };     // Today and the next six days are bookable.
 }                                                           // end of function
 
 // ==============================================================

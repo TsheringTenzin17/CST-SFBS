@@ -11,7 +11,7 @@ import { groupSummary } from '../utils/availability';    // Import the helper th
 
 // ----- Hook: useSummary -----
 // Loads the slot counts for one date and returns them with a loading flag
-export default function useSummary(date) {         // Custom hook; "date" is the day we want to load
+export default function useSummary(date, role) {    // Custom hook; "date" is the day we want to load
   const [summary, setSummary] = useState({});      // summary = the loaded data (starts empty)
   const [loading, setLoading] = useState(true);    // loading = true while waiting for the answer
 
@@ -21,7 +21,7 @@ export default function useSummary(date) {         // Custom hook; "date" is the
     setLoading(true);                                 // Show the loading state before we start
     apiCall(`/facilities/summary?date=${date}`)       // Ask the backend for this date's summary
       .then((data) => {                               // When the answer arrives successfully
-        if (!cancelled) setSummary(groupSummary(data.facilities));    // If still on the page, group the facilities and save them
+        if (!cancelled) setSummary(groupSummary(data.facilities, role)); // Group and apply role-specific availability
       })                                              // End of the success handler
       .catch(() => {                                  // If the request fails
         if (!cancelled) setSummary({});               // If still on the page, reset the summary to empty
@@ -32,7 +32,7 @@ export default function useSummary(date) {         // Custom hook; "date" is the
     return () => {                                    // Cleanup: runs when the page is left or "date" changes
       cancelled = true;                               // Mark as cancelled so old answers are ignored
     };                                                // End of the cleanup function
-  }, [date]);                                         // Run this effect again only when "date" changes
+  }, [date, role]);                                   // Reload when the date or account role changes
 
   return { summary, loading };    // Give the data and the loading flag to the component using this hook
 }                                 // End of the useSummary hook

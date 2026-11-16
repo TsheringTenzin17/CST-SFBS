@@ -102,6 +102,8 @@ function BookingForm() {
   const paymentScreenshotInput = useRef(null);
   const conflict = conflictSlot === slotKey;
   const bookingUser = accountProfile ? { ...user, ...accountProfile } : user;
+  const studentBlackout =
+    bookingUser?.role === 'student' ? availability?.booking_blackout : null;
   const selectedRule = availability?.rules?.find(
     (rule) => toMin(rule.start_time) <= toMin(start) && toMin(rule.end_time) >= toMin(end),
   );
@@ -109,7 +111,10 @@ function BookingForm() {
   const commercialSlot = selectedRule
     ? isCommercialBooking(selectedRule, date, bookingUser)
     : false;
-  const requiresPayment = bookingUser?.role === 'outsider' || commercialSlot;
+  const requiresPayment =
+    bookingUser?.role === 'outsider' ||
+    (commercialSlot &&
+      (bookingUser?.role !== 'faculty' || facility?.type === 'football'));
   const footballFeeAmount =
     requiresPayment && facility?.type === 'football'
       ? footballFee(bookingUser.role, date, assistantReferees)
@@ -191,6 +196,12 @@ function BookingForm() {
     e.preventDefault();
     setError(null);
     setConflictSlot(null);
+    if (studentBlackout) {
+      setError(
+        `Student bookings are paused across all facilities on this date: ${studentBlackout.reason}.`,
+      );
+      return;
+    }
     if (requiresPayment && !paymentJournalNumber.trim()) {
       setError('Enter the payment journal number.');
       return;
@@ -368,6 +379,12 @@ function BookingForm() {
           <p className="booking-intro">
             Complete your details to reserve this slot. Fields marked * are required.
           </p>
+          {studentBlackout && (
+            <p className="error" role="alert">
+              Student bookings are paused across all facilities on this date:{' '}
+              {studentBlackout.reason}.
+            </p>
+          )}
           {(() => {
             const identity = identityField(bookingUser.role, bookingUser);
             return (
@@ -532,7 +549,9 @@ function BookingForm() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={submitting || bookingDetailsLoading || !agree}
+              disabled={
+                submitting || bookingDetailsLoading || !agree || Boolean(studentBlackout)
+              }
             >
               {submitting ? (
                 <Spinner label="Confirming…" />

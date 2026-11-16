@@ -22,6 +22,7 @@ export const ROLE_LABELS = {
 };
 
 export const STATE_LABELS = {
+  blackout: 'Student bookings paused',
   maintenance: 'Closed for maintenance',
   past: 'Passed',
   unavailable: 'Not bookable',
@@ -155,11 +156,10 @@ export function isTaken(slot, bookings) {
 }
 
 // ---------- 5. slot state ----------
-// Returns one of: 'maintenance' | 'past' | 'unavailable' | 'booked' | 'full' | 'restricted' | 'open'
+// Returns one of: 'blackout' | 'maintenance' | 'past' | 'unavailable' | 'booked' | 'full' | 'restricted' | 'open'
 // `availability` is the object from GET /facilities/:id/availability.
 // With no signed-in user, a free slot is simply 'open' (the page shows "Sign in to book").
 export function slotState(slot, { date, availability, user }) {
-  if (availability.maintenance && availability.maintenance.length > 0) return 'maintenance';
   const startMin = toMin(slot.start);
   if (date < todayString() || (date === todayString() && startMin <= nowMinutes())) return 'past';
   if (
@@ -168,6 +168,8 @@ export function slotState(slot, { date, availability, user }) {
   ) {
     return 'unavailable';
   }
+  if (user?.role === 'student' && availability.booking_blackout) return 'blackout';
+  if (availability.maintenance && availability.maintenance.length > 0) return 'maintenance';
   if (slot.rule.primary_role === 'maintenance') return 'unavailable';
   if (isTaken(slot, availability.existing_bookings)) return 'booked';
   // weekend student matches: the day closes once the daily cap is used up

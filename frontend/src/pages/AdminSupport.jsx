@@ -15,6 +15,7 @@ function AdminSupport() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [emailingId, setEmailingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [filter, setFilter] = useState('all');
@@ -71,6 +72,29 @@ function AdminSupport() {
     }
   }
 
+  async function removeResolvedRequest(request) {
+    if (
+      !window.confirm(
+        `Permanently remove resolved ticket #${request.id} from the support inbox? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(request.id);
+    setError('');
+    setNotice('');
+    try {
+      await apiCall(`/admin/support-requests/${request.id}`, 'DELETE');
+      setRequests((current) => current.filter((item) => item.id !== request.id));
+      setNotice(`Resolved ticket #${request.id} was removed.`);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const list = Array.isArray(requests) ? requests : [];
   const count = (status) => list.filter((r) => r.status === status).length;
   const visible = filter === 'all' ? list : list.filter((r) => r.status === filter);
@@ -87,7 +111,7 @@ function AdminSupport() {
       <div className="sup-toolbar">
         <p>
           Review submitted requests and update their status. After resolving, use the email button
-          on the ticket to notify the requester.
+          to notify the requester, or remove resolved tickets you no longer need to keep.
         </p>
         <button className="admin-primary-button" onClick={loadRequests} type="button">
           Refresh
@@ -168,7 +192,7 @@ function AdminSupport() {
                   <select
                     className={`sup-select sup-${request.status}`}
                     value={request.status}
-                    disabled={savingId === request.id}
+                    disabled={savingId === request.id || deletingId === request.id}
                     onChange={(event) => updateStatus(request, event.target.value)}
                   >
                     {STATUSES.map(([value, label]) => (
@@ -181,7 +205,11 @@ function AdminSupport() {
                 {request.status === 'resolved' && (
                   <button
                     className="admin-secondary-button"
-                    disabled={emailingId === request.id}
+                    disabled={
+                      emailingId === request.id ||
+                      deletingId === request.id ||
+                      savingId === request.id
+                    }
                     onClick={() => sendResolutionEmail(request)}
                     type="button"
                   >
@@ -189,6 +217,24 @@ function AdminSupport() {
                       <Spinner label="Sending resolution email…" />
                     ) : (
                       'Email resolution update'
+                    )}
+                  </button>
+                )}
+                {request.status === 'resolved' && (
+                  <button
+                    className="admin-cancel-button"
+                    disabled={
+                      deletingId === request.id ||
+                      emailingId === request.id ||
+                      savingId === request.id
+                    }
+                    onClick={() => removeResolvedRequest(request)}
+                    type="button"
+                  >
+                    {deletingId === request.id ? (
+                      <Spinner label="Removing ticket…" />
+                    ) : (
+                      'Remove ticket'
                     )}
                   </button>
                 )}
