@@ -189,6 +189,19 @@ CREATE TABLE IF NOT EXISTS maintenance_blocks (                         -- make 
   CHECK (end_date >= start_date)                                        -- end date cannot be before start date
 );                                                                      -- end of the table, ; ends this command
 
+-- CAMPUS-WIDE BOOKING BLACKOUT DATES
+CREATE TABLE IF NOT EXISTS booking_blackout_dates (
+  id SERIAL PRIMARY KEY,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  reason VARCHAR(500) NOT NULL,
+  created_by INT REFERENCES users (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (end_date >= start_date)
+);
+CREATE INDEX IF NOT EXISTS idx_booking_blackout_dates_period
+  ON booking_blackout_dates (start_date, end_date);
+
 -- STEP 3: THE WEDNESDAY FACULTY SLOT NOW OPENS BY ITSELF, no admin click
 UPDATE schedule_rules                                                   -- change rows in the schedule_rules table
 SET                                                                     -- start of the new value

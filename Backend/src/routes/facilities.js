@@ -39,7 +39,7 @@ router.get('/summary', async (req, res) => { // Get slot counts for each facilit
     const dow = dayOfWeek(date); // Get the weekday.
     const timetable = await timetableForDate(pool, date); // Get the timetable for this date.
 
-    const [facilities, rules, bookings, blocks] = await Promise.all([
+    const [facilities, rules, bookings, blocks, blackouts] = await Promise.all([
       pool.query(
         'SELECT id, name, group_name, max_duration_minutes FROM facilities WHERE is_active = true ORDER BY id', // Get active facilities.
       ),
@@ -60,9 +60,19 @@ router.get('/summary', async (req, res) => { // Get slot counts for each facilit
          WHERE $1::date BETWEEN start_date AND end_date`, // Get maintenance for this date.
         [date],
       ),
+      pool.query(
+        `SELECT id, reason,
+                to_char(start_date, 'YYYY-MM-DD') AS start_date,
+                to_char(end_date, 'YYYY-MM-DD') AS end_date
+         FROM booking_blackout_dates
+         WHERE $1::date BETWEEN start_date AND end_date
+         LIMIT 1`, // Get a campus-wide restriction for this date.
+        [date],
+      ),
     ]);
 
     const blockedIds = new Set(blocks.rows.map((b) => b.facility_id)); // Store IDs of closed facilities.
+    const bookingBlackout = blackouts.rows[0] || null;
 
     const summary = facilities.rows.map((f) => { // Make a summary for each facility.
       const slotMin = f.max_duration_minutes || 120; // Set the slot length in minutes.
@@ -81,7 +91,7 @@ router.get('/summary', async (req, res) => { // Get slot counts for each facilit
           const e = s + slotMin; // Get the slot end time.
           const taken = booked.some((b) => toMin(b.start_time) < e && toMin(b.end_time) > s); // Check for an overlapping booking.
           const past = date < now.date || (date === now.date && s <= now.minutes); // Check if the slot has passed.
-          const free = !taken && !past && !blockedIds.has(f.id); // Check if the slot is free.
+          const free = !taken && !past && !blockedIds.has(f.id); // Check availability before student-only restrictions.
           if (r.day_booking_cap) {
             cap = r.day_booking_cap; // Set the daily limit.
             cappedSlots += 1; // Count this limited slot.
@@ -111,6 +121,7 @@ router.get('/summary', async (req, res) => { // Get slot counts for each facilit
         total, // Add the total slot count.
         available, // Add the free slot count.
         blocked: blockedIds.has(f.id), // Show if maintenance blocks the facility.
+        booking_blackout: bookingBlackout, // Show campus-wide booking restrictions.
       };
     });
 
@@ -132,7 +143,7 @@ router.get('/:id/availability', async (req, res) => { // Get one facility's avai
   try {
     const dow = dayOfWeek(date); // Get the weekday.
     const timetable = await timetableForDate(pool, date); // Get the timetable for this date.
-    const [rules, bookings, maintenance] = await Promise.all([
+    const [rules, bookings, maintenance, blackouts] = await Promise.all([
       pool.query(
         `SELECT to_char(start_time,'HH24:MI') AS start_time, to_char(end_time,'HH24:MI') AS end_time,
                 primary_role, fallback_role, fallback_type, notes, day_booking_cap
@@ -151,6 +162,15 @@ router.get('/:id/availability', async (req, res) => { // Get one facility's avai
         `SELECT reason FROM maintenance_blocks
          WHERE facility_id = $1 AND $2::date BETWEEN start_date AND end_date`, // Get maintenance for this date.
         [id, date],
+      ),
+      pool.query(
+        `SELECT id, reason,
+                to_char(start_date, 'YYYY-MM-DD') AS start_date,
+                to_char(end_date, 'YYYY-MM-DD') AS end_date
+         FROM booking_blackout_dates
+         WHERE $1::date BETWEEN start_date AND end_date
+         LIMIT 1`, // Get campus-wide restrictions for this date.
+        [date],
       ),
     ]);
 
@@ -173,6 +193,7 @@ router.get('/:id/availability', async (req, res) => { // Get one facility's avai
       rules: rules.rows, // Add the schedule rules.
       existing_bookings: bookings.rows, // Add existing bookings.
       maintenance: maintenance.rows, // non-empty = facility closed that day
+      booking_blackout: blackouts.rows[0] || null, // Set when all facilities are restricted.
     });
   } catch (err) {
     console.error(err); // Log the error.

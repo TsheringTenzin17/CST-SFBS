@@ -124,8 +124,7 @@ function BookingConfirmation() {
             </div>
           ) : (
             <div className="confirm-note confirm-note-free">
-              Please Note: No approval or payment is required for students and staff. Your
-              reservation is active.
+              This free reservation is active. No payment or administrator approval is required.
             </div>
           )}
         </div>

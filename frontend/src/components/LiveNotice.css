@@ -189,6 +189,7 @@
   .live-notice-close {                   /* The close "x" button */
     width: 36px;                         /* Button width (easy to tap) */
     height: 36px;                        /* Button height (easy to tap) */
+    min-height: 36px;                    /* Override the global 44px mobile button minimum */
     display: inline-grid;                /* Use a grid to center the icon */
     place-items: center;                 /* Center the icon */
     padding: 0;                          /* No space inside */

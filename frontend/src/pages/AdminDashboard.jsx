@@ -30,7 +30,7 @@ const ADMIN_FOOTER_LINKS = [
   { to: '/admin/bookings', label: 'Manage Bookings' },
   { to: '/admin/facilities', label: 'Facilities Status' },
   { to: '/admin/users', label: 'Registered Users' },
-  { to: '/admin/maintenance', label: 'Maintenance Blocks' },
+  { to: '/admin/maintenance', label: 'Maintenance & Closures' },
   { to: '/admin/reports', label: 'Reports & Analytics' },
 ];
 

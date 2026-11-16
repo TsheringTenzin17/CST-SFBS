@@ -80,6 +80,8 @@ function RescheduleBooking() {
           (slot) => slotState(slot, { date, availability, user }) === 'open',
         )
       : [];
+  const studentBlackout =
+    user?.role === 'student' ? availability?.booking_blackout : null;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -193,12 +195,21 @@ function RescheduleBooking() {
               This facility is closed for maintenance on this date. Choose another day.
             </p>
           )}
+          {studentBlackout && (
+            <p className="reschedule-empty" role="status">
+              Student bookings are paused across all facilities on this date:{' '}
+              {studentBlackout.reason}.
+            </p>
+          )}
           {availabilityLoading && (
             <p className="reschedule-empty" role="status">
               Checking available slots…
             </p>
           )}
-          {!availabilityLoading && availability && availableSlots.length === 0 && (
+          {!availabilityLoading &&
+            availability &&
+            !studentBlackout &&
+            availableSlots.length === 0 && (
             <p className="reschedule-empty">
               No suitable slots are available on this date. Try another date.
             </p>

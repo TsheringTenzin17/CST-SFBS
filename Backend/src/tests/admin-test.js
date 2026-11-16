@@ -10,11 +10,13 @@ const {
   facilityId,
   dateOnWeekday,
   addMaintenanceBlock,
+  trackBookingBlackout,
   check,
   finish,
 } = require('./helpers');
 const pool = require('../db');
 const { expirePastPendingBookings, processDueReminders } = require('../reminders');
+const { bookingWindow } = require('../time');
 
 async function main() {
   const admin = await createUser('admin');
@@ -23,6 +25,7 @@ async function main() {
   const outsider = await createUser('outsider');
   const basketball = await facilityId('Basketball Court');
   const football = await facilityId('Football Ground');
+  const archery = await facilityId('Archery Range');
   const tuesday = dateOnWeekday(2);
   let r;
 
@@ -88,6 +91,28 @@ async function main() {
     r.status === 200 && r.body.request.status === 'in_progress',
     `got ${r.status}`,
   );
+  r = await api('DELETE', `/admin/support-requests/${supportTicket.rows[0].id}`, {
+    admin_user_id: student,
+  });
+  check('support request removal is restricted to administrators', r.status === 403, `got ${r.status}`);
+  r = await api('DELETE', `/admin/support-requests/${supportTicket.rows[0].id}`, {
+    admin_user_id: admin,
+  });
+  check('an unresolved support request cannot be removed', r.status === 409, `got ${r.status}`);
+  r = await api('PATCH', `/admin/support-requests/${supportTicket.rows[0].id}`, {
+    admin_user_id: admin,
+    status: 'resolved',
+  });
+  check('an admin can resolve a support request before removal', r.status === 200, `got ${r.status}`);
+  r = await api('DELETE', `/admin/support-requests/${supportTicket.rows[0].id}`, {
+    admin_user_id: admin,
+  });
+  check('an admin can remove a resolved support request', r.status === 200, `got ${r.status}`);
+  const removedSupportTicket = await pool.query(
+    'SELECT id FROM support_requests WHERE id = $1',
+    [supportTicket.rows[0].id],
+  );
+  check('removed support requests no longer appear in storage', removedSupportTicket.rows.length === 0);
   const invalidSessionResponse = await fetch(
     `${process.env.API_URL || 'http://localhost:4000'}/support/requests`,
     {
@@ -609,7 +634,7 @@ async function main() {
     r.status === 200 && r.body.maintenance.length === 1,
     JSON.stringify(r.body.maintenance),
   );
-  await post({
+  const existingBlackoutBooking = await post({
     user_id: student,
     facility_id: basketball,
     booking_date: tuesday,
@@ -660,6 +685,111 @@ async function main() {
   );
   r = await api('DELETE', `/maintenance/${apiBlockId}`, { admin_user_id: admin });
   check('an admin can remove a maintenance block', r.status === 200, `got ${r.status}`);
+
+  console.log('Student booking restrictions');
+  r = await api('POST', '/booking-blackouts', {
+    admin_user_id: student,
+    start_date: tuesday,
+    end_date: wednesday,
+    reason: 'Exam and test period',
+  });
+  check('a student cannot add a booking restriction', r.status === 403, `got ${r.status}`);
+  r = await api('POST', '/booking-blackouts', {
+    admin_user_id: admin,
+    start_date: wednesday,
+    end_date: tuesday,
+    reason: 'Invalid date range',
+  });
+  check('booking restrictions reject an end date before the start date', r.status === 400);
+  r = await api('POST', '/booking-blackouts', {
+    admin_user_id: admin,
+    start_date: tuesday,
+    end_date: wednesday,
+    reason: 'Exam and test period',
+  });
+  check(
+    'an admin can add a student booking date range and see affected bookings',
+    r.status === 201 && r.body.affected_bookings > 0,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  const blackoutId = r.body.id;
+  trackBookingBlackout(blackoutId);
+  r = await api('POST', '/booking-blackouts', {
+    admin_user_id: admin,
+    start_date: wednesday,
+    end_date: wednesday,
+    reason: 'Overlapping restriction',
+  });
+  check('overlapping booking restrictions are rejected', r.status === 409, `got ${r.status}`);
+
+  r = await api('GET', `/facilities/${basketball}/availability?date=${tuesday}`);
+  check(
+    'facility availability reports the student booking restriction',
+    r.status === 200 && r.body.booking_blackout?.reason === 'Exam and test period',
+    JSON.stringify(r.body.booking_blackout),
+  );
+  r = await api('GET', `/facilities/${football}/availability?date=${wednesday}`);
+  check(
+    'the date range applies to other facilities too',
+    r.status === 200 && r.body.booking_blackout?.reason === 'Exam and test period',
+    JSON.stringify(r.body.booking_blackout),
+  );
+  r = await post({
+    user_id: student,
+    facility_id: basketball,
+    booking_date: tuesday,
+    start_time: '16:00',
+    end_time: '17:00',
+  });
+  check(
+    'new bookings are blocked during a campus-wide restriction',
+    r.status === 403 && /exam and test period/i.test(r.body.error),
+    `got ${r.status} ${r.body.error}`,
+  );
+  r = await post({
+    user_id: student,
+    facility_id: football,
+    booking_date: wednesday,
+    start_time: '16:00',
+    end_time: '18:00',
+  });
+  check('the restriction blocks student bookings across different facilities', r.status === 403);
+  r = await post({
+    user_id: outsider,
+    facility_id: archery,
+    booking_date: wednesday,
+    start_time: '20:00',
+    end_time: '21:00',
+  });
+  check(
+    'student booking restrictions do not block other account roles',
+    r.status === 201,
+    `got ${r.status} ${r.body.error}`,
+  );
+  const unchangedBooking = await pool.query('SELECT status FROM bookings WHERE id = $1', [
+    existingBlackoutBooking.body.booking.id,
+  ]);
+  check(
+    'existing bookings remain unchanged when a restriction is added',
+    ['pending', 'approved'].includes(unchangedBooking.rows[0]?.status),
+    JSON.stringify(unchangedBooking.rows[0]),
+  );
+  r = await api('GET', `/facilities/summary?date=${tuesday}`);
+  const restrictedBasketball = r.body.facilities?.find((f) => f.facility_id === basketball);
+  check(
+    'the availability summary reports the student booking restriction',
+    r.status === 200 &&
+      restrictedBasketball.booking_blackout?.reason === 'Exam and test period',
+    JSON.stringify(restrictedBasketball),
+  );
+  r = await api('DELETE', `/booking-blackouts/${blackoutId}`, { admin_user_id: admin });
+  check('an admin can remove a student booking restriction', r.status === 200, `got ${r.status}`);
+  r = await api('GET', `/facilities/${basketball}/availability?date=${tuesday}`);
+  check(
+    'removing a restriction reopens the date',
+    r.status === 200 && r.body.booking_blackout === null,
+    JSON.stringify(r.body.booking_blackout),
+  );
 
   console.log('Availability summary (real slot counts)');
   const date = dateOnWeekday(2);
@@ -793,6 +923,79 @@ async function main() {
     `got ${r.status}`,
   );
 
+  console.log('Re-booking expired booking credits');
+  const creditBooking = await pool.query(
+    `INSERT INTO bookings (
+       user_id, facility_id, booking_date, start_time, end_time, purpose, status,
+       payment_amount, payment_journal_number, payment_screenshot, payment_resolution
+     )
+     VALUES (
+       $1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 2,
+       '07:00', '08:00', 'Credit window test', 'expired', 2900, $3,
+       'data:image/png;base64,iVBORw0KGgo=', 'credit'
+     )
+     RETURNING id`,
+    [student, football, `CREDIT-WINDOW-${crypto.randomUUID()}`],
+  );
+  const bookingDate = new Date(`${bookingWindow().to}T00:00:00Z`);
+  bookingDate.setUTCDate(bookingDate.getUTCDate() + 1);
+  const beyondBookingWindow = bookingDate.toISOString().slice(0, 10);
+  r = await api('PATCH', `/bookings/${creditBooking.rows[0].id}/rebook`, {
+    admin_user_id: admin,
+    facility_id: football,
+    booking_date: beyondBookingWindow,
+    start_time: '20:00',
+    end_time: '22:00',
+  });
+  check(
+    'expired booking credits cannot be used more than one week ahead',
+    r.status === 400 && /Advance booking is limited/.test(r.body.error || ''),
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+
+  const creditUser = await createUser('student');
+  const reusableCredit = await pool.query(
+    `INSERT INTO bookings (
+       user_id, facility_id, booking_date, start_time, end_time, purpose, status,
+       payment_amount, payment_journal_number, payment_screenshot, payment_resolution
+     )
+     VALUES (
+       $1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 2,
+       '08:00', '09:00', 'Credit re-book test', 'expired', 2900, $3,
+       'data:image/png;base64,iVBORw0KGgo=', 'credit'
+     )
+     RETURNING id`,
+    [creditUser, football, `CREDIT-REBOOK-${crypto.randomUUID()}`],
+  );
+  const preferredDate = dateOnWeekday(5);
+  r = await api('PATCH', `/bookings/${reusableCredit.rows[0].id}/rebook`, {
+    admin_user_id: admin,
+    facility_id: football,
+    booking_date: preferredDate,
+    start_time: '18:00',
+    end_time: '20:00',
+  });
+  const confirmedCreditBooking = await pool.query(
+    `SELECT status, booking_date::text AS booking_date, payment_resolution_completed_at
+     FROM bookings WHERE id = $1`,
+    [reusableCredit.rows[0].id],
+  );
+  check(
+    'an admin can book an available replacement slot with a user’s credit',
+    r.status === 200 &&
+      confirmedCreditBooking.rows[0]?.status === 'approved' &&
+      confirmedCreditBooking.rows[0]?.booking_date === preferredDate &&
+      confirmedCreditBooking.rows[0]?.payment_resolution_completed_at != null,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  const creditNotice = await pool.query(
+    `SELECT id FROM notifications
+     WHERE user_id = $1 AND type = 'booking_confirmed'
+       AND message LIKE $2`,
+    [creditUser, `%credit from your expired booking B-${reusableCredit.rows[0].id}%`],
+  );
+  check('the user is notified when the credit books a replacement slot', creditNotice.rows.length > 0);
+
   const lateApprovalBooking = await pool.query(
     `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
      VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '12:00', '13:00', 'Late approval test', 'pending')
@@ -811,8 +1014,103 @@ async function main() {
     r.status === 410 && lateApprovalStatus.rows[0]?.status === 'expired',
     `got ${r.status} ${JSON.stringify(r.body)}`,
   );
+  r = await api('DELETE', `/bookings/${lateApprovalBooking.rows[0].id}/archive`, {
+    test_user_id: student,
+  });
+  check(
+    'a user cannot remove an expired unpaid booking from history',
+    r.status === 404,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('GET', `/bookings/user/${student}?test_user_id=${student}`);
+  check(
+    'expired unpaid bookings remain in My Bookings',
+    r.status === 200 &&
+      Array.isArray(r.body) &&
+      r.body.some((booking) => booking.id === lateApprovalBooking.rows[0].id),
+    `got ${r.status}`,
+  );
+
+  const cancelledArchiveBooking = await pool.query(
+    `INSERT INTO bookings (user_id, facility_id, booking_date, start_time, end_time, purpose, status)
+     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date, '03:00', '04:00',
+             'Cancelled archive test', 'cancelled')
+     RETURNING id`,
+    [student, basketball],
+  );
+  r = await api('DELETE', `/bookings/${cancelledArchiveBooking.rows[0].id}/archive`, {
+    test_user_id: student,
+  });
+  check(
+    'a user can remove a cancelled booking from history',
+    r.status === 200 && r.body.archived,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('GET', `/bookings/user/${student}?test_user_id=${student}`);
+  check(
+    'archived cancelled bookings disappear from My Bookings',
+    r.status === 200 &&
+      Array.isArray(r.body) &&
+      !r.body.some((booking) => booking.id === cancelledArchiveBooking.rows[0].id),
+    `got ${r.status}`,
+  );
+
+  const unresolvedPaidArchiveBooking = await pool.query(
+    `INSERT INTO bookings (
+       user_id, facility_id, booking_date, start_time, end_time, purpose, status, payment_amount
+     )
+     VALUES ($1, $2, (now() AT TIME ZONE 'Asia/Thimphu')::date - 1, '03:00', '04:00',
+             'Unresolved paid archive test', 'expired', 1500)
+     RETURNING id`,
+    [student, basketball],
+  );
+  r = await api('DELETE', `/bookings/${unresolvedPaidArchiveBooking.rows[0].id}/archive`, {
+    test_user_id: student,
+  });
+  check(
+    'a paid expired booking stays visible until a refund or credit is chosen',
+    r.status === 404,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('GET', `/bookings/user/${student}?test_user_id=${student}`);
+  check(
+    'a paid expired booking remains in My Bookings until its remedy is chosen',
+    r.status === 200 &&
+      Array.isArray(r.body) &&
+      r.body.some((booking) => booking.id === unresolvedPaidArchiveBooking.rows[0].id),
+    `got ${r.status}`,
+  );
+  await pool.query("UPDATE bookings SET payment_resolution = 'credit' WHERE id = $1", [
+    unresolvedPaidArchiveBooking.rows[0].id,
+  ]);
+  r = await api('DELETE', `/bookings/${unresolvedPaidArchiveBooking.rows[0].id}/archive`, {
+    test_user_id: student,
+  });
+  check(
+    'a user cannot remove an expired paid booking after choosing a remedy',
+    r.status === 404,
+    `got ${r.status} ${JSON.stringify(r.body)}`,
+  );
+  r = await api('GET', `/bookings/user/${student}?test_user_id=${student}`);
+  check(
+    'paid expired bookings remain in My Bookings after choosing a remedy',
+    r.status === 200 &&
+      Array.isArray(r.body) &&
+      r.body.some((booking) => booking.id === unresolvedPaidArchiveBooking.rows[0].id),
+    `got ${r.status}`,
+  );
 
   console.log('Scheduled booking reminders');
+
+  // 1. FIRST: cancel leftover bookings from earlier sections so they
+  //    cannot create extra reminders.
+  await pool.query(
+    `UPDATE bookings SET status = 'cancelled'
+     WHERE user_id = ANY($1) AND status IN ('pending', 'approved')`,
+    [[student, other, outsider, creditUser]],
+  );
+
+  // 2. THEN: set up the reminder scenario.
   await pool.query(
     `INSERT INTO user_notification_preferences (user_id, booking_updates, game_reminders, maintenance_alerts)
      VALUES ($1, true, true, true)
@@ -845,8 +1143,12 @@ async function main() {
      FROM slot`,
     [other, football],
   );
+
+  // 3. THEN: run the job twice (the second run must not create duplicates).
   await processDueReminders();
   await processDueReminders();
+
+  // 4. Check the results.
   const reminderRows = await pool.query(
     `SELECT lead_hours FROM booking_reminders WHERE booking_id = $1`,
     [reminderBooking.rows[0].id],
@@ -859,9 +1161,19 @@ async function main() {
     `SELECT id FROM notifications WHERE user_id = $1 AND type = 'booking_reminder'`,
     [other],
   );
+  const reminderDebug = await pool.query(
+    `SELECT id, status, booking_date::text AS booking_date, start_time::text AS start_time,
+            ((booking_date + start_time) AT TIME ZONE 'Asia/Thimphu') AS starts_at,
+            now() AS db_now
+     FROM bookings WHERE id = $1`,
+    [reminderBooking.rows[0].id],
+  );
   check(
     '24-hour and 2-hour reminders are generated once per booking',
     reminderRows.rows.length === 2 && reminderNotifications.rows.length === 2,
+    `booking rows: ${JSON.stringify(reminderRows.rows)}, ` +
+      `student reminder notifications: ${reminderNotifications.rows.length}, ` +
+      `booking: ${JSON.stringify(reminderDebug.rows)}`,
   );
   check('game reminder preference opt-out is respected', optedOutReminders.rows.length === 0);
 }

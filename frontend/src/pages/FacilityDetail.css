@@ -666,6 +666,16 @@ p.fd-selected {
   background: #fee2e2;
   font-size: 13px;
 }
+.fd-blackout-notice {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #f1d08a;
+  border-radius: 8px;
+  background: #fff7e2;
+  color: #754c00;
+  font-size: 14px;
+  line-height: 1.5;
+}
 
 .fd-grid-scroll {
   width: 100%;

@@ -107,7 +107,7 @@ function MyBookings() {
   async function handleArchive(booking) {
     if (
       !window.confirm(
-        `Remove completed booking B-${booking.id} from your history? The official booking record will be kept.`,
+        `Remove booking B-${booking.id} from your history? The official booking record will be kept.`,
       )
     )
       return;
@@ -171,10 +171,7 @@ function MyBookings() {
       <div className="my-bookings-heading">
         <div>
           <h1 className="title">{PORTAL_TITLES[user?.role] || 'Booking Portal'}</h1>
-          <p className="subtitle">
-            View schedules, cancellations, and your reservation history. Completed bookings leave
-            this list after 7 days; swipe left to remove one sooner. Official records are retained.
-          </p>
+          <p className="subtitle">Manage your bookings and reservation history.</p>
         </div>
         <Link className="my-bookings-book-button" to="/facilities">
           + Book New Session
@@ -263,7 +260,9 @@ function MyBookings() {
                 {visibleBookings.map((booking) => {
                   const status = bookingStatus(booking, today);
                   const canCancel = status === 'Confirmed';
-                  const canArchive = status === 'Completed';
+                  const canArchive =
+                    status === 'Completed' ||
+                    status === 'Cancelled';
                   const statusClass = status.toLowerCase().replaceAll(' ', '-');
 
                   return (
@@ -295,54 +294,33 @@ function MyBookings() {
                       </td>
                       <td data-label="Status">
                         <span className={`my-bookings-status ${statusClass}`}>{status}</span>
-                        {booking.status === 'expired' && booking.payment_amount > 0 && (
-                          <div className="my-bookings-payment-resolution">
-                            {booking.payment_resolution_completed_at ? (
-                              <p>
-                                The DSA marked your{' '}
-                                {booking.payment_resolution === 'refund'
-                                  ? 'refund'
-                                  : 'booking credit'}{' '}
-                                as processed.
-                              </p>
-                            ) : (
-                              <>
-                                <p>
-                                  This paid booking was not approved before it started. Choose a
-                                  full refund or booking credit; the DSA will arrange your choice.
-                                  {booking.payment_resolution && (
-                                    <>
-                                      {' '}
-                                      Your current choice:{' '}
-                                      {booking.payment_resolution === 'refund'
-                                        ? 'full refund'
-                                        : 'booking credit'}
-                                      .
-                                    </>
-                                  )}
-                                </p>
-                                <div className="my-bookings-remedy-actions">
-                                  <button
-                                    type="button"
-                                    disabled={resolvingPaymentId === booking.id}
-                                    onClick={() => choosePaymentResolution(booking, 'refund')}
-                                  >
-                                    {resolvingPaymentId === booking.id ? 'Saving…' : 'Full refund'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={resolvingPaymentId === booking.id}
-                                    onClick={() => choosePaymentResolution(booking, 'credit')}
-                                  >
-                                    {resolvingPaymentId === booking.id
-                                      ? 'Saving…'
-                                      : 'Booking credit'}
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        {booking.status === 'expired' &&
+                          booking.payment_amount > 0 &&
+                          !booking.payment_resolution_completed_at && (
+                            <div className="my-bookings-payment-resolution">
+                              {!booking.payment_resolution && (
+                                <p>Choose a refund or credit to resolve this expired booking.</p>
+                              )}
+                              <div className="my-bookings-remedy-actions">
+                                <button
+                                  type="button"
+                                  aria-label="Request a full refund"
+                                  disabled={resolvingPaymentId === booking.id}
+                                  onClick={() => choosePaymentResolution(booking, 'refund')}
+                                >
+                                  {resolvingPaymentId === booking.id ? 'Saving…' : 'Refund'}
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="Request booking credit"
+                                  disabled={resolvingPaymentId === booking.id}
+                                  onClick={() => choosePaymentResolution(booking, 'credit')}
+                                >
+                                  {resolvingPaymentId === booking.id ? 'Saving…' : 'Credit'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                       </td>
                       <td className="my-bookings-actions">
                         {canCancel && (
@@ -369,7 +347,7 @@ function MyBookings() {
                             type="button"
                             onClick={() => handleArchive(booking)}
                             disabled={archivingId === booking.id}
-                            aria-label={`Remove completed booking B-${booking.id} from history`}
+                            aria-label={`Remove booking B-${booking.id} from history`}
                           >
                             {archivingId === booking.id ? (
                               'Removing…'

@@ -111,7 +111,7 @@ export default function AdminFacilityForm() {
   }
 
   return (
-    <form className="ud-page" onSubmit={save}>
+    <form className={`ud-page${error ? ' has-error' : ''}`} onSubmit={save}>
       <Link to="/admin/facilities" className="usr-back">
         ← Back to Facilities Status
       </Link>
@@ -132,7 +132,7 @@ export default function AdminFacilityForm() {
         </div>
       )}
 
-      <section className="ud-card">
+      <section className="ud-card ud-facility-info">
         <h2>Facility Information</h2>
         <div className="ud-grid">
           <label>
@@ -255,7 +255,7 @@ export default function AdminFacilityForm() {
         </p>
       </section>
 
-      <section className="ud-card">
+      <section className="ud-card ud-facility-image">
         <h2>Facility Image</h2>
         <div
           className="fm-drop"
@@ -307,7 +307,7 @@ export default function AdminFacilityForm() {
         </div>
       </section>
 
-      <section className="ud-card">
+      <section className="ud-card ud-facility-status">
         <h2>Availability Status</h2>
         <p className="ud-hint fm-lead">Choose how this facility appears in booking search.</p>
         <div className="fm-radios" role="radiogroup" aria-label="Availability status">

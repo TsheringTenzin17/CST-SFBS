@@ -724,6 +724,10 @@
     box-shadow: 0 -8px 20px rgba(20, 65, 76, 0.12);
   }
 
+  .page.has-primary-tabs .form-actions {
+    bottom: calc(var(--mobile-tab-bar-height, 73px) + 8px + env(safe-area-inset-bottom));
+  }
+
   .form-actions .btn-secondary,
   .form-actions .btn-primary {
     width: 100%;
