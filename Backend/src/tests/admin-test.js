@@ -15,6 +15,7 @@ const {
   finish,
 } = require('./helpers');
 const pool = require('../db');
+const { isEmailConfigured } = require('../email');
 const { expirePastPendingBookings, processDueReminders } = require('../reminders');
 const { bookingWindow } = require('../time');
 
@@ -246,7 +247,7 @@ async function main() {
   let resetToken;
   if (
     process.env.NODE_ENV !== 'production' &&
-    (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM)
+    !isEmailConfigured()
   ) {
     r = await api('POST', '/auth/forgot-password', { email: testCredentials(student).email });
     resetToken = r.body.reset_url && new URL(r.body.reset_url).searchParams.get('token');
