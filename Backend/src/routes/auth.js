@@ -5,7 +5,7 @@ const crypto = require('crypto');                                               
 const pool = require('../db');                                                            // our database connection
 const { verifyPassword } = require('../passwords');
 const { authenticate, createSessionToken } = require('../auth');                          // login check and login token maker
-const { sendEmail } = require('../email');                                                // helper to send emails
+const { isEmailConfigured, sendEmail } = require('../email');                             // helper to send emails
 const router = express.Router();                                                          // router to group all routes in this file
 
 // ===================== 2. CONSTANTS =====================
@@ -566,10 +566,7 @@ router.post('/forgot-password', async (req, res) => {
       const user = result.rows[0];                                                        // get the user
       const token = await issueToken(user.id, 'password_reset', 1);                       // reset token valid for 1 hour
       const resetUrl = actionUrl('/reset-password', token);                               // make the reset link
-      const emailConfigured =                                                             // check if email settings are set
-        (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) ||                     // gmail settings
-        (process.env.RESEND_API_KEY && process.env.RESEND_FROM);                          // or resend settings
-      if (!emailConfigured) {                                                             // email is not set up
+      if (!isEmailConfigured()) {                                                        // email is not set up
         if (process.env.NODE_ENV !== 'production') {                                      // in development, show the link directly
           return res.json({
             message:
@@ -579,7 +576,9 @@ router.post('/forgot-password', async (req, res) => {
           });
         }
         // in production this is an error
-        throw new Error('Email is not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD.');
+        throw new Error(
+          'Email is not configured. Set BREVO_API_KEY and BREVO_SENDER (or RESEND_API_KEY and RESEND_FROM, or GMAIL_USER and GMAIL_APP_PASSWORD).',
+        );
       }
       // send the reset email
       await sendEmail({
