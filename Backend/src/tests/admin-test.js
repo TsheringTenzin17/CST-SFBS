@@ -17,7 +17,7 @@ const {
 const pool = require('../db');
 const { isEmailConfigured } = require('../email');
 const { expirePastPendingBookings, processDueReminders } = require('../reminders');
-const { bookingWindow } = require('../time');
+const { bookingWindow, bhutanNow } = require('../time');
 
 async function main() {
   const admin = await createUser('admin');
@@ -28,6 +28,10 @@ async function main() {
   const football = await facilityId('Football Ground');
   const archery = await facilityId('Archery Range');
   const tuesday = dateOnWeekday(2);
+  const now = bhutanNow();
+  const paymentApprovalDate = [2, 5]
+    .map(dateOnWeekday)
+    .find((date) => date > now.date || (date === now.date && now.minutes <= 16 * 60));
   let r;
 
   console.log('Help and contact requests');
@@ -359,7 +363,7 @@ async function main() {
   const paidBooking = await post({
     user_id: outsider,
     facility_id: football,
-    booking_date: tuesday,
+    booking_date: paymentApprovalDate,
     start_time: '18:00',
     end_time: '20:00',
   });
